@@ -1,0 +1,79 @@
+{# Carte formation — classes .fc* (formations.css) #}
+{% set isEnrolled = f.id in enrolledFormationIds %}
+{% set lvl = f.level.value %}
+{% set catSlug = f.category|lower|replace({'_': '-'}) %}
+{% set levelMod =
+    lvl == 'BEGINNER' ? 'beginner'
+    : (lvl == 'INTERMEDIATE' ? 'intermediate' : 'advanced')
+%}
+
+<li>
+    <article class="fc">
+        <a href="{{ path('app_formation_show', { id: f.id }) }}" class="fc-banner fc-banner--{{ catSlug }}">
+            <span class="fc-banner__grad" aria-hidden="true"></span>
+            <span class="fc-banner__shine" aria-hidden="true"></span>
+            <div class="fc-banner__foot">
+                <span class="fc-banner__tag">Formation</span>
+                <span class="fc-banner__pill">Skilora</span>
+            </div>
+        </a>
+
+        <div class="fc-body">
+            <h2 class="fc-title">
+                <a href="{{ path('app_formation_show', { id: f.id }) }}">{{ f.title }}</a>
+            </h2>
+            <p class="fc-desc">{{ f.description }}</p>
+
+            <div class="fc-meta">
+                <div class="fc-badges">
+                    <span class="fc-badge">{{ f.categoryLabelFr }}</span>
+                    <span class="fc-badge fc-badge--{{ levelMod }}">{{ f.levelLabelFr }}</span>
+                </div>
+                <div class="fc-row">
+                    <span class="fc-duration">
+                        <span class="fc-duration__icon" aria-hidden="true">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </span>
+                        <span>{{ f.duration }}&nbsp;h</span>
+                    </span>
+                    <div class="fc-price">
+                        {% if f.price is null %}
+                            <span class="fc-price--muted">—</span>
+                        {% elseif f.price <= 0 %}
+                            <span class="fc-price--free">Gratuit</span>
+                        {% else %}
+                            <span class="fc-price--num">{{ f.priceDisplayFr }}</span><span class="fc-price--cur">TND</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="fc-footer">
+            <div class="fc-footer__stack">
+                <a href="{{ path('app_formation_show', { id: f.id }) }}" class="f-btn f-btn--primary">
+                    Voir le détail
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </a>
+                {% if app.user %}
+                    {% if isEnrolled %}
+                        <div class="fc-enrolled">
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            Inscrit
+                        </div>
+                    {% else %}
+                        <form method="post" action="{{ path('app_formation_enroll', { id: f.id }) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('formation_enroll_' ~ f.id) }}">
+                            <button type="submit" class="fc-enroll-secondary">S'inscrire</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <p class="fc-login-hint">
+                        <a href="{{ path('app_login') }}">Connexion</a>
+                        <span> · pour vous inscrire</span>
+                    </p>
+                {% endif %}
+            </div>
+        </footer>
+    </article>
+</li>

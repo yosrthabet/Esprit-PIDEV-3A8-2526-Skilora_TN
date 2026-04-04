@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Database error · Skilora{% endblock %}
+
+{% block body %}
+    <div class="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 class="text-xl font-semibold">Something went wrong</h1>
+        <p class="text-muted-foreground mt-3 text-sm">{{ message }}</p>
+        <p class="text-muted-foreground mt-4 text-xs">Check the Symfony log (<code class="rounded bg-muted px-1">var/log/dev.log</code>) for details.</p>
+        <a href="{{ path('app_home') }}" class="mt-8 inline-block text-sm text-primary underline-offset-4 hover:underline">Back to home</a>
+    </div>
+{% endblock %}

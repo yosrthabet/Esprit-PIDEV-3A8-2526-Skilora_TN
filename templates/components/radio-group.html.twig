@@ -1,0 +1,48 @@
+{# components/radio-group.html.twig — ShadCN Radio Group
+
+   Usage: {{ include('components/radio-group.html.twig', {
+       name: 'plan',
+       label: 'Select a plan',
+       selected: 'pro',
+       options: [
+           { value: 'free', label: 'Free', description: 'Basic features' },
+           { value: 'pro', label: 'Pro', description: '$9/month' },
+           { value: 'enterprise', label: 'Enterprise', description: 'Custom pricing' },
+       ],
+       layout: 'vertical',
+   }) }}
+#}
+{% set selected = selected|default('') %}
+{% set layout = layout|default('vertical') %}
+{% set disabled = disabled|default(false) %}
+
+<fieldset class="space-y-3 {{ class|default('') }}" {{ disabled ? 'disabled' : '' }}>
+    {% if label is defined and label %}
+        <legend class="text-sm font-medium leading-none mb-3">{{ label }}</legend>
+    {% endif %}
+
+    <div class="{{ layout == 'horizontal' ? 'flex flex-wrap gap-4' : 'space-y-2' }}">
+        {% for option in options|default([]) %}
+            <label class="flex items-start gap-3 cursor-pointer group {{ disabled ? 'opacity-50 cursor-not-allowed' : '' }}">
+                <input
+                    type="radio"
+                    name="{{ name }}"
+                    value="{{ option.value }}"
+                    {{ selected == option.value ? 'checked' : '' }}
+                    {{ disabled ? 'disabled' : '' }}
+                    class="mt-0.5 aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-ring accent-primary"
+                />
+                <div class="space-y-0.5">
+                    <span class="text-sm font-medium leading-none group-hover:text-foreground">{{ option.label }}</span>
+                    {% if option.description is defined %}
+                        <p class="text-xs text-muted-foreground">{{ option.description }}</p>
+                    {% endif %}
+                </div>
+            </label>
+        {% endfor %}
+    </div>
+
+    {% if error is defined and error %}
+        <p class="text-[0.8rem] font-medium text-destructive">{{ error }}</p>
+    {% endif %}
+</fieldset>

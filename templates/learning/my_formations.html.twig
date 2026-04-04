@@ -1,0 +1,40 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('css/formations.css') }}?v=3">
+{% endblock %}
+
+{% block page_title %}My formations{% endblock %}
+
+{% block content %}
+<div class="f-learning-wrap">
+    <div class="f-learn-head">
+        <h2 class="f-learn-title">My formations</h2>
+        <p class="f-learn-sub">Courses you are enrolled in. Open a formation to continue learning or mark it complete.</p>
+    </div>
+
+    {% if enrollments is empty %}
+        <div class="f-empty f-learn-empty">
+            <p class="f-learn-sub f-mb-0">You are not enrolled in any formation yet.</p>
+            <a href="{{ path('app_formation_index') }}" class="f-btn f-btn--primary f-mt-md">Browse catalog</a>
+        </div>
+    {% else %}
+        <div class="f-learn-grid">
+            {% for e in enrollments %}
+                <div class="f-learn-row">
+                    <h3><a href="{{ path('app_formation_show', { id: e.formation.id }) }}">{{ e.formation.title }}</a></h3>
+                    <div class="f-learn-actions">
+                        {% if e.completed %}
+                            <span class="f-badge-state f-badge-state--done">Completed</span>
+                        {% else %}
+                            <span class="f-badge-state f-badge-state--progress">In progress</span>
+                        {% endif %}
+                        <a href="{{ path('app_formation_show', { id: e.formation.id }) }}" class="f-btn f-btn--ghost f-btn--sm">Open</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

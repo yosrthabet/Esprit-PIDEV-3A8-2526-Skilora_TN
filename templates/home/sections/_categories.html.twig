@@ -1,0 +1,33 @@
+<!-- CATEGORIES -->
+<section class="categories-section py-24">
+    <div class="container mx-auto px-4">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <div class="max-w-2xl">
+                <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-4">Browse talent by category</h2>
+                <p class="text-xl text-muted-foreground">Looking for work? Browse jobs instead.</p>
+            </div>
+            <a href="#" class="inline-flex items-center text-primary font-semibold hover:gap-2 transition-all">
+                All Categories
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" class="ml-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for category in categories %}
+                <a href="#" class="category-card group block p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        <!-- Lucide Icon dynamically mapped if needed, using simple span for now -->
+                        {% include 'components/icon.html.twig' with { name: category.icon, size: 24 } %}
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">{{ category.title }}</h3>
+                    <div class="flex items-center justify-between text-muted-foreground font-medium">
+                        <span class="flex items-center">
+                            <span class="mr-2 text-yellow-500">★</span> {{ category.rating }}/5
+                        </span>
+                        <span>{{ category.count }}</span>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>

@@ -1,0 +1,117 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Formations · Admin{% endblock %}
+{% block page_title %}Formations{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{{ path('app_admin_formation_new') }}"
+       class="inline-flex h-9 items-center justify-center rounded-md bg-white px-4 text-xs font-semibold text-zinc-950 shadow hover:bg-zinc-100 dark:bg-white dark:text-zinc-950">
+        + Ajouter une formation
+    </a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl space-y-6">
+    <div>
+        <h2 class="text-xl font-semibold tracking-tight">Gestion des formations</h2>
+        <p class="text-sm text-muted-foreground mt-1">Liste, recherche et actions sur les formations publiées.</p>
+    </div>
+
+    <form method="get" action="{{ path('app_admin_formation_index') }}" class="flex flex-wrap items-end gap-3">
+        <div class="flex-1 min-w-[220px] max-w-md space-y-1">
+            <label for="q" class="text-xs font-medium text-muted-foreground">Recherche</label>
+            <input type="search" id="q" name="q" value="{{ q|e('html_attr') }}" placeholder="Titre ou description…" maxlength="200" autocomplete="off"
+                   class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+        </div>
+        <button type="submit" class="inline-flex h-9 items-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent">Rechercher</button>
+        {% if q %}
+            <a href="{{ path('app_admin_formation_index') }}" class="inline-flex h-9 items-center rounded-md px-3 text-sm text-destructive hover:underline">Effacer</a>
+        {% endif %}
+    </form>
+
+    {% for message in app.flashes('success') %}
+        <div class="rounded-md border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-800 dark:text-green-300">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{{ message }}</div>
+    {% endfor %}
+
+    <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-border bg-muted/40">
+                        <th class="h-10 px-3 sm:px-4 text-left font-medium text-muted-foreground w-14">ID</th>
+                        <th class="h-10 px-3 sm:px-4 text-left font-medium text-muted-foreground min-w-[8rem]">Titre</th>
+                        <th class="h-10 px-3 sm:px-4 text-left font-medium text-muted-foreground">Catégorie</th>
+                        <th class="h-10 px-3 sm:px-4 text-left font-medium text-muted-foreground">Niveau</th>
+                        <th class="h-10 px-3 sm:px-4 text-left font-medium text-muted-foreground">Prix</th>
+                        <th class="h-10 px-3 sm:px-4 text-right font-medium text-muted-foreground whitespace-nowrap">Durée (h)</th>
+                        <th class="h-10 px-4 text-right font-medium text-muted-foreground w-28">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for formation in formations %}
+                        <tr class="border-b border-border hover:bg-muted/30 transition-colors">
+                            <td class="p-3 sm:p-4 text-muted-foreground font-mono text-xs">{{ formation.id }}</td>
+                            <td class="p-3 sm:p-4 font-medium">{{ formation.title }}</td>
+                            <td class="p-3 sm:p-4">
+                                <span class="inline-flex max-w-[10rem] truncate rounded-full border border-border bg-muted/50 px-2 py-0.5 text-xs">{{ formation.categoryLabelFr }}</span>
+                            </td>
+                            <td class="p-3 sm:p-4 text-muted-foreground text-xs sm:text-sm">{{ formation.levelLabelFr }}</td>
+                            <td class="p-3 sm:p-4 text-muted-foreground tabular-nums text-xs sm:text-sm">{{ formation.priceDisplayFr }}</td>
+                            <td class="p-3 sm:p-4 text-right tabular-nums">{{ formation.duration }}</td>
+                            <td class="p-3 sm:p-4 text-right">
+                                <details class="relative inline-block text-left">
+                                    <summary class="cursor-pointer list-none rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground [&::-webkit-details-marker]:hidden">
+                                        <span class="sr-only">Actions</span>
+                                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/></svg>
+                                    </summary>
+                                    <div class="absolute right-0 z-20 mt-1 min-w-[10rem] rounded-md border border-border bg-card py-1 text-card-foreground shadow-md">
+                                        <a href="{{ path('app_admin_formation_edit', { id: formation.id }) }}"
+                                           class="block px-3 py-2 text-sm hover:bg-accent">Modifier</a>
+                                        <form method="post" action="{{ path('app_admin_formation_delete', { id: formation.id }) }}"
+                                              class="border-t border-border"
+                                              onsubmit="return confirm('Supprimer cette formation ?');">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('formation_delete_' ~ formation.id) }}">
+                                            <button type="submit" class="w-full px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="p-10 text-center text-muted-foreground">
+                                Aucune formation. Utilisez <strong>+ Ajouter une formation</strong>.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if pageCount > 1 or total > 0 %}
+        <div class="flex flex-wrap items-center justify-between gap-4 text-sm">
+            <p class="text-muted-foreground">
+                Affichage {% if total > 0 %}{{ rangeFrom }}–{{ rangeTo }}{% else %}0{% endif %} sur {{ total }}
+                {% if pageCount > 1 %}(page {{ currentPage }}/{{ pageCount }}){% endif %}
+            </p>
+            {% if pageCount > 1 %}
+                <nav class="flex flex-wrap items-center justify-center gap-2" aria-label="Pagination">
+                    {% set baseQuery = q ? { q: q } : {} %}
+                    <a href="{{ path('app_admin_formation_index', baseQuery|merge({ page: currentPage - 1 })) }}"
+                       class="inline-flex h-8 items-center rounded-md border px-3 text-xs {{ currentPage <= 1 ? 'pointer-events-none opacity-50' : '' }}">Précédent</a>
+                    {% for p in 1..pageCount %}
+                        <a href="{{ path('app_admin_formation_index', baseQuery|merge({ page: p })) }}"
+                           class="inline-flex h-8 w-8 items-center justify-center rounded-md text-xs font-medium {{ p == currentPage ? 'bg-primary text-primary-foreground' : 'border hover:bg-accent' }}">{{ p }}</a>
+                    {% endfor %}
+                    <a href="{{ path('app_admin_formation_index', baseQuery|merge({ page: currentPage + 1 })) }}"
+                       class="inline-flex h-8 items-center rounded-md border px-3 text-xs {{ currentPage >= pageCount ? 'pointer-events-none opacity-50' : '' }}">Suivant</a>
+                </nav>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

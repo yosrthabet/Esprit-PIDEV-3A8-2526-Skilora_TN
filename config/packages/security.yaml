@@ -1,0 +1,62 @@
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_USER]
+
+    providers:
+        # UserRepository::loadUserByIdentifier (email OR username) — property is ignored
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        main:
+            lazy: true
+            provider: app_user_provider
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                username_parameter: _username
+                password_parameter: _password
+                default_target_path: app_dashboard
+                always_use_default_target_path: false
+                enable_csrf: true
+                csrf_parameter: _csrf_token
+                csrf_token_id: authenticate
+                success_handler: App\Security\LoginSuccessHandler
+            logout:
+                path: app_logout
+                target: app_login
+
+    access_control:
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/logout, roles: PUBLIC_ACCESS }
+        - { path: ^/css/, roles: PUBLIC_ACCESS }
+        - { path: ^/js/, roles: PUBLIC_ACCESS }
+        - { path: ^/build/, roles: PUBLIC_ACCESS }
+        - { path: ^/assets/, roles: PUBLIC_ACCESS }
+        - { path: ^/favicon, roles: PUBLIC_ACCESS }
+        - { path: ^/images/, roles: PUBLIC_ACCESS }
+        - { path: ^/_error, roles: PUBLIC_ACCESS }
+        - { path: ^/_profiler, roles: PUBLIC_ACCESS }
+        - { path: ^/_wdt, roles: PUBLIC_ACCESS }
+        # Landing page (accueil) open to everyone; login button goes to /login
+        - { path: ^/?$, roles: PUBLIC_ACCESS }
+        - { path: ^/formations/\d+/inscription$, roles: ROLE_USER, methods: [POST] }
+        - { path: ^/formations/\d+/complete$, roles: ROLE_USER, methods: [POST] }
+        - { path: ^/formations, roles: PUBLIC_ACCESS }
+        - { path: ^/database/users, roles: ROLE_ADMIN }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/, roles: ROLE_USER }
+
+when@test:
+    security:
+        password_hashers:
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: plaintext

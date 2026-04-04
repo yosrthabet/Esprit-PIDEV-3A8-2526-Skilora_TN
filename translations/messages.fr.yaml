@@ -1,0 +1,9 @@
+# Application (FR) — messages flash et libellés réutilisables
+formation:
+  flash:
+    created: 'La formation « %title% » a été créée.'
+    updated: 'La formation « %title% » a été mise à jour.'
+    deleted: 'La formation « %title% » a été supprimée.'
+    csrf_invalid: 'Session expirée ou jeton de sécurité invalide. Rechargez la page et réessayez.'
+  form:
+    invalid_integer: 'Saisissez un nombre entier valide (sans décimales).'

@@ -1,0 +1,17 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Certificats · Admin{% endblock %}
+{% block page_title %}Certificats{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl space-y-4">
+    <p class="text-sm text-muted-foreground">
+        Module en préparation : émission de certificats, liste des apprenants, téléchargement PDF, etc.
+    </p>
+    <div class="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
+        Aucun certificat configuré pour l’instant.
+    </div>
+    <a href="{{ path('app_admin_dashboard') }}"
+       class="inline-flex text-sm font-medium text-primary hover:underline">← Retour au tableau de bord</a>
+</div>
+{% endblock %}

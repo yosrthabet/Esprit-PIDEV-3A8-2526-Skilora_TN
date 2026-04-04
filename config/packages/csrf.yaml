@@ -1,0 +1,6 @@
+# CSRF for forms and form_login (session-based on Symfony 6.4)
+framework:
+    form:
+        csrf_protection:
+            enabled: true
+    csrf_protection: true

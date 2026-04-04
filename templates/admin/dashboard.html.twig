@@ -1,0 +1,67 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Tableau de bord · Admin{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="space-y-8 animate-fade-in max-w-6xl">
+    <p class="text-sm text-muted-foreground">
+        Bienvenue dans l’espace administration. Gérez les formations visibles sur le catalogue public et préparez les certificats.
+    </p>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <a href="{{ path('app_formation_index') }}"
+           class="rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm transition-colors hover:border-primary/40 hover:bg-accent/30">
+            <p class="text-sm font-medium text-muted-foreground">Catalogue public</p>
+            <p class="mt-2 text-2xl font-bold">{{ formation_count }}</p>
+            <p class="mt-1 text-xs text-muted-foreground">Formation(s) listée(s) sur /formations</p>
+        </a>
+        <a href="{{ path('app_admin_formation_new') }}"
+           class="rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm transition-colors hover:border-primary/40 hover:bg-accent/30">
+            <p class="text-sm font-medium text-muted-foreground">Publication</p>
+            <p class="mt-2 text-base font-semibold">Nouvelle formation</p>
+            <p class="mt-1 text-xs text-muted-foreground">Créer et mettre en ligne une fiche</p>
+        </a>
+        <a href="{{ path('app_admin_certificates_index') }}"
+           class="rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm transition-colors hover:border-primary/40 hover:bg-accent/30">
+            <p class="text-sm font-medium text-muted-foreground">Certificats</p>
+            <p class="mt-2 text-base font-semibold">À venir</p>
+            <p class="mt-1 text-xs text-muted-foreground">Émission et suivi des attestations</p>
+        </a>
+    </div>
+
+    <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border p-6">
+            <div>
+                <h2 class="font-semibold leading-none tracking-tight">Dernières formations</h2>
+                <p class="text-sm text-muted-foreground mt-1">Les plus récemment créées</p>
+            </div>
+            <a href="{{ path('app_admin_formation_index') }}"
+               class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                Gérer tout
+            </a>
+        </div>
+        <div class="p-6 pt-0">
+            {% if recent_formations is empty %}
+                <p class="text-sm text-muted-foreground py-8 text-center">Aucune formation pour le moment. Utilisez <strong>Publier une formation</strong> pour commencer.</p>
+            {% else %}
+                <ul class="divide-y divide-border">
+                    {% for f in recent_formations %}
+                        <li class="flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0">
+                            <div class="min-w-0">
+                                <p class="font-medium truncate">{{ f.title }}</p>
+                                <p class="text-xs text-muted-foreground">
+                                    {{ f.duration }} h · {{ f.lessonsCount }} leçon(s)
+                                    {% if f.createdAt %} · {{ f.createdAt|date('d/m/Y') }}{% endif %}
+                                </p>
+                            </div>
+                            <a href="{{ path('app_admin_formation_edit', { id: f.id }) }}"
+                               class="text-xs font-medium text-primary hover:underline shrink-0">Modifier</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

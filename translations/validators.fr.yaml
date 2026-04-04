@@ -1,0 +1,27 @@
+# Formation — règles métier et champs (domaine validators)
+formation.title.not_blank: 'Indiquez un titre pour cette formation.'
+formation.title.min: 'Le titre doit contenir au moins {{ limit }} caractères.'
+formation.title.max: 'Le titre ne peut pas dépasser {{ limit }} caractères.'
+
+formation.description.not_blank: 'Rédigez une description pour présenter la formation.'
+formation.description.min: 'La description doit faire au moins {{ limit }} caractères (détaillez le contenu).'
+formation.description.max: 'La description est limitée à {{ limit }} caractères.'
+
+formation.price.positive_or_zero: 'Le prix doit être un nombre positif ou zéro (formation gratuite).'
+
+formation.duration.not_blank: 'Indiquez la durée totale de la formation (en heures, nombre entier).'
+formation.duration.type_integer: 'La durée doit être un nombre entier d’heures (sans décimales).'
+formation.duration.positive: 'La durée doit être strictement positive.'
+
+formation.lessons_count.not_blank: 'Indiquez le nombre de leçons prévues.'
+formation.lessons_count.type_integer: 'Le nombre de leçons doit être un entier.'
+formation.lessons_count.positive: 'Le nombre de leçons doit être au moins 1.'
+
+formation.level.not_null: 'Choisissez un niveau (débutant, intermédiaire ou avancé).'
+formation.level.choice: 'Le niveau sélectionné n’est pas valide.'
+
+formation.category.not_blank: 'Choisissez une catégorie.'
+formation.category.choice: 'La catégorie sélectionnée n’est pas valide.'
+
+formation.validation.duration_vs_lessons: 'La durée totale ({{ duration }} h) doit être strictement supérieure au nombre de leçons ({{ lessons }}). Par exemple, prévoyez plus d’heures que de séances, ou réduisez le nombre de leçons.'
+formation.validation.duplicate_title: 'Une formation porte déjà ce titre (après normalisation). Choisissez un titre distinct pour éviter les doublons.'

@@ -1,0 +1,4 @@
+# Application (EN) — flash + form strings
+formation:
+  form:
+    invalid_integer: 'Enter a valid whole number (no decimals).'

@@ -1,0 +1,16 @@
+{# Page d’erreur générique (production-friendly) #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Erreur {{ status_code }} · Skilora{% endblock %}
+
+{% block body %}
+<main class="min-h-screen flex flex-col items-center justify-center px-6 py-16 text-center">
+    <p class="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Skilora</p>
+    <h1 class="mt-4 text-5xl font-bold tabular-nums tracking-tight">{{ status_code }}</h1>
+    <p class="mt-4 max-w-md text-sm text-muted-foreground">{{ status_text }}</p>
+    <a href="{{ path('app_home') }}"
+       class="mt-10 inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
+        Retour à l’accueil
+    </a>
+</main>
+{% endblock %}

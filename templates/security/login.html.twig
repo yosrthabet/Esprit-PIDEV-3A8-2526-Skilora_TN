@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion · Skilora{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-12">
+    <div class="w-full max-w-md space-y-8">
+        <div class="text-center">
+            <a href="{{ path('app_home') }}" class="text-2xl font-black tracking-tighter text-foreground focus-ring rounded-md">SKILORA</a>
+            <h1 class="mt-6 text-2xl font-semibold tracking-tight text-foreground">Connexion</h1>
+            <p class="mt-2 text-sm text-muted-foreground">Accédez à votre espace sécurisé</p>
+        </div>
+
+        {% if error %}
+            <div class="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive" role="alert">
+                {{ error.messageKey|trans(error.messageData, 'security') }}
+            </div>
+        {% endif %}
+
+        <form method="post" action="{{ path('app_login') }}" class="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm" novalidate>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            <div class="space-y-2">
+                <label for="username" class="text-sm font-medium leading-none text-foreground">E-mail ou nom d’utilisateur</label>
+                <input id="username" name="_username" type="text" value="{{ last_username|default('') }}"
+                       autocomplete="username" required autofocus
+                       class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            </div>
+
+            <div class="space-y-2">
+                <label for="password" class="text-sm font-medium leading-none text-foreground">Mot de passe</label>
+                <input id="password" name="_password" type="password" autocomplete="current-password" required
+                       class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            </div>
+
+            <button type="submit" class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                Se connecter
+            </button>
+        </form>
+
+        <p class="text-center text-xs text-muted-foreground">
+            <a href="{{ path('app_home') }}" class="underline underline-offset-4 hover:text-foreground">← Retour à l’accueil</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{# Admin form theme — errors under fields + invalid row + widget border (Tailwind v2 layout) #}
+{% extends 'tailwind_2_layout.html.twig' %}
+
+{%- block form_row -%}
+    {%- set row_attr = row_attr|merge({
+        class: (row_attr.class|default('') ~ (errors|length ? ' rounded-lg border border-destructive/50 bg-destructive/[0.06] p-3' : '') ~ ' ' ~ row_class|default('mb-6'))|trim
+    }) -%}
+    {{- parent() -}}
+{%- endblock form_row -%}
+
+{%- block form_errors -%}
+    {%- if errors|length > 0 -%}
+        <ul class="mt-1.5 list-none space-y-0.5 p-0" role="alert" aria-live="polite">
+            {%- for error in errors -%}
+                <li class="text-sm font-medium text-destructive">{{ error.message }}</li>
+            {%- endfor -%}
+        </ul>
+    {%- endif -%}
+{%- endblock form_errors -%}
+
+{%- block form_help -%}
+    {%- set help_attr = help_attr|merge({ class: (help_attr.class|default('') ~ ' mt-1.5 block text-xs leading-relaxed text-muted-foreground')|trim }) -%}
+    {{- parent() -}}
+{%- endblock form_help -%}
+
+{%- block form_label -%}
+    {%- set label_attr = label_attr|merge({ class: (label_attr.class|default('') ~ ' text-foreground')|trim }) -%}
+    {{- parent() -}}
+{%- endblock form_label -%}
+
+{%- block widget_attributes -%}
+    {%- set widget_errors_class = ' !border-destructive !ring-1 !ring-destructive/40 focus-visible:!ring-destructive' -%}
+    {%- if errors|length -%}
+        {%- set attr = attr|merge({ 'aria-invalid': 'true' }) -%}
+    {%- endif -%}
+    {{- parent() -}}
+{%- endblock widget_attributes -%}

@@ -1,0 +1,31 @@
+{# components/form-field.html.twig — ShadCN-style Form Field wrapper
+
+   Usage: {{ include('components/form-field.html.twig', {
+       label: 'Username',
+       name: 'username',
+       description: 'This is your public display name.',
+       error: 'Username is required.',
+       required: true,
+   }) }}
+#}
+
+<div class="space-y-2 {{ class|default('') }}">
+    {% if label is defined and label %}
+        <label for="{{ name }}" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            {{ label }}
+            {% if required|default(false) %}
+                <span class="text-destructive">*</span>
+            {% endif %}
+        </label>
+    {% endif %}
+
+    {{ block('field_content') is defined ? block('field_content') : '' }}
+
+    {% if description is defined and description %}
+        <p class="text-[0.8rem] text-muted-foreground">{{ description }}</p>
+    {% endif %}
+
+    {% if error is defined and error %}
+        <p class="text-[0.8rem] font-medium text-destructive">{{ error }}</p>
+    {% endif %}
+</div>

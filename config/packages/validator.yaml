@@ -1,0 +1,4 @@
+framework:
+    validation:
+        # Validation e-mail alignée sur les navigateurs (contrôles de saisie cohérents)
+        email_validation_mode: html5

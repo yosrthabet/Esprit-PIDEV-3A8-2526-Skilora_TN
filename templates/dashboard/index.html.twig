@@ -1,0 +1,131 @@
+{# Tableau de bord applicatif — indicateurs issus de la base de données #}
+{% extends 'layouts/app.html.twig' %}
+
+{% block title %}Tableau de bord · Skilora{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-fade-in">
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {% for stat in stats %}
+        <div class="rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm">
+            <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-muted-foreground">{{ stat.label }}</p>
+                {% if stat.trend == 'up' %}
+                    <svg class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 17l5-5 5 5M7 7l5 5 5-5"/>
+                    </svg>
+                {% else %}
+                    <svg class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/>
+                    </svg>
+                {% endif %}
+            </div>
+            <div class="mt-2">
+                <p class="text-2xl font-bold tabular-nums">{{ stat.value }}</p>
+                <p class="text-xs text-muted-foreground mt-1">{{ stat.change }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+
+        <div class="lg:col-span-2 rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3 p-6 pb-4">
+                <div>
+                    <h2 class="font-semibold leading-none tracking-tight">Inscriptions récentes</h2>
+                    <p class="text-sm text-muted-foreground mt-1">Derniers comptes créés sur la plateforme</p>
+                </div>
+                {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('app_database_users') }}"
+                   class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                    Liste complète
+                </a>
+                {% endif %}
+            </div>
+            <div class="px-6 pb-6">
+                {{ include('components/table.html.twig', {
+                    columns: [
+                        { key: 'user', label: 'Utilisateur' },
+                        { key: 'role', label: 'Rôle' },
+                        { key: 'status', label: 'Statut' },
+                        { key: 'actions', label: '', align: 'right' },
+                    ],
+                    empty_message: 'Aucun utilisateur en base pour le moment.',
+                    rows: recent_users|map(u => {
+                        user: '<div class="flex items-center gap-3">' ~
+                              include('components/avatar.html.twig', { initials: u.name|split(' ')|map(w => w|first)|join('')|slice(0, 2), size: 'sm' }) ~
+                              '<div><p class="text-sm font-medium">' ~ u.name|e ~ '</p><p class="text-xs text-muted-foreground">' ~ u.email|e ~ '</p></div></div>',
+                        role: include('components/badge.html.twig', { label: u.role, variant: 'secondary' }),
+                        status: include('components/badge.html.twig', {
+                            label: u.status,
+                            variant: u.status == 'Actif' ? 'success' : (u.status == 'En attente' ? 'warning' : 'outline')
+                        }),
+                        actions: include('components/dropdown-menu.html.twig', {
+                            items: [
+                                { label: 'Profil', href: '#' },
+                                { label: 'Modifier', href: '#' },
+                                { type: 'separator' },
+                                { label: 'Supprimer', href: '#', variant: 'destructive' },
+                            ]
+                        })
+                    })
+                }) }}
+            </div>
+        </div>
+
+        <div class="space-y-6">
+
+            <div class="rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm">
+                <h2 class="font-semibold leading-none tracking-tight mb-4">Raccourcis</h2>
+                <div class="grid grid-cols-1 gap-2">
+                    <a href="{{ path('app_formation_index') }}"
+                       class="inline-flex w-full items-center justify-start gap-2 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                        Catalogue formations
+                    </a>
+                    {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('app_admin_dashboard') }}"
+                       class="inline-flex w-full items-center justify-start gap-2 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                        Administration
+                    </a>
+                    <a href="{{ path('app_admin_formation_index') }}"
+                       class="inline-flex w-full items-center justify-start gap-2 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                        Gérer les formations
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm">
+                <h2 class="font-semibold leading-none tracking-tight mb-1">Qualité de service</h2>
+                <p class="text-sm text-muted-foreground mb-4">Indicateurs illustratifs — à relier à vos métriques réelles si besoin.</p>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Disponibilité cible</span>
+                            <span class="text-muted-foreground">99,9 %</span>
+                        </div>
+                        {{ include('components/progress.html.twig', { value: 99.9 }) }}
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Objectif sécurité</span>
+                            <span class="text-muted-foreground">100 %</span>
+                        </div>
+                        {{ include('components/progress.html.twig', { value: 100 }) }}
+                    </div>
+                </div>
+            </div>
+
+            {{ include('components/alert.html.twig', {
+                title: 'Données en direct',
+                body: 'Les chiffres utilisateurs et formations proviennent de votre base MySQL. Les modules emploi et rapports pourront s’y afficher ensuite.',
+            }) }}
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

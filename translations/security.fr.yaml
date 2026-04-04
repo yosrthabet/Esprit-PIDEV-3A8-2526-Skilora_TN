@@ -1,0 +1,7 @@
+# Messages du composant Security (connexion, erreurs d’authentification)
+'Invalid credentials.': 'E-mail ou mot de passe incorrect.'
+'Username could not be found.': 'Aucun compte ne correspond à cet identifiant.'
+'Password is required': 'Le mot de passe est obligatoire.'
+'User account is disabled.': 'Ce compte est désactivé.'
+'Account is locked.': 'Compte temporairement verrouillé.'
+'Too many failed login attempts, please try again later.': 'Trop de tentatives de connexion. Réessayez plus tard.'

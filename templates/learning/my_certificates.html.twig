@@ -1,0 +1,49 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('css/formations.css') }}?v=3">
+{% endblock %}
+
+{% block page_title %}My certificates{% endblock %}
+
+{% block content %}
+<div class="f-learning-wrap">
+    <div class="f-learn-head">
+        <h2 class="f-learn-title">My certificates</h2>
+        <p class="f-learn-sub">Certificates issued when you complete a formation.</p>
+    </div>
+
+    {% if certificates is empty %}
+        <div class="f-empty f-learn-empty">
+            <p class="f-learn-sub f-mb-0">No certificates yet. Complete a formation to earn one.</p>
+            <a href="{{ path('app_formation_index') }}" class="f-btn f-btn--primary f-mt-md">Browse catalog</a>
+        </div>
+    {% else %}
+        <div style="overflow-x: auto;">
+            <table class="f-cert-table">
+                <thead>
+                    <tr>
+                        <th>Learner</th>
+                        <th>Formation</th>
+                        <th>Completion</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in certificates %}
+                        <tr>
+                            <td>{{ c.user.fullName }}</td>
+                            <td>{{ c.formation.title }}</td>
+                            <td>{{ c.issuedAt|date('Y-m-d H:i') }}</td>
+                            <td>
+                                <a href="{{ path('app_certificate_pdf', { id: c.id }) }}" class="f-btn f-btn--primary f-btn--sm">Download PDF</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

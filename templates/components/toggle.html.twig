@@ -1,0 +1,38 @@
+{# components/toggle.html.twig — ShadCN Toggle Button
+
+   Usage: {{ include('components/toggle.html.twig', {
+       name: 'bold',
+       label: '<svg>B</svg>',
+       pressed: false,
+       variant: 'default',
+       size: 'default',
+   }) }}
+#}
+{% set variant = variant|default('default') %}
+{% set size = size|default('default') %}
+{% set pressed = pressed|default(false) %}
+
+{% set variant_classes = {
+    'default': 'bg-transparent hover:bg-muted hover:text-muted-foreground',
+    'outline': 'border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground',
+} %}
+
+{% set size_classes = {
+    'default': 'h-9 px-3 min-w-9',
+    'sm': 'h-8 px-2 min-w-8',
+    'lg': 'h-10 px-4 min-w-10',
+} %}
+
+<button
+    type="button"
+    x-data="{ pressed: {{ pressed ? 'true' : 'false' }} }"
+    @click="pressed = !pressed"
+    :aria-pressed="pressed.toString()"
+    :class="pressed ? 'bg-accent text-accent-foreground' : '{{ variant_classes[variant] }}'"
+    class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 {{ size_classes[size] }} {{ class|default('') }}"
+>
+    {% if name is defined %}
+        <input type="hidden" name="{{ name }}" :value="pressed ? '1' : '0'">
+    {% endif %}
+    {{ label|default('')|raw }}
+</button>

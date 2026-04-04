@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('css/formations.css') }}?v=2">
+{% endblock %}
+
+{% block body_class %}body--formation{% endblock %}
+
+{% block title %}Formations · Skilora{% endblock %}
+
+{% block body %}
+<div class="f-page">
+    {% include 'formation/_public_header.html.twig' %}
+
+    <section class="f-hero">
+        <div class="f-hero__glow" aria-hidden="true"></div>
+        <div class="f-container f-hero__content">
+            <p class="f-eyebrow">Catalogue</p>
+            <h1 class="f-title">Explore Formations</h1>
+            <p class="f-subtitle">
+                Parcours structurés, filtres rapides et fiches détaillées — pensé comme une plateforme e-learning professionnelle.
+            </p>
+            {% if formations is not empty %}
+                <p class="f-pill">
+                    <span class="f-pill__dot" aria-hidden="true"></span>
+                    <span><strong>{{ formations|length }}</strong> programme{{ formations|length > 1 ? 's' : '' }} disponible{{ formations|length > 1 ? 's' : '' }}</span>
+                </p>
+            {% endif %}
+        </div>
+    </section>
+
+    <div class="f-toolbar-wrap">
+        {% include 'formation/_catalog_toolbar.html.twig' %}
+    </div>
+
+    <main class="f-container f-main">
+        {% if formations is empty %}
+            <div class="f-empty">
+                <div class="f-empty__icon" aria-hidden="true">
+                    <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.25">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A9 9 0 0115 21.75a9 9 0 006-8.25V6.75A9 9 0 009 3.75c-.856 0-1.68.122-2.46.358"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12"/>
+                    </svg>
+                </div>
+                <h2>Aucune formation pour l’instant</h2>
+                <p>Modifiez les filtres ou la recherche, ou revenez plus tard lorsque de nouveaux programmes seront publiés.</p>
+            </div>
+        {% else %}
+            <ul class="f-grid" role="list">
+                {% for f in formations %}
+                    {% include 'formation/_card.html.twig' %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{# components/form.html.twig — ShadCN-style Form wrapper with validation
+
+   Usage:
+   {% include 'components/form.html.twig' with {
+       action: '#',
+       method: 'POST',
+       id: 'register-form',
+   } %}
+
+   Then use form-field for each field:
+   {% include 'components/form-field.html.twig' with {
+       label: 'Email',
+       name: 'email',
+       description: 'We will never share your email.',
+       error: form_errors(form.email)|first,
+   } %}
+#}
+{% set method = method|default('POST') %}
+{% set id = id|default('') %}
+{% set enctype = enctype|default('') %}
+
+<form
+    {{ id ? 'id="' ~ id ~ '"' : '' }}
+    action="{{ action|default('') }}"
+    method="{{ method }}"
+    {{ enctype ? 'enctype="' ~ enctype ~ '"' : '' }}
+    class="space-y-6 {{ class|default('') }}"
+    novalidate
+>
+    {{ block('form_content') is defined ? block('form_content') : '' }}
+</form>
