@@ -1,0 +1,67 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    recruitment.cv_upload_dir: '%kernel.project_dir%/var/uploads/cvs'
+    # Si true : tout compte ROLE_EMPLOYER voit toutes les lignes `applications` (toutes offres / tous candidats).
+    # Mettre false en production multi-entreprise stricte.
+    recruitment.employer_sees_all_candidatures: true
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Recruitment/Entity/'
+            - '../src/Recruitment/Controller/'
+            - '../src/Kernel.php'
+
+    App\Recruitment\Controller\:
+        resource: '../src/Recruitment/Controller/'
+        tags: ['controller.service_arguments']
+
+    App\Recruitment\Service\ApplicationSubmissionService:
+        arguments:
+            $cvUploadDir: '%recruitment.cv_upload_dir%'
+
+    App\Recruitment\Controller\EmployerApplicationsController:
+        arguments:
+            $cvUploadDir: '%recruitment.cv_upload_dir%'
+            $projectDir: '%kernel.project_dir%'
+
+    App\Recruitment\Controller\CandidateJobOfferController:
+        arguments:
+            $employerSeesAllCandidatures: '%recruitment.employer_sees_all_candidatures%'
+
+    App\Recruitment\Controller\EmployerInterviewsController:
+        arguments:
+            $employerSeesAllCandidatures: '%recruitment.employer_sees_all_candidatures%'
+
+    App\Recruitment\Command\SeedEmployerApplicationsCommand:
+        arguments:
+            $cvUploadDir: '%recruitment.cv_upload_dir%'
+
+    App\Recruitment\Command\SpreadEmployerDemoApplicationsCommand:
+        arguments:
+            $cvUploadDir: '%recruitment.cv_upload_dir%'
+
+    App\Recruitment\Repository\ApplicationsTableGateway:
+        arguments:
+            $employerSeesAllCandidatures: '%recruitment.employer_sees_all_candidatures%'
+
+    App\Recruitment\Repository\ApplicationRepository:
+        arguments:
+            $employerSeesAllCandidatures: '%recruitment.employer_sees_all_candidatures%'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones

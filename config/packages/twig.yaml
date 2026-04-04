@@ -1,0 +1,10 @@
+twig:
+    file_name_pattern: '*.twig'
+    default_path: '%kernel.project_dir%/templates'
+    form_themes: ['tailwind_2_layout.html.twig']
+    globals:
+        employer_sees_all_candidatures: '%recruitment.employer_sees_all_candidatures%'
+
+when@test:
+    twig:
+        strict_variables: true

@@ -1,0 +1,38 @@
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+        profiling_collect_backtrace: '%kernel.debug%'
+        # Uniquement pour schema:validate / migrations : limite les tables comparées.
+        # N’affecte pas les INSERT/UPDATE/SELECT runtime des entités mappées.
+        schema_filter: ~^(users|companies|job_offers|applications|interviews)$~
+    orm:
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        auto_mapping: true
+        mappings:
+            App:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity'
+                prefix: 'App\Entity'
+                alias: App
+            AppRecruitment:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Recruitment/Entity'
+                prefix: 'App\Recruitment\Entity'
+                alias: Recruitment
+
+when@test:
+    doctrine:
+        dbal:
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@prod:
+    doctrine:
+        orm:
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool

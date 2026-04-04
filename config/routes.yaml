@@ -1,0 +1,11 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+controllers_recruitment:
+    resource:
+        path: ../src/Recruitment/Controller/
+        namespace: App\Recruitment\Controller
+    type: attribute

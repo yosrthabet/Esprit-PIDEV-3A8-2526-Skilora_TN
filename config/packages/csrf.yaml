@@ -1,0 +1,4 @@
+# CSRF protection for forms and security (Symfony 6.4).
+# Stateless token IDs and form token_id are Symfony 7+; use default session-based CSRF here.
+framework:
+    csrf_protection: true
