@@ -1,0 +1,86 @@
+<!-- HERO SECTION — Full viewport, cinematic -->
+<section class="hero-section relative h-screen w-full flex items-center justify-center overflow-hidden">
+
+    <!-- Layered background -->
+    <div class="absolute inset-0 z-0">
+        <div class="absolute inset-0 bg-zinc-950"></div>
+
+        <!-- Gradient mesh blobs -->
+        <div class="hero-blob-1 absolute w-[700px] h-[700px] rounded-full bg-blue-600/20 blur-[180px] -top-[15%] -left-[10%]"></div>
+        <div class="hero-blob-2 absolute w-[600px] h-[600px] rounded-full bg-violet-500/15 blur-[160px] -bottom-[15%] -right-[10%]"></div>
+        <div class="hero-blob-3 absolute w-[500px] h-[500px] rounded-full bg-indigo-400/10 blur-[140px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+
+        <!-- Noise grain -->
+        <div class="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iLjc1Ii8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')]"></div>
+    </div>
+
+    <!-- Video Background — clean geometric mesh, no floating icons -->
+    <video class="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-lighten z-[1]" autoplay muted loop playsinline preload="auto">
+        <source src="https://videos.pexels.com/video-files/3141210/3141210-uhd_2560_1440_25fps.mp4" type="video/mp4">
+    </video>
+
+    <!-- Radial vignette to focus attention center -->
+    <div class="absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(9,9,11,0.7)_100%)]"></div>
+
+    <!-- Content -->
+    <div class="container relative z-10 mx-auto px-4 flex flex-col items-center text-center text-white">
+
+        <!-- Eyebrow badge -->
+        <div class="hero-title mb-8">
+            <span class="inline-flex items-center gap-2 rounded-full border border-zinc-700/60 bg-zinc-900/60 backdrop-blur-sm px-5 py-2 text-sm font-medium text-zinc-300">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                10,000+ freelancers active now
+            </span>
+        </div>
+
+        <h1 class="hero-title text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-[8.5rem] font-black tracking-tighter leading-[0.85] mb-6 max-w-5xl">
+            <span class="block">Skill meets</span>
+            <span class="block bg-gradient-to-r from-blue-400 via-violet-400 to-purple-400 bg-clip-text text-transparent italic" style="padding-bottom: 0.1em;">opportunity.</span>
+        </h1>
+
+        <p class="hero-subtitle text-base md:text-lg text-zinc-400 max-w-lg mb-10 font-normal leading-relaxed">
+            Where top talent and ambitious companies connect, collaborate, and grow.
+        </p>
+
+        <!-- CTA : inscription + connexion (page dédiée /login) -->
+        <div class="hero-subtitle flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <a href="{{ path('app_register') }}" class="group relative inline-flex h-13 items-center justify-center rounded-full bg-white px-8 text-sm font-bold text-zinc-950 overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(139,92,246,0.3)] active:scale-95">
+                <span class="relative z-10 flex items-center gap-2">
+                    Inscription
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-0.5 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </span>
+                <span class="absolute inset-0 bg-gradient-to-r from-blue-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></span>
+                <span class="relative z-10 group-hover:text-white transition-colors duration-300"></span>
+            </a>
+            <a href="{{ path('app_login') }}" class="inline-flex h-13 items-center justify-center rounded-full border border-zinc-700/60 bg-white/5 backdrop-blur-sm px-8 text-sm font-semibold text-white hover:bg-white/10 hover:border-zinc-600 transition-all duration-300 hover:scale-105 active:scale-95">
+                Connexion
+            </a>
+        </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="hero-scroll-indicator absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3">
+        <span class="text-zinc-500 text-[10px] font-medium uppercase tracking-[0.25em]">Scroll</span>
+        <div class="w-[1.5px] h-10 bg-gradient-to-b from-zinc-500/60 to-transparent relative overflow-hidden rounded-full">
+            <div class="absolute top-0 left-0 w-full h-3 bg-white/80 rounded-full animate-bounce" style="animation-duration: 2s;"></div>
+        </div>
+    </div>
+</section>
+
+<!-- STATS STRIP -->
+<section class="relative z-20 bg-zinc-950 border-y border-zinc-800/40">
+    <div class="container mx-auto px-4 py-8 md:py-10">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {% for stat in stats %}
+                <div class="hero-stats flex flex-col items-center space-y-1 text-center group">
+                    <span class="text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight group-hover:text-violet-400 transition-colors duration-300">{{ stat.value }}</span>
+                    <span class="text-xs md:text-sm font-medium text-zinc-400">{{ stat.label }}</span>
+                    <span class="text-[11px] text-zinc-600">{{ stat.suffix }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>

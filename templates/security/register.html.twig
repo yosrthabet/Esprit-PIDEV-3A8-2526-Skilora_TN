@@ -1,0 +1,63 @@
+{% extends 'layouts/auth.html.twig' %}
+
+{% block title %}Inscription — Skilora{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold tracking-tight text-foreground">Créer un compte</h1>
+<p class="text-sm text-muted-foreground">
+    Déjà inscrit ?
+    <a href="{{ path('app_login') }}" class="font-semibold text-primary underline-offset-4 hover:underline">Se connecter</a>
+</p>
+
+{% for message in app.flashes('error') %}
+    <div class="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">{{ message }}</div>
+{% endfor %}
+{% for message in app.flashes('success') %}
+    <div class="rounded-lg border border-green-500/50 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:text-green-400">{{ message }}</div>
+{% endfor %}
+
+<form method="post" action="{{ path('app_register') }}" class="space-y-4">
+    <input type="hidden" name="_token" value="{{ csrf_token('register') }}"/>
+    <div class="space-y-2">
+        <label for="email" class="text-sm font-medium leading-none">E-mail</label>
+        <input
+            id="email"
+            name="email"
+            type="email"
+            value="{{ email }}"
+            autocomplete="email"
+            required
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+    </div>
+    <div class="space-y-2">
+        <label for="password" class="text-sm font-medium leading-none">Mot de passe</label>
+        <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="new-password"
+            required
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+    </div>
+    <div class="space-y-2">
+        <label for="password_confirm" class="text-sm font-medium leading-none">Confirmer le mot de passe</label>
+        <input
+            id="password_confirm"
+            name="password_confirm"
+            type="password"
+            autocomplete="new-password"
+            required
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+    </div>
+
+    <button
+        type="submit"
+        class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
+    >
+        S’inscrire
+    </button>
+</form>
+{% endblock %}

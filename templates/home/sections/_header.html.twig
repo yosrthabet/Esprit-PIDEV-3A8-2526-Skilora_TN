@@ -1,0 +1,35 @@
+<header class="fixed top-0 left-0 right-0 z-50 transition-all duration-500" 
+    x-data="{ scrolled: false }" 
+    @scroll.window="scrolled = (window.pageYOffset > 50)"
+    :class="scrolled ? 'bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/50' : 'bg-transparent'">
+    <div class="container mx-auto px-4 h-20 flex items-center justify-between">
+        <div class="flex items-center gap-8">
+            <a href="{{ path('app_home') }}" class="text-2xl font-black tracking-tighter text-white">SKILORA</a>
+            <nav class="hidden md:flex gap-6 text-sm font-semibold text-zinc-400">
+                <a href="#" class="hover:text-white transition-colors">Find Talent</a>
+                <a href="#" class="hover:text-white transition-colors">Find Work</a>
+                <a href="#" class="hover:text-white transition-colors">Why Skilora</a>
+                <a href="#" class="hover:text-white transition-colors">Enterprise</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-4">
+            {% if app.user %}
+                {% if is_granted('ROLE_EMPLOYER') %}
+                    <a href="{{ path('app_employer_dashboard') }}" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors">Mon espace</a>
+                {% elseif is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('app_dashboard') }}" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors">Admin</a>
+                {% else %}
+                    <a href="{{ path('app_candidate_offres_index') }}" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors">Mon espace</a>
+                {% endif %}
+                <a href="{{ path('app_logout') }}" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors">Déconnexion</a>
+            {% else %}
+                <a href="{{ path('app_login') }}" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors">Connexion</a>
+                <a href="{{ path('app_register') }}" class="h-10 px-6 inline-flex items-center justify-center rounded-full bg-white text-zinc-950 text-sm font-bold hover:bg-zinc-200 transition-all shadow-lg">Inscription</a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<!-- Custom cursor (Büro-style) -->
+<div id="custom-cursor" class="fixed top-0 left-0 w-5 h-5 rounded-full bg-white mix-blend-difference pointer-events-none z-[9999] transition-transform duration-100 ease-out hidden md:block" style="transform: translate(-50%, -50%);"></div>
+<div id="cursor-follower" class="fixed top-0 left-0 w-10 h-10 rounded-full border border-white/30 pointer-events-none z-[9998] transition-all duration-300 ease-out hidden md:block" style="transform: translate(-50%, -50%);"></div>

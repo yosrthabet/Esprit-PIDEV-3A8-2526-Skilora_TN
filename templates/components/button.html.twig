@@ -1,0 +1,45 @@
+{# components/button.html.twig — ShadCN Button
+
+   Usage: include('components/button.html.twig', {
+       label: 'Click me',
+       variant: 'default',   (default|destructive|outline|secondary|ghost|link)
+       size: 'default',      (default|sm|lg|icon)
+       type: 'button',       (button|submit|reset)
+       disabled: false,
+       class: '',
+       attrs: ''
+   })
+#}
+{% set variant = variant|default('default') %}
+{% set size = size|default('default') %}
+{% set type = type|default('button') %}
+{% set disabled = disabled|default(false) %}
+{% set extra_class = class|default('') %}
+{% set attrs = attrs|default('') %}
+
+{% set variant_classes = {
+    'default': 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90',
+    'destructive': 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
+    'outline': 'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
+    'secondary': 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
+    'ghost': 'hover:bg-accent hover:text-accent-foreground',
+    'link': 'text-primary underline-offset-4 hover:underline',
+} %}
+
+{% set size_classes = {
+    'default': 'h-9 px-4 py-2',
+    'sm': 'h-8 rounded-md px-3 text-xs',
+    'lg': 'h-10 rounded-md px-8',
+    'icon': 'h-9 w-9',
+} %}
+
+<button
+    type="{{ type }}"
+    {{ disabled ? 'disabled' : '' }}
+    class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-ring disabled:pointer-events-none disabled:opacity-50 {{ variant_classes[variant] }} {{ size_classes[size] }} {{ extra_class }}"
+    {{ attrs|raw }}
+>
+    {% if icon_before is defined %}{{ icon_before|raw }}{% endif %}
+    {{ label|default('') }}
+    {% if icon_after is defined %}{{ icon_after|raw }}{% endif %}
+</button>

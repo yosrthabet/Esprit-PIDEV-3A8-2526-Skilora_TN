@@ -1,0 +1,60 @@
+{% extends 'layouts/auth.html.twig' %}
+
+{% block title %}Connexion — Skilora{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold tracking-tight text-foreground">Connexion</h1>
+<p class="text-sm text-muted-foreground">
+    Pas encore de compte ?
+    <a href="{{ path('app_register') }}" class="font-semibold text-primary underline-offset-4 hover:underline">Créer un compte</a>
+    ·
+    <a href="{{ path('app_home') }}" class="font-medium text-muted-foreground underline-offset-4 hover:underline">Retour à l’accueil</a>
+</p>
+
+{% if error %}
+    <div class="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        {{ error.messageKey|trans(error.messageData, 'security') }}
+    </div>
+{% endif %}
+
+<form method="post" action="{{ path('app_login') }}" class="space-y-4">
+    <div class="space-y-2">
+        <label for="username" class="text-sm font-medium leading-none">E-mail</label>
+        <input
+            id="username"
+            name="_username"
+            type="email"
+            value="{{ last_username }}"
+            autocomplete="email"
+            required
+            autofocus
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+    </div>
+    <div class="space-y-2">
+        <label for="password" class="text-sm font-medium leading-none">Mot de passe</label>
+        <input
+            id="password"
+            name="_password"
+            type="password"
+            autocomplete="current-password"
+            required
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+    </div>
+
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}"/>
+
+    <label class="flex items-center gap-2 text-sm text-muted-foreground">
+        <input type="checkbox" name="_remember_me" class="rounded border-input"/>
+        Se souvenir de moi
+    </label>
+
+    <button
+        type="submit"
+        class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
+    >
+        Se connecter
+    </button>
+</form>
+{% endblock %}
