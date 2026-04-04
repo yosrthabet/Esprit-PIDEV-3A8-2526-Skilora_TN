@@ -1,0 +1,114 @@
+﻿{% extends 'recrutement/candidate/base.html.twig' %}
+
+{% block candidate_title %}Toutes les offres{% endblock %}
+{% block candidate_page_title %}Offres d’emploi{% endblock %}
+
+{% set work_fr = work_type_labels() %}
+{% set work_type = work_type|default('all') %}
+{% set search = search|default(null) %}
+
+{% block candidate_content %}
+<div class="mx-auto w-full min-w-0 max-w-6xl space-y-8 pb-2">
+    {# Pas de candidate-stagger sur le bloc filtres (évite animations sur le formulaire) #}
+    <header class="space-y-6">
+        <div class="grid w-full min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+            <div class="min-w-0 space-y-2">
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary/80 dark:text-primary/70">
+                    Parcourir
+                </p>
+                <h1 class="candidate-font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                    Offres ouvertes
+                </h1>
+                <p class="max-w-xl text-sm leading-relaxed text-muted-foreground">
+                    Recherchez par mot-clé ou filtrez par mode de travail — même logique que l’espace employeur.
+                </p>
+                {% if is_employer %}
+                    <p class="rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-800 dark:text-amber-200">
+                        Compte employeur : la candidature en ligne est réservée aux profils candidats.
+                    </p>
+                {% endif %}
+            </div>
+            <div class="hidden shrink-0 justify-self-end sm:block">
+                <div class="candidate-font-display rounded-2xl border border-border/80 bg-card/90 px-5 py-4 text-center shadow-sm backdrop-blur-sm">
+                    <p class="text-2xl font-semibold tabular-nums text-foreground">{{ job_offers|length }}</p>
+                    <p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">résultat{{ job_offers|length > 1 ? 's' : '' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="get" action="{{ path('app_candidate_offres_index') }}" class="w-full min-w-0 rounded-2xl border border-border/80 bg-card/60 p-4 sm:p-5 backdrop-blur-sm">
+            {# Une colonne jusqu’à lg, puis 3 colonnes alignées en bas — évite trous de grille en sm/md #}
+            <div class="grid w-full min-w-0 grid-cols-1 gap-4 md:grid-cols-2 md:items-end lg:grid-cols-[minmax(0,1fr)_minmax(11rem,13rem)_auto] lg:gap-x-4">
+                <div class="min-w-0 space-y-2 md:col-span-2 lg:col-span-1">
+                    <label for="candidate-offres-q" class="block text-sm font-medium leading-snug text-foreground">Recherche</label>
+                    <input id="candidate-offres-q" type="search" name="q" value="{{ search|default('') }}" placeholder="Titre, lieu, entreprise…" autocomplete="off"
+                           class="box-border h-10 w-full min-w-0 rounded-xl border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"/>
+                </div>
+                <div class="min-w-0 space-y-2 md:col-span-1 lg:col-span-1">
+                    <label for="candidate-offres-wt" class="block text-sm font-medium leading-snug text-foreground">Mode de travail</label>
+                    <select id="candidate-offres-wt" name="work_type" class="box-border h-10 w-full min-w-0 rounded-xl border border-input bg-background px-3 text-sm text-foreground">
+                        <option value="all" {{ work_type == 'all' ? 'selected' }}>Tous les modes</option>
+                        {% for wt_key, wt_label in work_fr %}
+                            <option value="{{ wt_key }}" {{ work_type == wt_key ? 'selected' }}>{{ wt_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex min-h-[2.5rem] min-w-0 flex-wrap items-center gap-2 md:col-span-1 md:justify-end lg:col-span-1 lg:min-h-0 lg:justify-end">
+                    <button type="submit" class="h-10 shrink-0 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90">Rechercher</button>
+                    <a href="{{ path('app_candidate_offres_index') }}" class="inline-flex h-10 shrink-0 items-center justify-center rounded-xl border border-input bg-background px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground">Réinitialiser</a>
+                </div>
+            </div>
+        </form>
+    </header>
+
+    {% if job_offers is empty %}
+        <div class="candidate-stagger rounded-3xl border border-dashed border-border bg-card/60 px-6 py-14 text-center backdrop-blur-sm sm:px-8 sm:py-16">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-primary">
+                <svg class="h-7 w-7 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+            </div>
+            <p class="candidate-font-display mt-6 text-lg font-medium text-foreground">Aucune offre pour le moment</p>
+            <p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">Revenez bientôt : les entreprises publient régulièrement de nouvelles opportunités.</p>
+        </div>
+    {% else %}
+        <ul class="candidate-stagger grid min-w-0 list-none gap-5 p-0 sm:grid-cols-1 lg:grid-cols-2">
+            {% for job in job_offers %}
+                {% set company_label = job.companyName|default(job.company.name|default('Entreprise')) %}
+                {% set initials = company_label|slice(0, 1)|upper %}
+                <li class="candidate-card-offer min-w-0">
+                    <a href="{{ path('app_candidate_offres_show', {id: job.id}) }}" class="group flex h-full min-w-0 flex-col p-5 sm:p-6">
+                        <div class="flex min-w-0 items-start gap-3 sm:gap-4">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-base font-bold text-primary ring-1 ring-primary/10 dark:from-primary/25 dark:to-primary/5">
+                                {{ initials }}
+                            </div>
+                            <div class="min-w-0 flex-1 space-y-1">
+                                <h2 class="candidate-font-display break-words text-lg font-semibold leading-snug text-card-foreground group-hover:text-primary">{{ job.title }}</h2>
+                                <p class="text-sm text-muted-foreground">{{ company_label }}</p>
+                            </div>
+                            <span class="mt-1 hidden shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100 sm:block" aria-hidden="true">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-4 flex min-w-0 flex-wrap gap-2">
+                            {% if job.location %}
+                                <span class="candidate-pill max-w-full">
+                                    <svg class="h-3.5 w-3.5 shrink-0 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    <span class="min-w-0 truncate">{{ job.location }}</span>
+                                </span>
+                            {% endif %}
+                            {% set wt = job.workType %}
+                            {% if wt %}
+                                <span class="candidate-pill">{{ wt|work_type_label }}</span>
+                            {% endif %}
+                            {% if job.postedDate %}
+                                <span class="candidate-pill">
+                                    {{ job.postedDate|date('d M Y') }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% endblock %}

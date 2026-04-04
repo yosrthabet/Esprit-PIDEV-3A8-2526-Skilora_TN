@@ -1,0 +1,61 @@
+{# Espace employeur — même coque que l’app (clair par défaut + bascule thème), textes maquette #}
+{% extends 'layouts/app.html.twig' %}
+
+{% set current_route = app.request.attributes.get('_route') %}
+
+{% block sidebar_home_url %}{{ path('app_employer_dashboard') }}{% endblock %}
+
+{% block title %}{% block employer_title %}Espace employeur · Skilora{% endblock %}{% endblock %}
+
+{% block sidebar_nav %}
+<p class="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">Menu principal</p>
+{% set nav = [
+    { label: 'Tableau de bord', route: 'app_employer_dashboard', icon: 'grid', routes: ['app_employer_dashboard'] },
+    { label: 'Publier une offre', route: 'app_employer_job_offer_new', icon: 'plus', routes: ['app_employer_job_offer_new'] },
+    { label: 'Mes offres', route: 'app_employer_job_offer_index', icon: 'briefcase', routes: ['app_employer_job_offer_index', 'app_employer_job_offer_show', 'app_employer_job_offer_edit'] },
+    { label: 'Candidatures', route: 'app_employer_applications', icon: 'users', routes: ['app_employer_applications', 'app_employer_applications_profile', 'app_employer_applications_cover_letter', 'app_employer_applications_cv'] },
+    { label: 'Entretiens', route: 'app_employer_interviews', icon: 'video', routes: ['app_employer_interviews', 'app_employer_interviews_plan'] },
+    { label: 'Mon profil', route: 'app_employer_profile', icon: 'user', routes: ['app_employer_profile'] },
+] %}
+
+{% for item in nav %}
+    {% set active = current_route in item.routes %}
+    <a href="{{ path(item.route) }}"
+       class="flex w-full min-h-[2.5rem] items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium leading-none transition-colors
+              {{ active
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground' }}">
+        {{ _self.nav_icon(item.icon) }}
+        <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
+    </a>
+{% endfor %}
+
+<a href="{{ path('app_logout') }}"
+   class="mt-2 flex w-full min-h-[2.5rem] items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left text-sm font-medium text-sidebar-foreground/60 transition-colors hover:border-sidebar-border/50 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+    {{ _self.nav_icon('logout') }}
+    <span class="min-w-0 flex-1 truncate">Déconnexion</span>
+</a>
+{% endblock %}
+
+{# Flash → toasts gérés dans base.html.twig #}
+{% block content %}
+{% block employer_content %}{% endblock %}
+{% endblock %}
+
+{% macro nav_icon(name) %}
+    {% if name == 'grid' %}
+        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+    {% elseif name == 'plus' %}
+        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+    {% elseif name == 'briefcase' %}
+        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M3 6h18M3 6v10a2 2 0 002 2h14a2 2 0 002-2V6M3 6l2-2h14l2 2"/></svg>
+    {% elseif name == 'users' %}
+        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+    {% elseif name == 'video' %}
+        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+    {% elseif name == 'user' %}
+        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+    {% elseif name == 'logout' %}
+        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+    {% endif %}
+{% endmacro %}
