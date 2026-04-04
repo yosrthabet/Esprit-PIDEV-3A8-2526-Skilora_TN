@@ -1,0 +1,434 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}Ticket #{{ ticket.id }} · {{ ticket.subject }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Premium Dark Theme ported from client site */
+        :root {
+            --panel-raised: #18181b;
+            --panel-raised2: #27272a;
+            --panel-edge: rgba(255,255,255,0.06);
+            --card-dark: #18181b;
+            --border-light: #3f3f46;
+            --border-dark: rgba(255,255,255,0.08);
+            --text-bright: #fafafa;
+            --text-body: #d4d4d8;
+            --text-muted-light: #a1a1aa;
+            --text-muted-dark: #71717a;
+            --accent-glow: rgba(108,99,255,0.12);
+        }
+
+        .admin-support-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .admin-support-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .admin-card {
+            background: var(--panel-raised);
+            border: 1px solid var(--panel-edge);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--panel-edge);
+            background: var(--panel-raised2);
+        }
+
+        .admin-card-body {
+            padding: 24px;
+        }
+
+        /* ── Ticket Detail Header ── */
+        .ticket-header {
+            background: linear-gradient(180deg, #18181b 0%, #09090b 100%);
+            border: 1px solid var(--panel-edge);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .th-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-bright);
+            margin-bottom: 12px;
+        }
+        .th-desc {
+            font-size: 14px;
+            color: var(--text-body);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .th-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--panel-edge);
+            font-size: 12px;
+            color: var(--text-muted-light);
+        }
+        .th-meta-item { display: flex; align-items: center; gap: 6px; }
+
+        /* ── Conversation Timeline (Chat Bubbles) ── */
+        .conv-card {
+            background: var(--card-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            margin-bottom: 24px;
+        }
+        .messages-scroll {
+            max-height: 520px;
+            min-height: 320px;
+            overflow-y: auto;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #09090b;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,.2) transparent;
+        }
+        .messages-scroll::-webkit-scrollbar { width: 6px; }
+        .messages-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius:4px; }
+
+        .msg-row { display: flex; align-items: flex-end; gap: 10px; animation: msgSlide .28s ease; }
+        .msg-row.admin { flex-direction: row-reverse; } /* Admin is "Me" on the right */
+        @keyframes msgSlide { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+        .msg-avatar {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700;
+            flex-shrink: 0;
+        }
+        .avatar-client { background: #52525b; color: #fafafa; border: 1px solid #71717a; }
+        .avatar-admin  { background: #27272a; color: #fafafa; border: 1px solid #3f3f46; }
+        .avatar-internal { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .bubble-wrap { max-width: 72%; display: flex; flex-direction: column; gap: 4px; }
+        .msg-row.admin .bubble-wrap { align-items: flex-end; }
+
+        .bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 13.5px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
+            position: relative;
+        }
+        .bubble-client {
+            background: #27272a;
+            color: #e4e4e7;
+            border: 1px solid #3f3f46;
+            border-bottom-left-radius: 4px;
+        }
+        .bubble-admin {
+            background: #3f3f46;
+            color: #fafafa;
+            border: 1px solid #52525b;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.4);
+        }
+        .bubble-internal {
+            background: rgba(245, 158, 11, 0.08);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 8px 24px rgba(245, 158, 11, .1);
+        }
+
+        .bubble-meta {
+            font-size: 10.5px;
+            color: var(--text-muted-dark);
+            display: flex; align-items: center; gap: 5px;
+            padding: 0 4px;
+        }
+        .msg-row.admin .bubble-meta { color: #a1a1aa; justify-content: flex-end; }
+        .msg-row:not(.admin) .bubble-meta { color: #a1a1aa; }
+
+        .bubble-actions {
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 4px;
+        }
+        .msg-row.admin .bubble-actions { justify-content: flex-end; }
+        .bact {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 11px; font-weight: 600;
+            padding: 4px 10px; border-radius: 8px;
+            border: none; cursor: pointer;
+            transition: all .18s;
+            text-decoration: none;
+        }
+        .bact-edit  { background: rgba(255,255,255,.08); color: #e4e4e7; border: 1px solid rgba(255,255,255,.12); }
+        .bact-edit:hover { background: rgba(255,255,255,.14); }
+        .bact-del   { background: rgba(127,29,29,.4); color: #fecaca; border: 1px solid rgba(248,113,113,.3); }
+        .bact-del:hover { background: rgba(127,29,29,.55); }
+
+        .attachment-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            margin-top: 8px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 11px; font-weight: 600;
+        }
+        .app-client { background: rgba(0,0,0,.2); color: #d4d4d8; border: 1px solid rgba(255,255,255,.1); }
+        .app-admin  { background: #3f3f46; color: #d4d4d8; border: 1px solid #52525b; }
+        .app-internal { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
+
+        /* ── Forms inside Cards ── */
+        .form-label-custom {
+            display: block; font-size: 11px; font-weight: 700; letter-spacing: .05em;
+            text-transform: uppercase; color: var(--text-muted-light); margin-bottom: 6px;
+        }
+        .form-input-custom {
+            width: 100%; background: #0c0c0e; border: 1px solid var(--panel-edge);
+            border-radius: 8px; color: var(--text-bright); font-size: 13.5px;
+            padding: 10px 14px; outline: none; transition: border-color .2s;
+            font-family: inherit;
+        }
+        .form-input-custom:focus { border-color: rgba(255,255,255,.2); }
+        select.form-input-custom option { background: #18181b; color: #fafafa; }
+
+        .btn-custom {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all .2s; text-decoration: none; border: none;
+        }
+        .btn-primary { background: #fafafa; color: #09090b; }
+        .btn-primary:hover { opacity: .9; }
+        
+        .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text-bright); border: 1px solid var(--panel-edge); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+        
+        .btn-danger { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        .btn-danger:hover { background: rgba(239,68,68,0.2); }
+
+        /* ── Specific Reply Form ── */
+        .reply-box {
+            background: var(--panel-raised);
+            border: 1px solid var(--panel-edge);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .reply-box-header {
+            display: flex; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--panel-edge);
+            background: var(--panel-raised2);
+        }
+        .reply-tab {
+            font-size: 13px; font-weight: 600; color: var(--text-muted-dark); cursor: pointer;
+            padding: 4px 12px; border-radius: 6px; transition: all .2s;
+        }
+        .reply-tab.active { background: #fafafa; color: #09090b; }
+        .reply-tab.internal.active { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+        .reply-body-inner { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+        
+        .internal-checkbox-wrap {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px; border-radius: 8px;
+            background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.15);
+            margin-bottom: 10px;
+        }
+        .internal-checkbox-wrap input[type="checkbox"] { accent-color: #f59e0b; width: 16px; height: 16px; }
+        .internal-checkbox-wrap label { font-size: 13px; color: #fbbf24; font-weight: 600; cursor: pointer; }
+        form ul { list-style: none; padding: 0; margin: 6px 0 0; }
+        form ul li { color: #ef4444; font-size: 11.5px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        form ul li::before { content: "⚠️"; font-size: 10px; }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-support-layout">
+    
+    {# ── LEFT COLUMN: Ticket info, Conversation, and Reply Form ── #}
+    <div style="display:flex; flex-direction:column;">
+        
+        {# Ticket Info block #}
+        <div class="ticket-header">
+            <h2 class="th-title">{{ ticket.subject }}</h2>
+            <div class="th-desc">{{ ticket.description }}</div>
+            
+            <div class="th-meta">
+                <div class="th-meta-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Client #{{ ticket.utilisateurId }}
+                </div>
+                <div class="th-meta-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Created on {{ ticket.dateCreation ? ticket.dateCreation|date('M d, Y H:i') : '-' }}
+                </div>
+                {% if ticket.dateResolution %}
+                    <div class="th-meta-item text-green-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Resolved on {{ ticket.dateResolution|date('M d, Y H:i') }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Timeline #}
+        <div class="conv-card">
+            <div class="messages-scroll" id="adminMsgScroll">
+                {% for message in messages %}
+                    {% set is_admin = (message.utilisateurId != ticket.utilisateurId) %}
+                    <div class="msg-row {{ is_admin ? 'admin' : 'client' }}">
+                        
+                        <div class="msg-avatar {{ message.isInternal ? 'avatar-internal' : (is_admin ? 'avatar-admin' : 'avatar-client') }}">
+                            {{ message.isInternal ? '!' : (is_admin ? 'A' : 'U') }}
+                        </div>
+                        
+                        <div class="bubble-wrap">
+                            <div class="bubble {{ message.isInternal ? 'bubble-internal' : (is_admin ? 'bubble-admin' : 'bubble-client') }}">
+                                {{ message.contenu }}
+                            </div>
+                            
+                            {% if message.attachmentsJson %}
+                                <span class="attachment-pill {{ message.isInternal ? 'app-internal' : (is_admin ? 'app-admin' : 'app-client') }}">
+                                    📎 {{ message.attachmentsJson }}
+                                </span>
+                            {% endif %}
+                            
+                            <div class="bubble-meta">
+                                <span>{{ is_admin ? 'Admin #' ~ message.utilisateurId : 'Client #' ~ message.utilisateurId }}</span>
+                                {% if message.isInternal %}
+                                    <span style="color:#fbbf24;">(Internal)</span>
+                                {% endif %}
+                                <span>·</span>
+                                <span>{{ message.dateEnvoi ? message.dateEnvoi|date('d M, H:i') : '-' }}</span>
+                            </div>
+                            
+                            <div class="bubble-actions">
+                                <a href="{{ path('admin_support_message_edit', {ticketId: ticket.id, messageId: message.id}) }}" class="bact bact-edit">
+                                    Edit
+                                </a>
+                                <form method="post" action="{{ path('admin_support_message_delete', {ticketId: ticket.id, messageId: message.id}) }}" onsubmit="return confirm('Delete this message?');" style="margin:0;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_message_' ~ message.id) }}">
+                                    <button type="submit" class="bact bact-del">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div style="text-align:center; padding:40px; color:var(--text-muted-light);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:.25;margin:0 auto 10px;display:block;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        No messages in this conversation yet.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Reply form at the bottom (Zendesk style) #}
+        <div class="reply-box" x-data="{ isInternal: false }">
+            <div class="reply-box-header">
+                <div class="reply-tab" :class="!isInternal ? 'active' : ''" @click="isInternal = false; document.getElementById('isInternalCheckbox').checked = false;">
+                    💬 Public Reply
+                </div>
+                <div class="reply-tab internal" :class="isInternal ? 'active' : ''" @click="isInternal = true; document.getElementById('isInternalCheckbox').checked = true;">
+                    🔒 Internal Note
+                </div>
+            </div>
+            
+            <div class="reply-body-inner" :style="isInternal ? 'background: rgba(245, 158, 11, 0.03);' : ''">
+                {{ form_start(message_form, {attr: {novalidate: 'novalidate'}}) }}
+                    
+                    <div style="display:none;">
+                        {{ form_widget(message_form.isInternal, { id: 'isInternalCheckbox' }) }}
+                    </div>
+                    
+                    <div x-show="isInternal" class="internal-checkbox-wrap" x-transition>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        This note will only be visible to other administrators.
+                    </div>
+
+                    <div style="margin-bottom:14px;">
+                        {{ form_widget(message_form.contenu, {attr: {class: 'form-input-custom', rows: 5, placeholder: 'Type your message here...', style: 'background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1);'}}) }}
+                        {{ form_errors(message_form.contenu) }}
+                    </div>
+                    
+                    <div style="margin-bottom:14px;">
+                        <label class="form-label-custom">Attachments JSON (Optional)</label>
+                        {{ form_widget(message_form.attachmentsJson, {attr: {class: 'form-input-custom', rows: 1, placeholder: '["url1", "url2"]'}}) }}
+                        {{ form_errors(message_form.attachmentsJson) }}
+                    </div>
+                    
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button type="submit" class="btn-custom btn-primary" :style="isInternal ? 'background: #f59e0b; color: #fff;' : ''">
+                            <span x-text="isInternal ? 'Add Internal Note' : 'Send Public Reply'"></span>
+                        </button>
+                    </div>
+                {{ form_end(message_form) }}
+            </div>
+        </div>
+
+    </div>
+
+    {# ── RIGHT COLUMN: Ticket Properties Sidebar ── #}
+    <aside style="position:sticky; top:24px; display:flex; flex-direction:column; gap:24px;">
+        
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3 style="font-size:14px; font-weight:700; color:var(--text-bright);">Ticket Properties</h3>
+            </div>
+            <div class="admin-card-body">
+                {{ form_start(admin_form, {attr: {style: 'display:flex; flex-direction:column; gap:16px;', novalidate: 'novalidate'}}) }}
+                    
+                    <div>
+                        <label class="form-label-custom">Status</label>
+                        {{ form_widget(admin_form.statut, {attr: {class: 'form-input-custom'}}) }}
+                        {{ form_errors(admin_form.statut) }}
+                    </div>
+                    <div style="display:none;">
+                        {{ form_widget(admin_form.priorite) }}
+                        {{ form_widget(admin_form.agentId) }}
+                    </div>
+
+                    <div style="padding-top:8px; border-top:1px solid var(--panel-edge);">
+                        <button type="submit" class="btn-custom btn-primary" style="width:100%;">
+                            Update Status
+                        </button>
+                    </div>
+                    
+                {{ form_end(admin_form) }}
+            </div>
+        </div>
+
+    </aside>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        const scroll = document.getElementById('adminMsgScroll');
+        if (scroll) scroll.scrollTop = scroll.scrollHeight;
+    </script>
+{% endblock %}

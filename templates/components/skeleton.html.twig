@@ -1,0 +1,26 @@
+{# components/skeleton.html.twig — ShadCN Skeleton loading placeholder #}
+{#
+  Usage:
+    {{ include('components/skeleton.html.twig', { type: 'line', count: 3 }) }}
+    {{ include('components/skeleton.html.twig', { type: 'card' }) }}
+    {{ include('components/skeleton.html.twig', { type: 'avatar' }) }}
+#}
+{% set type = type|default('line') %}
+{% set count = count|default(3) %}
+
+{% if type == 'line' %}
+    <div class="space-y-3 {{ class|default('') }}">
+        {% for i in 1..count %}
+            <div class="h-4 rounded-md bg-primary/10 animate-pulse" style="width: {{ [100, 80, 60][loop.index0 % 3] }}%"></div>
+        {% endfor %}
+    </div>
+{% elseif type == 'card' %}
+    <div class="rounded-xl border border-border p-6 space-y-4 {{ class|default('') }}">
+        <div class="h-5 w-2/5 rounded bg-primary/10 animate-pulse"></div>
+        <div class="h-4 w-4/5 rounded bg-primary/10 animate-pulse"></div>
+        <div class="h-4 w-3/5 rounded bg-primary/10 animate-pulse"></div>
+        <div class="h-8 w-24 rounded-md bg-primary/10 animate-pulse"></div>
+    </div>
+{% elseif type == 'avatar' %}
+    <div class="h-10 w-10 rounded-full bg-primary/10 animate-pulse {{ class|default('') }}"></div>
+{% endif %}

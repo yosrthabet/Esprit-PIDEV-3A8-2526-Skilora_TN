@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Message · Ticket #{{ ticket.id }}{% endblock %}
+
+{% block html_class %}dark{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --chat-bg:#0d0f14; --card-bg:#1a1f2e; --panel-bg:#13161d;
+            --border:rgba(255,255,255,0.07); --accent:#6c63ff; --accent2:#a78bfa;
+            --text-primary:#f1f5f9; --text-secondary:#8892a4; --text-muted:#4b5563;
+        }
+        .form-shell { background:var(--chat-bg); min-height:100vh; padding-top:100px; display:flex; align-items:flex-start; justify-content:center; }
+        .form-card { width:100%; max-width:600px; background:var(--card-bg); border:1px solid var(--border); border-radius:24px; overflow:hidden; }
+        .form-card-header { padding:28px 32px 20px; border-bottom:1px solid var(--border); background:var(--panel-bg); position:relative; overflow:hidden; }
+        .form-card-header::before { content:''; position:absolute; top:-60px; right:-60px; width:200px; height:200px; background:rgba(168,139,250,.15); border-radius:50%; filter:blur(60px); pointer-events:none; }
+        .fch-label { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent2); margin-bottom:6px; }
+        .fch-title { font-size:22px; font-weight:800; color:var(--text-primary); }
+        .fch-sub   { font-size:13px; color:var(--text-secondary); margin-top:4px; }
+        .form-body { padding:28px 32px; display:flex; flex-direction:column; gap:18px; }
+        .form-label-dark { display:block; font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
+        .form-input-dark { width:100%; background:var(--panel-bg); border:1px solid var(--border); border-radius:12px; color:var(--text-primary); font-size:13.5px; padding:11px 14px; outline:none; transition:border-color .2s,box-shadow .2s; resize:vertical; font-family:inherit; }
+        .form-input-dark::placeholder { color:var(--text-muted); }
+        .form-input-dark:focus { border-color:rgba(108,99,255,.5); box-shadow:0 0 0 3px rgba(108,99,255,.12); }
+        .btn-primary { flex:1; background:linear-gradient(135deg,#6c63ff,#8b5cf6); color:#fff; border:none; border-radius:12px; padding:12px; font-size:13.5px; font-weight:700; cursor:pointer; transition:opacity .2s,transform .15s; box-shadow:0 4px 20px rgba(108,99,255,.3); display:flex; align-items:center; justify-content:center; gap:7px; }
+        .btn-primary:hover { opacity:.9; transform:translateY(-1px); }
+        .btn-cancel { flex:1; background:var(--panel-bg); border:1px solid var(--border); border-radius:12px; padding:12px; font-size:13.5px; font-weight:700; color:var(--text-secondary); text-decoration:none; display:flex; align-items:center; justify-content:center; gap:7px; transition:all .2s; }
+        .btn-cancel:hover { border-color:rgba(108,99,255,.3); color:var(--accent2); }
+    </style>
+{% endblock %}
+
+{% block body %}
+{% include 'home/sections/_header.html.twig' %}
+
+<div class="form-shell">
+    <div style="width:100%;max-width:600px;padding:0 16px 60px;">
+        <a href="{{ path('support_show', {id: ticket.id}) }}" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#6c63ff;text-decoration:none;margin-bottom:14px;opacity:.8;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.8">
+            ← Back to ticket
+        </a>
+
+        <div class="form-card">
+            <div class="form-card-header">
+                <p class="fch-label">Message Editor</p>
+                <h1 class="fch-title">Edit Message</h1>
+                <p class="fch-sub">Update the content of your message below.</p>
+            </div>
+            <div class="form-body">
+                {{ form_start(form, {attr: {style: 'display:contents;'}}) }}
+                    <div>
+                        <label class="form-label-dark">Message</label>
+                        {{ form_widget(form.contenu, {attr: {class: 'form-input-dark', rows: 6, placeholder: 'Your updated message…'}}) }}
+                        {{ form_errors(form.contenu) }}
+                    </div>
+                    <div>
+                        <label class="form-label-dark">Attachments (JSON)</label>
+                        {{ form_widget(form.attachmentsJson, {attr: {class: 'form-input-dark', rows: 2, placeholder: 'Optional…'}}) }}
+                        {{ form_errors(form.attachmentsJson) }}
+                    </div>
+                    <div style="display:flex;gap:12px;">
+                        <a href="{{ path('support_show', {id: ticket.id}) }}" class="btn-cancel">Cancel</a>
+                        <button type="submit" class="btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            Save Changes
+                        </button>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

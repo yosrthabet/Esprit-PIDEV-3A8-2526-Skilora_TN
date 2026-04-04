@@ -1,0 +1,536 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ticket #{{ ticket.id }} · {{ ticket.subject }}{% endblock %}
+
+{% block html_class %}dark{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Dark-first: zinc surfaces, minimal pure white (only accents) */
+        :root {
+            --chat-bg: #09090b;
+            --panel-raised: #18181b;
+            --panel-raised2: #27272a;
+            --panel-edge: rgba(255,255,255,0.06);
+            --card-dark: #18181b;
+            --border-light: #3f3f46;
+            --border-dark: rgba(255,255,255,0.08);
+            --accent-glow: rgba(108,99,255,0.12);
+            --text-bright: #fafafa;
+            --text-body: #d4d4d8;
+            --text-muted-light: #a1a1aa;
+            --text-muted-dark: #71717a;
+            --green: #22c55e;
+        }
+
+        .support-shell {
+            background: var(--chat-bg);
+            min-height: 100vh;
+            padding-top: 96px;
+        }
+
+        /* ── Ticket header: raised dark card (no big white slab) ── */
+        .ticket-header-card {
+            background: var(--panel-raised);
+            border: 1px solid var(--panel-edge);
+            border-radius: 20px;
+            padding: 24px 28px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.55);
+        }
+        .ticket-header-card::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 160px; height: 160px;
+            background: var(--accent-glow);
+            border-radius: 50%;
+            filter: blur(48px);
+            pointer-events: none;
+        }
+        .ticket-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .badge-open    { background: rgba(34,197,94,.12); color: #4ade80; border: 1px solid rgba(34,197,94,.25); }
+        .badge-progress{ background: rgba(59,130,246,.12); color: #93c5fd; border: 1px solid rgba(59,130,246,.25); }
+        .badge-closed  { background: rgba(113,113,122,.2); color: #d4d4d8; border: 1px solid rgba(255,255,255,.1); }
+        .badge-resolved{ background: rgba(16,185,129,.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,.25); }
+        .badge-cat     { background: rgba(139,92,246,.12); color: #c4b5fd; border: 1px solid rgba(139,92,246,.25); }
+        .badge-prio    { background: rgba(245,158,11,.12); color: #fcd34d; border: 1px solid rgba(245,158,11,.25); }
+
+        .ticket-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-bright);
+            margin-bottom: 6px;
+            word-break: break-word;
+        }
+        .ticket-desc {
+            font-size: 13.5px;
+            color: var(--text-body);
+            line-height: 1.6;
+            margin-bottom: 14px;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        .close-ticket-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(248,113,113,.35);
+            background: rgba(127,29,29,.35);
+            color: #fca5a5;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .close-ticket-btn:hover {
+            background: rgba(127,29,29,.55);
+            border-color: rgba(248,113,113,.55);
+        }
+
+        /* ── Conversation: dark inner strip + white header bar ── */
+        .conv-card {
+            background: var(--card-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        .conv-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--border-dark);
+            background: var(--panel-raised2);
+        }
+        .conv-header h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-bright);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .conv-header h3::before {
+            content: '';
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%,100% { opacity:1; transform:scale(1); }
+            50%      { opacity:.5; transform:scale(1.3); }
+        }
+        .msg-count-pill {
+            background: rgba(0,0,0,.25);
+            border: 1px solid var(--panel-edge);
+            color: var(--text-muted-light);
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .messages-scroll {
+            flex: 1;
+            max-height: 520px;
+            min-height: 320px;
+            overflow-y: auto;
+            padding: 20px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: #09090b;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,.2) transparent;
+        }
+        .messages-scroll::-webkit-scrollbar { width: 6px; }
+        .messages-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius:4px; }
+
+        /* ── Message bubbles ── */
+        .msg-row { display: flex; align-items: flex-end; gap: 10px; animation: msgSlide .28s ease; }
+        .msg-row.client { flex-direction: row-reverse; }
+        @keyframes msgSlide { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+        .msg-avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700;
+            flex-shrink: 0;
+        }
+        .avatar-client { background: #52525b; color: #fafafa; border: 1px solid #71717a; }
+        .avatar-admin  { background: #27272a; color: #fafafa; border: 1px solid #3f3f46; }
+
+        .bubble-wrap { max-width: 72%; display: flex; flex-direction: column; gap: 4px; }
+        .msg-row.client .bubble-wrap { align-items: flex-end; }
+
+        .bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 13.5px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
+            position: relative;
+        }
+        .bubble-client {
+            background: #3f3f46;
+            color: #fafafa;
+            border: 1px solid #52525b;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.4);
+        }
+        .bubble-admin {
+            background: #27272a;
+            color: #e4e4e7;
+            border: 1px solid #3f3f46;
+            border-bottom-left-radius: 4px;
+        }
+        .bubble-meta {
+            font-size: 10.5px;
+            color: var(--text-muted-dark);
+            display: flex; align-items: center; gap: 5px;
+            padding: 0 4px;
+        }
+        .msg-row.client .bubble-meta { color: #a1a1aa; justify-content: flex-end; }
+        .msg-row:not(.client) .bubble-meta { color: #a1a1aa; }
+
+        .bubble-actions {
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 4px;
+        }
+        .msg-row.client .bubble-actions { justify-content: flex-end; }
+        .bact {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 11px; font-weight: 600;
+            padding: 4px 10px; border-radius: 8px;
+            border: none; cursor: pointer;
+            transition: all .18s;
+            text-decoration: none;
+        }
+        .bact-edit  { background: rgba(255,255,255,.08); color: #e4e4e7; border: 1px solid rgba(255,255,255,.12); }
+        .bact-edit:hover { background: rgba(255,255,255,.14); }
+        .bact-del   { background: rgba(127,29,29,.4); color: #fecaca; border: 1px solid rgba(248,113,113,.3); }
+        .bact-del:hover { background: rgba(127,29,29,.55); }
+
+        .attachment-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            margin-top: 8px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 11px; font-weight: 600;
+        }
+        .app-client { background: rgba(0,0,0,.2); color: #d4d4d8; border: 1px solid rgba(255,255,255,.1); }
+        .app-admin  { background: #3f3f46; color: #d4d4d8; border: 1px solid #52525b; }
+
+        .no-messages {
+            text-align: center;
+            padding: 40px 20px;
+            color: #a1a1aa;
+            font-size: 14px;
+        }
+
+        /* ── Send panel: dark card (matches header) ── */
+        .send-card {
+            background: var(--panel-raised);
+            border: 1px solid var(--panel-edge);
+            border-radius: 20px;
+            padding: 22px 22px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.55);
+        }
+        .send-card-title {
+            font-size: 14px; font-weight: 700;
+            color: var(--text-bright);
+            margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .send-icon {
+            width: 30px; height: 30px; border-radius:8px;
+            background: var(--panel-raised2);
+            border: 1px solid var(--panel-edge);
+            display: flex; align-items: center; justify-content: center;
+            color: #fafafa;
+        }
+        .form-label-dark {
+            display: block;
+            font-size: 10.5px; font-weight: 700;
+            letter-spacing: .07em; text-transform: uppercase;
+            color: var(--text-muted-light);
+            margin-bottom: 6px;
+        }
+        .form-input-dark {
+            width: 100%;
+            background: #0c0c0e;
+            border: 1px solid var(--panel-edge);
+            border-radius: 12px;
+            color: var(--text-bright);
+            font-size: 13.5px;
+            padding: 10px 14px;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+            resize: vertical;
+            font-family: inherit;
+        }
+        .form-input-dark::placeholder { color: var(--text-muted-dark); }
+        .form-input-dark:focus {
+            border-color: rgba(255,255,255,.2);
+            box-shadow: 0 0 0 3px rgba(255,255,255,.06);
+        }
+        .btn-send {
+            width: 100%;
+            background: #fafafa;
+            color: #09090b;
+            border: none;
+            border-radius: 999px;
+            padding: 12px;
+            font-size: 13.5px; font-weight: 700;
+            cursor: pointer;
+            transition: opacity .2s, transform .15s;
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            box-shadow: 0 10px 40px rgba(0,0,0,.45);
+        }
+        .btn-send:hover { opacity:.95; transform:translateY(-1px); }
+        .btn-send:active { transform:translateY(0); }
+        .btn-feedback-save {
+            background: linear-gradient(135deg, #16a34a, #15803d) !important;
+            color: #fff !important;
+            box-shadow: 0 8px 28px rgba(34,197,94,.25) !important;
+        }
+        .btn-feedback-save:hover { opacity: .95; transform: translateY(-1px); }
+
+        /* ── Feedback: dark + subtle green edge ── */
+        .feedback-card {
+            background: var(--panel-raised);
+            border: 1px solid rgba(34,197,94,.25);
+            border-radius: 20px;
+            padding: 20px 22px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        .feedback-title {
+            font-size: 14px; font-weight: 700; color: var(--text-bright);
+            margin-bottom: 12px;
+        }
+        .feedback-card input[type="text"],
+        .feedback-card textarea,
+        .feedback-card select {
+            width: 100%;
+            background: #0c0c0e !important;
+            border: 1px solid var(--panel-edge) !important;
+            border-radius: 12px;
+            color: var(--text-bright) !important;
+            padding: 10px 14px;
+        }
+        .feedback-card label { color: var(--text-muted-light) !important; }
+
+        /* ── Divider label ── */
+        .date-divider {
+            display: flex; align-items: center; gap: 10px;
+            color: var(--text-muted-light); font-size: 11px; font-weight: 600;
+        }
+        .date-divider::before, .date-divider::after {
+            content: ''; flex:1; height:1px; background: var(--panel-edge);
+        }
+
+        select.form-input-dark option { background: #18181b; color: #fafafa; }
+
+        @media (max-width: 1024px) {
+            .support-layout { grid-template-columns: 1fr !important; }
+            .support-send-col { position: relative !important; top: auto !important; }
+        }
+
+        form ul { list-style: none; padding: 0; margin: 6px 0 0; }
+        form ul li { color: #ef4444; font-size: 11.5px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        form ul li::before { content: "⚠️"; font-size: 10px; }
+    </style>
+{% endblock %}
+
+{% block body %}
+{% include 'home/sections/_header.html.twig' %}
+
+<div class="support-shell">
+    <div class="support-layout mx-auto w-full max-w-6xl px-4 pb-12" style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;">
+
+        {# ── LEFT column ── #}
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+            {# Ticket header #}
+            <div class="ticket-header-card">
+                <a href="{{ path('support_index') }}"
+                   style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#71717a;text-decoration:none;margin-bottom:14px;transition:color .2s;"
+                   onmouseover="this.style.color='#18181b'" onmouseout="this.style.color='#71717a'">
+                    ← All Tickets
+                </a>
+
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;">
+                    <span class="ticket-badge badge-cat">{{ ticket.categorie }}</span>
+                    <span class="ticket-badge badge-prio">{{ ticket.priorite }}</span>
+                    <span class="ticket-badge
+                        {% if ticket.statut in ['RESOLVED','CLOSED'] %}badge-resolved
+                        {% elseif ticket.statut == 'IN_PROGRESS' %}badge-progress
+                        {% else %}badge-open{% endif %}">
+                        {{ ticket.statut|replace({'_':' '}) }}
+                    </span>
+                </div>
+
+                <h2 class="ticket-title">{{ ticket.subject }}</h2>
+                <p class="ticket-desc">{{ ticket.description }}</p>
+
+                {% if ticket.statut not in ['CLOSED'] %}
+                    <form method="post" action="{{ path('support_close', {id: ticket.id}) }}" style="display:inline;">
+                        <input type="hidden" name="_token" value="{{ csrf_token('close_ticket_' ~ ticket.id) }}">
+                        <button type="submit" class="close-ticket-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6m0-6 6 6"/></svg>
+                            Close ticket
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+
+            {# Conversation #}
+            <div class="conv-card">
+                <div class="conv-header">
+                    <h3>Conversation</h3>
+                    <span class="msg-count-pill">{{ messages|length }} message{{ messages|length != 1 ? 's' : '' }}</span>
+                </div>
+
+                <div class="messages-scroll" id="msgScroll">
+                    {% for message in messages %}
+                        {% set is_client = message.utilisateurId == ticket.utilisateurId %}
+                        <div class="msg-row {{ is_client ? 'client' : '' }}">
+                            <div class="msg-avatar {{ is_client ? 'avatar-client' : 'avatar-admin' }}">
+                                {{ is_client ? 'Y' : 'A' }}
+                            </div>
+                            <div class="bubble-wrap">
+                                <div class="bubble {{ is_client ? 'bubble-client' : 'bubble-admin' }}">{{ message.contenu }}</div>
+                                {% if message.attachmentsJson %}
+                                    <span class="attachment-pill {{ is_client ? 'app-client' : 'app-admin' }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                        {{ message.attachmentsJson }}
+                                    </span>
+                                {% endif %}
+                                <div class="bubble-meta">
+                                    <span>{{ is_client ? 'You' : 'Support Admin' }}</span>
+                                    <span>·</span>
+                                    <span>{{ message.dateEnvoi ? message.dateEnvoi|date('d M, H:i') : '-' }}</span>
+                                </div>
+                                {% if is_client and ticket.statut not in ['RESOLVED','CLOSED'] %}
+                                    <div class="bubble-actions">
+                                        <a href="{{ path('support_message_edit', {ticketId: ticket.id, messageId: message.id}) }}" class="bact bact-edit">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                            Edit
+                                        </a>
+                                        <form method="post" action="{{ path('support_message_delete', {ticketId: ticket.id, messageId: message.id}) }}" onsubmit="return confirm('Delete this message?');" style="margin:0;padding:0;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_message_' ~ message.id) }}">
+                                            <button type="submit" class="bact bact-del">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="no-messages">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:.25;margin:0 auto 10px;display:block;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            No messages yet. Start the conversation below!
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        {# ── RIGHT column ── #}
+        <div class="support-send-col" style="display:flex;flex-direction:column;gap:16px;position:sticky;top:100px;">
+
+            {# Send message #}
+            <div class="send-card">
+                <div class="send-card-title">
+                    <div class="send-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </div>
+                    Send Message
+                </div>
+                {{ form_start(message_form, {attr: {style: 'display:flex;flex-direction:column;gap:14px;', novalidate: 'novalidate'}}) }}
+                    <div>
+                        <label class="form-label-dark">Your message</label>
+                        {{ form_widget(message_form.contenu, {attr: {class: 'form-input-dark', rows: 5, placeholder: 'Write your message here…'}}) }}
+                        {{ form_errors(message_form.contenu) }}
+                    </div>
+                    <div>
+                        <label class="form-label-dark">Attachments (JSON)</label>
+                        {{ form_widget(message_form.attachmentsJson, {attr: {class: 'form-input-dark', rows: 2, placeholder: 'Optional…'}}) }}
+                        {{ form_errors(message_form.attachmentsJson) }}
+                    </div>
+                    <button type="submit" class="btn-send">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Send
+                    </button>
+                {{ form_end(message_form) }}
+            </div>
+
+            {% if ticket.statut == 'CLOSED' %}
+            <div id="avis" class="feedback-card" style="scroll-margin-top: 100px;">
+                <div class="feedback-title">
+                    ⭐ {{ has_feedback ? 'Votre avis support (Support review)' : 'Donner votre avis support (Rate support)' }}
+                </div>
+                <p style="margin:-2px 0 8px;color:#a1a1aa;font-size:12px;line-height:1.5;">
+                    Note = rating sur 5, message = commentaire optionnel.
+                </p>
+                {{ form_start(feedback_form, {attr: {style: 'display:flex;flex-direction:column;gap:12px;', novalidate: 'novalidate'}}) }}
+                    
+                    <div>
+                        <label class="form-label-dark">Note (Rating)</label>
+                        {{ form_widget(feedback_form.rating, {attr: {class: 'form-input-dark'}}) }}
+                        {{ form_errors(feedback_form.rating) }}
+                    </div>
+
+                    <div>
+                        <label class="form-label-dark">Message / Commentaire (Optionnel)</label>
+                        {{ form_widget(feedback_form.comment, {attr: {class: 'form-input-dark', rows: 3}}) }}
+                        {{ form_errors(feedback_form.comment) }}
+                    </div>
+
+                    <button type="submit" class="btn-send btn-feedback-save">
+                        {{ has_feedback ? 'Mettre a jour l’avis' : 'Enregistrer l’avis' }}
+                    </button>
+                {{ form_end(feedback_form) }}
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Auto-scroll to bottom of messages
+        const scroll = document.getElementById('msgScroll');
+        if (scroll) scroll.scrollTop = scroll.scrollHeight;
+
+    </script>
+{% endblock %}

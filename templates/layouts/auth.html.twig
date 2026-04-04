@@ -1,0 +1,42 @@
+{# layouts/auth.html.twig — Centered card layout for login/register/forgot-password #}
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="flex min-h-screen">
+    {# Left hero panel #}
+    <div class="hidden lg:flex lg:w-1/2 flex-col justify-between bg-primary p-10 text-primary-foreground">
+        <div class="flex items-center gap-2">
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-foreground text-primary text-sm font-bold">
+                S
+            </div>
+            <span class="text-lg font-semibold">Skilora</span>
+        </div>
+
+        <div class="space-y-4">
+            <blockquote class="text-xl font-medium leading-relaxed">
+                {% block auth_quote %}
+                "Connecting Tunisia's youth to global opportunities."
+                {% endblock %}
+            </blockquote>
+            <p class="text-sm text-primary-foreground/70">
+                {% block auth_attribution %}Skilora — Secure, Intelligent, Limitless{% endblock %}
+            </p>
+        </div>
+    </div>
+
+    {# Right form panel #}
+    <div class="flex w-full lg:w-1/2 items-center justify-center p-6 sm:p-12">
+        <div class="w-full max-w-md space-y-6">
+            {# Mobile logo #}
+            <div class="flex items-center gap-2 lg:hidden">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
+                    S
+                </div>
+                <span class="text-lg font-semibold">Skilora</span>
+            </div>
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

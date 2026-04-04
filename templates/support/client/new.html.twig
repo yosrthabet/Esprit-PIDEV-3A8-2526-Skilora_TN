@@ -1,0 +1,187 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Support Ticket · Skilora{% endblock %}
+
+{% block html_class %}dark{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --chat-bg: #09090b;
+            --panel-raised: #18181b;
+            --panel-raised2: #27272a;
+            --panel-edge: rgba(255,255,255,0.06);
+            --accent-glow: rgba(108,99,255,0.12);
+            --text-bright: #fafafa;
+            --text-body: #d4d4d8;
+            --text-muted-light: #a1a1aa;
+            --text-muted-dark: #71717a;
+        }
+        .form-shell {
+            background: var(--chat-bg);
+            min-height: 100vh;
+            padding-top: 96px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        .form-card {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto 60px;
+            background: var(--panel-raised);
+            border: 1px solid var(--panel-edge);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.55);
+        }
+        .form-card-header {
+            padding: 28px 32px 20px;
+            border-bottom: 1px solid var(--panel-edge);
+            background: var(--panel-raised2);
+            position: relative;
+            overflow: hidden;
+        }
+        .form-card-header::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 180px;
+            height: 180px;
+            background: var(--accent-glow);
+            border-radius: 50%;
+            filter: blur(48px);
+            pointer-events: none;
+        }
+        .fch-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted-light);
+            margin-bottom: 6px;
+        }
+        .fch-title { font-size: 22px; font-weight: 800; color: var(--text-bright); }
+        .fch-sub { font-size: 13px; color: var(--text-body); margin-top: 4px; }
+        .form-body { padding: 28px 32px; display: flex; flex-direction: column; gap: 18px; }
+        .form-label-dark {
+            display: block;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--text-muted-light);
+            margin-bottom: 6px;
+        }
+        .form-input-dark {
+            width: 100%;
+            background: #0c0c0e;
+            border: 1px solid var(--panel-edge);
+            border-radius: 12px;
+            color: var(--text-bright);
+            font-size: 13.5px;
+            padding: 11px 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+        }
+        .form-input-dark::placeholder { color: var(--text-muted-dark); }
+        .form-input-dark:focus {
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+        }
+        select.form-input-dark option { background: #18181b; color: #fafafa; }
+        textarea.form-input-dark { resize: vertical; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .btn-submit {
+            width: 100%;
+            background: #fafafa;
+            color: #09090b;
+            border: none;
+            border-radius: 999px;
+            padding: 13px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-submit:hover { opacity: 0.95; transform: translateY(-1px); }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted-light);
+            text-decoration: none;
+            margin-bottom: 14px;
+            padding: 0 4px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--text-bright); }
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-body { padding: 20px; }
+            .form-card-header { padding: 20px; }
+        }
+
+        form ul { list-style: none; padding: 0; margin: 6px 0 0; }
+        form ul li { color: #ef4444; font-size: 11.5px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        form ul li::before { content: "⚠️"; font-size: 10px; }
+    </style>
+{% endblock %}
+
+{% block body %}
+{% include 'home/sections/_header.html.twig' %}
+
+<div class="form-shell">
+    <div style="width:100%;max-width:680px;padding:0 16px;">
+        <a href="{{ path('support_index') }}" class="back-link">← Back to tickets</a>
+
+        <div class="form-card">
+            <div class="form-card-header">
+                <p class="fch-label">Support Center</p>
+                <h1 class="fch-title">Open a Support Request</h1>
+                <p class="fch-sub">Give us enough detail so we can resolve it quickly.</p>
+            </div>
+            <div class="form-body">
+                {{ form_start(form, {attr: {style: 'display:contents;', novalidate: 'novalidate'}}) }}
+                    <div>
+                        <label class="form-label-dark">Subject</label>
+                        {{ form_widget(form.subject, {attr: {class: 'form-input-dark', placeholder: 'Brief summary of your issue…'}}) }}
+                        {{ form_errors(form.subject) }}
+                    </div>
+                    <div class="form-grid">
+                        <div>
+                            <label class="form-label-dark">Category</label>
+                            {{ form_widget(form.categorie, {attr: {class: 'form-input-dark'}}) }}
+                            {{ form_errors(form.categorie) }}
+                        </div>
+                        <div>
+                            <label class="form-label-dark">Priority</label>
+                            {{ form_widget(form.priorite, {attr: {class: 'form-input-dark'}}) }}
+                            {{ form_errors(form.priorite) }}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label-dark">Description</label>
+                        {{ form_widget(form.description, {attr: {class: 'form-input-dark', rows: 5, placeholder: 'Describe your issue in detail…'}}) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+                    <button type="submit" class="btn-submit">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14"/></svg>
+                        Submit Ticket
+                    </button>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

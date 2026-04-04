@@ -1,0 +1,49 @@
+{# components/table.html.twig — ShadCN Data Table #}
+{#
+  Usage: {{ include('components/table.html.twig', {
+      columns: [
+          { key: 'name', label: 'Name' },
+          { key: 'email', label: 'Email' },
+          { key: 'role', label: 'Role' },
+          { key: 'actions', label: '', align: 'right' },
+      ],
+      rows: [
+          { name: 'John', email: 'john@test.com', role: '<span class="...">Admin</span>', actions: '...' },
+      ],
+      empty_message: 'No results found.',
+  }) }}
+#}
+{% set empty_message = empty_message|default('No results.') %}
+
+<div class="relative w-full overflow-x-auto {{ class|default('') }}">
+    <table class="w-full caption-bottom text-sm">
+        <thead class="[&_tr]:border-b">
+            <tr class="border-b border-border transition-colors">
+                {% for col in columns %}
+                    <th class="h-10 px-4 text-{{ col.align|default('left') }} align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]">
+                        {{ col.label }}
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody class="[&_tr:last-child]:border-0">
+            {% if rows|default([])|length == 0 %}
+                <tr>
+                    <td colspan="{{ columns|length }}" class="h-24 text-center text-muted-foreground">
+                        {{ empty_message }}
+                    </td>
+                </tr>
+            {% else %}
+                {% for row in rows %}
+                <tr class="border-b border-border transition-colors hover:bg-muted/50">
+                    {% for col in columns %}
+                        <td class="p-4 align-middle text-{{ col.align|default('left') }} [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]">
+                            {{ attribute(row, col.key)|default('')|raw }}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,117 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Welcome to Skilora{% endblock %}
+
+{% block body %}
+    {# Preloader #}
+    <div x-data="{ open: true }" 
+         x-init="setTimeout(() => open = false, 1200)"
+         x-show="open" 
+         x-transition:leave="transition ease-in-out duration-700" 
+         x-transition:leave-start="opacity-100 transform translate-y-0" 
+         x-transition:leave-end="opacity-0 transform -translate-y-4"
+         class="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center">
+        <h1 class="text-4xl font-extrabold tracking-tight lg:text-5xl text-foreground">
+            S K I L O R A
+        </h1>
+        <div class="mt-4 w-48 h-1 bg-muted rounded-full overflow-hidden">
+            <div class="h-full bg-primary animate-pulse" style="width: 100%;"></div>
+        </div>
+    </div>
+
+    <!-- MAIN WRAPPER FOR GSAP SCROLL -->
+    {% include 'home/sections/_header.html.twig' %}
+    
+    <main class="w-full relative ">
+        
+        {% include 'home/sections/_hero.html.twig' %}
+        
+    </main>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            gsap.registerPlugin(ScrollTrigger);
+
+            // ─── Custom cursor (Büro-style) ───
+            const cursor = document.getElementById('custom-cursor');
+            const follower = document.getElementById('cursor-follower');
+            if (cursor && follower) {
+                let mouseX = 0, mouseY = 0;
+                let cursorX = 0, cursorY = 0;
+                let followerX = 0, followerY = 0;
+
+                document.addEventListener('mousemove', (e) => {
+                    mouseX = e.clientX;
+                    mouseY = e.clientY;
+                });
+
+                function animateCursor() {
+                    cursorX += (mouseX - cursorX) * 0.2;
+                    cursorY += (mouseY - cursorY) * 0.2;
+                    followerX += (mouseX - followerX) * 0.08;
+                    followerY += (mouseY - followerY) * 0.08;
+
+                    cursor.style.left = cursorX + 'px';
+                    cursor.style.top = cursorY + 'px';
+                    follower.style.left = followerX + 'px';
+                    follower.style.top = followerY + 'px';
+
+                    requestAnimationFrame(animateCursor);
+                }
+                animateCursor();
+
+                // Scale up on hover over interactive elements
+                document.querySelectorAll('a, button, .category-card, .company-logo-item').forEach(el => {
+                    el.addEventListener('mouseenter', () => {
+                        cursor.style.transform = 'translate(-50%, -50%) scale(2.5)';
+                        cursor.style.mixBlendMode = 'difference';
+                        follower.style.transform = 'translate(-50%, -50%) scale(2)';
+                        follower.style.opacity = '0';
+                    });
+                    el.addEventListener('mouseleave', () => {
+                        cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+                        follower.style.transform = 'translate(-50%, -50%) scale(1)';
+                        follower.style.opacity = '1';
+                    });
+                });
+            }
+
+            // ─── Hero blob floating animation ───
+            gsap.to('.hero-blob-1', { x: 80, y: 40, duration: 8, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+            gsap.to('.hero-blob-2', { x: -60, y: -30, duration: 10, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+            gsap.to('.hero-blob-3', { x: 40, y: 60, duration: 12, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+
+            // ─── Hero text reveal ───
+            gsap.fromTo(".hero-title", 
+                { y: 80, opacity: 0 },
+                { y: 0, opacity: 1, duration: 1.4, ease: "power4.out", stagger: 0.3, delay: 1.5 }
+            );
+            
+            gsap.fromTo(".hero-subtitle", 
+                { y: 40, opacity: 0 },
+                { y: 0, opacity: 1, duration: 1, ease: "power3.out", delay: 2.2 }
+            );
+
+            gsap.fromTo(".hero-scroll-indicator",
+                { opacity: 0, y: 20 },
+                { opacity: 1, y: 0, duration: 1, delay: 3, ease: "power2.out" }
+            );
+
+            // ─── Stats counter animation ───
+            gsap.fromTo(".hero-stats", 
+                { y: 40, opacity: 0 },
+                {
+                    y: 0, opacity: 1, duration: 1, ease: "power3.out", stagger: 0.15,
+                    scrollTrigger: { trigger: ".hero-stats", start: "top 90%", toggleActions: "play none none reverse" }
+                }
+            );
+
+            // Recalculate after render
+            setTimeout(() => ScrollTrigger.refresh(), 500);
+            setTimeout(() => ScrollTrigger.refresh(), 1500);
+        });
+    </script>
+{% endblock %}
