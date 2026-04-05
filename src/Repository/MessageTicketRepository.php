@@ -33,4 +33,19 @@ class MessageTicketRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    public function searchByTicket(Ticket $ticket, string $query = ''): array
+    {
+        $qb = $this->createQueryBuilder('m')
+            ->andWhere('m.ticket = :ticket')
+            ->setParameter('ticket', $ticket)
+            ->orderBy('m.dateEnvoi', 'ASC');
+
+        if ($query) {
+            $qb->andWhere('m.contenu LIKE :q')
+               ->setParameter('q', '%' . $query . '%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }

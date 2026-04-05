@@ -1,0 +1,62 @@
+<div id="avis-grid-container">
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {% for feedback in feedbacks %}
+            <div class="rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md hover:border-emerald-500/30 flex flex-col">
+                {# Card Header #}
+                <div class="flex items-start justify-between border-b border-border/70 p-5 bg-muted/20">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                                Ticket #{{ feedback.ticket.id }}
+                            </span>
+                            <span class="text-xs text-muted-foreground">
+                                • Client #{{ feedback.ticket.utilisateurId }}
+                            </span>
+                        </div>
+                        <p class="mt-1 text-xs text-muted-foreground">{{ feedback.dateCreation|date('M d, Y · H:i') }}</p>
+                    </div>
+                </div>
+                
+                {# Card Body #}
+                <div class="p-5 flex-1 flex flex-col">
+                    {# Stars #}
+                    <div class="flex gap-1 mb-4">
+                        {% for i in 1..5 %}
+                            <svg class="h-5 w-5 {{ i <= feedback.rating ? 'text-yellow-400' : 'text-zinc-700' }}" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        {% endfor %}
+                    </div>
+                    
+                    {# Comment #}
+                    {% if feedback.comment %}
+                        <p class="text-sm text-muted-foreground leading-relaxed italic">
+                            "{{ feedback.comment }}"
+                        </p>
+                    {% else %}
+                        <p class="text-sm text-zinc-600 italic">No comment provided.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div class="col-span-full rounded-2xl border border-dashed border-border p-12 text-center">
+                <p class="text-sm text-muted-foreground">No more feedback to show.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    {# Pagination #}
+    {% if total_pages > 1 %}
+        <div class="mt-8 flex items-center justify-between border-t border-border/70 pt-6">
+            <p class="text-xs text-muted-foreground">Page {{ current_page }} of {{ total_pages }}</p>
+            <div class="flex gap-2">
+                {% if current_page > 1 %}
+                    <button onclick="changeAvisPage({{ current_page - 1 }})" class="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-accent text-foreground">Previous</button>
+                {% endif %}
+                {% if current_page < total_pages %}
+                    <button onclick="changeAvisPage({{ current_page + 1 }})" class="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-accent text-foreground">Next</button>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>

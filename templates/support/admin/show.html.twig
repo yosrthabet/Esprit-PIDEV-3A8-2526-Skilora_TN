@@ -292,56 +292,19 @@
             </div>
         </div>
 
-        {# Timeline #}
+        {# Timeline with Search #}
         <div class="conv-card">
+            <div class="flex items-center justify-between border-b border-white/5 px-6 py-3 bg-white/5">
+                <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Conversation</span>
+                <div class="relative">
+                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" id="msgSearch" oninput="searchMessages()" placeholder="Search messages..." class="rounded-lg border border-white/10 bg-black/20 py-1.5 pl-8 pr-3 text-[11px] outline-none focus:border-white/20" value="{{ search_query }}">
+                </div>
+            </div>
             <div class="messages-scroll" id="adminMsgScroll">
-                {% for message in messages %}
-                    {% set is_admin = (message.utilisateurId != ticket.utilisateurId) %}
-                    <div class="msg-row {{ is_admin ? 'admin' : 'client' }}">
-                        
-                        <div class="msg-avatar {{ message.isInternal ? 'avatar-internal' : (is_admin ? 'avatar-admin' : 'avatar-client') }}">
-                            {{ message.isInternal ? '!' : (is_admin ? 'A' : 'U') }}
-                        </div>
-                        
-                        <div class="bubble-wrap">
-                            <div class="bubble {{ message.isInternal ? 'bubble-internal' : (is_admin ? 'bubble-admin' : 'bubble-client') }}">
-                                {{ message.contenu }}
-                            </div>
-                            
-                            {% if message.attachmentsJson %}
-                                <span class="attachment-pill {{ message.isInternal ? 'app-internal' : (is_admin ? 'app-admin' : 'app-client') }}">
-                                    📎 {{ message.attachmentsJson }}
-                                </span>
-                            {% endif %}
-                            
-                            <div class="bubble-meta">
-                                <span>{{ is_admin ? 'Admin #' ~ message.utilisateurId : 'Client #' ~ message.utilisateurId }}</span>
-                                {% if message.isInternal %}
-                                    <span style="color:#fbbf24;">(Internal)</span>
-                                {% endif %}
-                                <span>·</span>
-                                <span>{{ message.dateEnvoi ? message.dateEnvoi|date('d M, H:i') : '-' }}</span>
-                            </div>
-                            
-                            <div class="bubble-actions">
-                                <a href="{{ path('admin_support_message_edit', {ticketId: ticket.id, messageId: message.id}) }}" class="bact bact-edit">
-                                    Edit
-                                </a>
-                                <form method="post" action="{{ path('admin_support_message_delete', {ticketId: ticket.id, messageId: message.id}) }}" onsubmit="return confirm('Delete this message?');" style="margin:0;">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_message_' ~ message.id) }}">
-                                    <button type="submit" class="bact bact-del">
-                                        Delete
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                {% else %}
-                    <div style="text-align:center; padding:40px; color:var(--text-muted-light);">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:.25;margin:0 auto 10px;display:block;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        No messages in this conversation yet.
-                    </div>
-                {% endfor %}
+                <div id="messages-list-wrapper">
+                    {% include 'support/admin/_message_list.html.twig' %}
+                </div>
             </div>
         </div>
 
@@ -430,5 +393,20 @@
     <script>
         const scroll = document.getElementById('adminMsgScroll');
         if (scroll) scroll.scrollTop = scroll.scrollHeight;
+
+        let msgSearchTimeout;
+        function searchMessages() {
+            clearTimeout(msgSearchTimeout);
+            msgSearchTimeout = setTimeout(() => {
+                const query = document.getElementById('msgSearch').value;
+                fetch(`{{ path('admin_support_show', {id: ticket.id}) }}?mq=${query}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById('messages-list-wrapper').innerHTML = html;
+                });
+            }, 300);
+        }
     </script>
 {% endblock %}

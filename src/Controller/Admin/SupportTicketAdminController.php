@@ -19,22 +19,86 @@ use Symfony\Component\Routing\Attribute\Route;
 class SupportTicketAdminController extends AbstractController
 {
     #[Route('', name: 'index', methods: ['GET'])]
-    public function index(TicketRepository $ticketRepository, FeedbackRepository $feedbackRepository): Response
+    public function index(Request $request, TicketRepository $ticketRepository, FeedbackRepository $feedbackRepository): Response
     {
+        $query = $request->query->get('q', '');
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = 5;
+
+        $tickets = $ticketRepository->search($query, $page, $limit);
+        $totalItems = $ticketRepository->countTotal($query);
+        $totalPages = ceil($totalItems / $limit);
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('support/admin/_ticket_table.html.twig', [
+                'tickets' => $tickets,
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'search_query' => $query,
+            ]);
+        }
+
         return $this->render('support/admin/index.html.twig', [
-            'tickets' => $ticketRepository->findBy([], ['dateCreation' => 'DESC']),
+            'tickets' => $tickets,
             'status_stats' => $ticketRepository->countByStatus(),
+            'priority_stats' => $ticketRepository->countByPriority(),
             'avg_rating' => $feedbackRepository->getAverageRating(),
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'search_query' => $query,
         ]);
     }
 
     #[Route('/avis', name: 'avis_index', methods: ['GET'])]
-    public function avis(FeedbackRepository $feedbackRepository): Response
+    public function avis(Request $request, FeedbackRepository $feedbackRepository): Response
     {
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = 5;
+
+        $feedbacks = $feedbackRepository->search($page, $limit);
+        $totalItems = $feedbackRepository->countAll();
+        $totalPages = ceil($totalItems / $limit);
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('support/admin/_avis_grid.html.twig', [
+                'feedbacks' => $feedbacks,
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+            ]);
+        }
+
         return $this->render('support/admin/avis.html.twig', [
-            'feedbacks' => $feedbackRepository->findBy([], ['dateCreation' => 'DESC']),
+            'feedbacks' => $feedbacks,
             'avg_rating' => $feedbackRepository->getAverageRating(),
+            'rating_dist' => $feedbackRepository->getRatingDistribution(),
+            'current_page' => $page,
+            'total_pages' => $totalPages,
         ]);
+    }
+
+    #[Route('/export/csv', name: 'export_csv', methods: ['GET'])]
+    public function exportCsv(TicketRepository $ticketRepository): Response
+    {
+        $tickets = $ticketRepository->findAll();
+        $csv = "ID,Subject,Category,Priority,Status,Created At\n";
+        
+        foreach ($tickets as $ticket) {
+            $csv .= sprintf(
+                "%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                $ticket->getId(),
+                str_replace('"', '""', $ticket->getSubject() ?? ''),
+                str_replace('"', '""', $ticket->getCategorie() ?? ''),
+                $ticket->getPriorite(),
+                $ticket->getStatut(),
+                $ticket->getDateCreation()?->format('Y-m-d H:i') ?? '-'
+            );
+        }
+
+        $response = new Response($csv);
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="tickets_' . date('Y-m-d') . '.csv"');
+
+        return $response;
     }
 
     #[Route('/{id}', name: 'show', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
@@ -184,11 +248,22 @@ class SupportTicketAdminController extends AbstractController
             'method' => 'POST',
         ]);
 
+        $query = $request->query->get('mq', '');
+        $messages = $messageRepository->searchByTicket($ticket, $query);
+
+        if ($request->isXmlHttpRequest() && $request->query->has('mq')) {
+            return $this->render('support/admin/_message_list.html.twig', [
+                'messages' => $messages,
+                'ticket' => $ticket,
+            ]);
+        }
+
         return $this->render('support/admin/show.html.twig', [
             'ticket' => $ticket,
-            'messages' => $messageRepository->findByTicket($ticket, true),
+            'messages' => $messages,
             'admin_form' => $adminForm->createView(),
             'message_form' => $messageForm->createView(),
+            'search_query' => $query,
         ]);
     }
 }

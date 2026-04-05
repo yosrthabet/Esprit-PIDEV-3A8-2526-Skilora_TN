@@ -36,4 +36,40 @@ class FeedbackRepository extends ServiceEntityRepository
 
         return $avg !== null ? (float) $avg : 0.0;
     }
+
+    /** @return array<int, int> star => count */
+    public function getRatingDistribution(): array
+    {
+        $rows = $this->createQueryBuilder('f')
+            ->select('f.rating as rating, COUNT(f.id) as total')
+            ->groupBy('f.rating')
+            ->getQuery()
+            ->getArrayResult();
+
+        $result = array_fill(1, 5, 0);
+        foreach ($rows as $row) {
+            $result[(int) $row['rating']] = (int) $row['total'];
+        }
+
+        return $result;
+    }
+
+    /** @return Feedback[] */
+    public function search(int $page = 1, int $limit = 5): array
+    {
+        return $this->createQueryBuilder('f')
+            ->orderBy('f.dateCreation', 'DESC')
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countAll(): int
+    {
+        return (int) $this->createQueryBuilder('f')
+            ->select('COUNT(f.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }
