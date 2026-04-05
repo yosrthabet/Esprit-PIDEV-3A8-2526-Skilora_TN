@@ -1,0 +1,93 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Login - Skilora{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-2xl p-8">
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Skilora</h1>
+            <p class="text-center text-gray-600 mb-8">Welcome back! Please login to your account</p>
+
+            {% if error %}
+                <div class="mb-4 rounded border border-red-400 bg-red-100 p-4 text-red-800" role="alert">
+                    {{ error.messageKey|trans(error.messageData, 'security')|default(error.message) }}
+                </div>
+            {% endif %}
+
+            <form method="post" action="{{ path('app_login_check') }}" class="space-y-6">
+                {# CSRF Token - Required for security #}
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                        Username
+                    </label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        value="{{ last_username }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                        placeholder="Enter your username"
+                        required
+                        autofocus
+                    />
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Password
+                    </label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                        placeholder="Enter your password"
+                        required
+                    />
+                </div>
+
+                <div class="flex items-center">
+                    <input
+                        type="checkbox"
+                        id="remember_me"
+                        name="_remember_me"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label for="remember_me" class="ml-2 block text-sm text-gray-700">
+                        Remember me
+                    </label>
+                </div>
+
+                <button
+                    type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+                >
+                    Sign In
+                </button>
+            </form>
+
+            <div class="mt-6 border-t border-gray-300 pt-6">
+                <p class="text-center text-sm text-gray-600">
+                    Don't have an account?
+                    <a href="{{ path('app_register') }}" class="text-blue-600 hover:underline font-medium">
+                        Register here
+                    </a>
+                </p>
+            </div>
+
+            <!-- Test Credentials Info -->
+            <div class="mt-6 p-4 bg-gray-100 rounded-lg">
+                <p class="text-xs font-semibold text-gray-700 mb-2">Test Credentials:</p>
+                <ul class="text-xs text-gray-600 space-y-1">
+                    <li><strong>Admin:</strong> admin / admin123</li>
+                    <li><strong>User:</strong> user / user123</li>
+                    <li><strong>Employer:</strong> employer / emp123</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

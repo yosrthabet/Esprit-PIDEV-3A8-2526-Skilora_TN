@@ -1,0 +1,34 @@
+{# components/avatar.html.twig — ShadCN Avatar
+
+   Usage: include('components/avatar.html.twig', {
+       src: '/uploads/avatars/user.jpg',
+       alt: 'John Doe',
+       initials: 'JD',
+       size: 'default',  (sm|default|lg)
+   })
+#}
+{% set size = size|default('default') %}
+
+{% set size_classes = {
+    'sm': 'h-8 w-8 text-xs',
+    'default': 'h-10 w-10 text-sm',
+    'lg': 'h-14 w-14 text-lg',
+} %}
+
+<span class="relative flex shrink-0 overflow-hidden rounded-full {{ size_classes[size] }} {{ class|default('') }}">
+    {% if src is defined and src %}
+        <img
+            src="{{ src }}"
+            alt="{{ alt|default('') }}"
+            class="aspect-square h-full w-full object-cover"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <span class="hidden items-center justify-center h-full w-full rounded-full bg-muted font-medium text-muted-foreground">
+            {{ initials|default('?') }}
+        </span>
+    {% else %}
+        <span class="flex items-center justify-center h-full w-full rounded-full bg-muted font-medium text-muted-foreground">
+            {{ initials|default('?') }}
+        </span>
+    {% endif %}
+</span>

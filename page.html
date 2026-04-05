@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Welcome to Skilora</title>
+        <link rel="icon" href="/favicon.svg">
+
+                <link rel="stylesheet" href="/css/app.css?v=1774962477">
+        
+            </head>
+    <body class="min-h-screen bg-background text-foreground antialiased" x-data x-cloak>
+                <div x-data="{ open: true }" 
+         x-init="setTimeout(() => open = false, 1200)"
+         x-show="open" 
+         x-transition:leave="transition ease-in-out duration-700" 
+         x-transition:leave-start="opacity-100 transform translate-y-0" 
+         x-transition:leave-end="opacity-0 transform -translate-y-4"
+         class="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center">
+        <h1 class="text-4xl font-extrabold tracking-tight lg:text-5xl text-foreground">
+            S K I L O R A
+        </h1>
+        <div class="mt-4 w-48 h-1 bg-muted rounded-full overflow-hidden">
+            <div class="h-full bg-primary animate-pulse" style="width: 100%;"></div>
+        </div>
+    </div>
+
+    <!-- MAIN WRAPPER FOR GSAP SCROLL -->
+    <header class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-background/80 backdrop-blur-md border-b border-border/50" x-data="{ scrolled: false }" @scroll.window="scrolled = (window.pageYOffset > 50)">
+    <div class="container mx-auto px-4 h-20 flex items-center justify-between">
+        <div class="flex items-center gap-8">
+            <a href="/" class="text-2xl font-black tracking-tighter">SKILORA</a>
+            <nav class="hidden md:flex gap-6 text-sm font-semibold text-muted-foreground">
+                <a href="#" class="hover:text-foreground transition-colors">Find Talent</a>
+                <a href="#" class="hover:text-foreground transition-colors">Find Work</a>
+                <a href="#" class="hover:text-foreground transition-colors">Why Skilora</a>
+                <a href="#" class="hover:text-foreground transition-colors">Enterprise</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="#" class="hidden md:block text-sm font-semibold hover:text-primary transition-colors">Log In</a>
+            <a href="#" class="h-10 px-6 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/25">Sign Up</a>
+        </div>
+    </div>
+</header>    
+    <main class="w-full relative pb-10">
+        
+        <!-- HERO SECTION -->
+<section class="relative min-h-[90vh] flex flex-col items-center justify-center pt-24 pb-16 overflow-hidden">
+    <!-- Abstract gradient background -->
+    <div class="absolute inset-0 z-0 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/20 blur-[100px] rounded-full mix-blend-multiply"></div>
+        <div class="absolute bottom-[20%] right-[-10%] w-[60%] h-[60%] bg-violet-600/20 blur-[120px] rounded-full mix-blend-multiply"></div>
+    </div>
+
+    <div class="container relative z-10 mx-auto px-4 flex flex-col items-center">
+        <!-- New badge -->
+        <div class="hero-title inline-flex items-center rounded-full border border-border bg-background/50 backdrop-blur px-3 py-1 text-sm mb-8">
+            <span class="flex h-2 w-2 rounded-full bg-blue-600 mr-2 animate-pulse"></span>
+            Skilora is launching soon
+        </div>
+
+        <h1 class="hero-title text-center text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter leading-[1.05] max-w-5xl mb-6">
+            Find the perfect <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent italic pe-2">freelance</span><br> talent, right now.
+        </h1>
+        
+        <p class="hero-subtitle text-center text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mb-10 font-medium">
+            Join the smart ecosystem connecting professionals, companies, and trainers. AI-matched, verified, and ready to scale your projects.
+        </p>
+
+        <div class="hero-subtitle flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <button class="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground h-14 px-8 text-base font-semibold shadow-xl hover:bg-primary/90 transition-all hover:scale-105 active:scale-95">
+                Hire a Pro
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" class="ml-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+            </button>
+            <button class="inline-flex items-center justify-center rounded-full bg-background border-2 border-border text-foreground h-14 px-8 text-base font-semibold hover:bg-muted transition-all">
+                Find Work
+            </button>
+        </div>
+
+        <!-- STATS -->
+        <div class="mt-20 w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-8 pt-10 border-t border-border/50">
+                            <div class="hero-stats flex flex-col items-center space-y-1">
+                    <span class="text-4xl md:text-5xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">10K+</span>
+                    <span class="text-sm font-medium text-muted-foreground">Active Job Seekers</span>
+                    <span class="text-xs text-muted-foreground/60">Talent ready to work</span>
+                </div>
+                            <div class="hero-stats flex flex-col items-center space-y-1">
+                    <span class="text-4xl md:text-5xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">2,500</span>
+                    <span class="text-sm font-medium text-muted-foreground">Companies Hiring</span>
+                    <span class="text-xs text-muted-foreground/60">Verified Businesses</span>
+                </div>
+                            <div class="hero-stats flex flex-col items-center space-y-1">
+                    <span class="text-4xl md:text-5xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">500+</span>
+                    <span class="text-sm font-medium text-muted-foreground">Training Courses</span>
+                    <span class="text-xs text-muted-foreground/60">To boost skills</span>
+                </div>
+                            <div class="hero-stats flex flex-col items-center space-y-1">
+                    <span class="text-4xl md:text-5xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">$2M+</span>
+                    <span class="text-sm font-medium text-muted-foreground">Earned by Talent</span>
+                    <span class="text-xs text-muted-foreground/60">Paid securely</span>
+                </div>
+                    </div>
+    </div>
+</section>        
+        <!-- COMPANIES MARQUEE -->
+<section class="companies-section py-12 border-y border-border/50 bg-muted/20 overflow-hidden">
+    <div class="container mx-auto px-4 mb-6">
+        <p class="text-center text-sm font-semibold text-muted-foreground uppercase tracking-widest">Trusted by leading companies</p>
+    </div>
+    
+    <div class="relative w-full flex items-center overflow-hidden">
+        <!-- Gradient masks -->
+        <div class="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background to-transparent z-10"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background to-transparent z-10"></div>
+        
+        <div class="companies-track flex whitespace-nowrap gap-16 px-8 items-center" style="width: max-content;">
+            <!-- Duplicate loop for seamless scroll effect -->
+                                                <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Vermeg
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        InstaDeep
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Expensya
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        GoMyCode
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Topnet
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Poulina
+                    </div>
+                                                                <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Vermeg
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        InstaDeep
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Expensya
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        GoMyCode
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Topnet
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Poulina
+                    </div>
+                                                                <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Vermeg
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        InstaDeep
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Expensya
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        GoMyCode
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Topnet
+                    </div>
+                                    <div class="text-2xl md:text-3xl font-black text-foreground/40 hover:text-foreground/80 transition-colors uppercase tracking-tight duration-300 select-none">
+                        Poulina
+                    </div>
+                                    </div>
+    </div>
+</section>        
+        <!-- CATEGORIES -->
+<section class="categories-section py-24">
+    <div class="container mx-auto px-4">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <div class="max-w-2xl">
+                <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-4">Browse talent by category</h2>
+                <p class="text-xl text-muted-foreground">Looking for work? Browse jobs instead.</p>
+            </div>
+            <a href="#" class="inline-flex items-center text-primary font-semibold hover:gap-2 transition-all">
+                All Categories
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" class="ml-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <a href="#" class="category-card group block p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        <!-- Lucide Icon dynamically mapped if needed, using simple span for now -->
+                        <i data-lucide="globe" class="" width="24" height="24"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Development &amp; IT</h3>
+                    <div class="flex items-center justify-between text-muted-foreground font-medium">
+                        <span class="flex items-center">
+                            <span class="mr-2 text-yellow-500">★</span> 4.9/5
+                        </span>
+                        <span>4.8k jobs</span>
+                    </div>
+                </a>
+                            <a href="#" class="category-card group block p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        <!-- Lucide Icon dynamically mapped if needed, using simple span for now -->
+                        <i data-lucide="pen-tool" class="" width="24" height="24"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Design &amp; Creative</h3>
+                    <div class="flex items-center justify-between text-muted-foreground font-medium">
+                        <span class="flex items-center">
+                            <span class="mr-2 text-yellow-500">★</span> 4.8/5
+                        </span>
+                        <span>3.6k jobs</span>
+                    </div>
+                </a>
+                            <a href="#" class="category-card group block p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        <!-- Lucide Icon dynamically mapped if needed, using simple span for now -->
+                        <i data-lucide="bar-chart" class="" width="24" height="24"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Sales &amp; Marketing</h3>
+                    <div class="flex items-center justify-between text-muted-foreground font-medium">
+                        <span class="flex items-center">
+                            <span class="mr-2 text-yellow-500">★</span> 4.7/5
+                        </span>
+                        <span>1.5k jobs</span>
+                    </div>
+                </a>
+                            <a href="#" class="category-card group block p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        <!-- Lucide Icon dynamically mapped if needed, using simple span for now -->
+                        <i data-lucide="edit-3" class="" width="24" height="24"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Writing &amp; Translation</h3>
+                    <div class="flex items-center justify-between text-muted-foreground font-medium">
+                        <span class="flex items-center">
+                            <span class="mr-2 text-yellow-500">★</span> 4.8/5
+                        </span>
+                        <span>2.1k jobs</span>
+                    </div>
+                </a>
+                            <a href="#" class="category-card group block p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        <!-- Lucide Icon dynamically mapped if needed, using simple span for now -->
+                        <i data-lucide="monitor" class="" width="24" height="24"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Admin Support</h3>
+                    <div class="flex items-center justify-between text-muted-foreground font-medium">
+                        <span class="flex items-center">
+                            <span class="mr-2 text-yellow-500">★</span> 4.9/5
+                        </span>
+                        <span>1.2k jobs</span>
+                    </div>
+                </a>
+                            <a href="#" class="category-card group block p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        <!-- Lucide Icon dynamically mapped if needed, using simple span for now -->
+                        <i data-lucide="pie-chart" class="" width="24" height="24"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Finance &amp; Accounting</h3>
+                    <div class="flex items-center justify-between text-muted-foreground font-medium">
+                        <span class="flex items-center">
+                            <span class="mr-2 text-yellow-500">★</span> 4.8/5
+                        </span>
+                        <span>800 jobs</span>
+                    </div>
+                </a>
+                    </div>
+    </div>
+</section>        
+        <!-- TOP TALENTS HORIZONTAL SCROLL -->
+<section class="talents-section relative h-screen bg-zinc-950 text-white flex items-center overflow-hidden">
+    <div class="container mx-auto px-4 absolute top-20 left-0 right-0 z-10 pointer-events-none">
+        <h2 class="text-4xl md:text-6xl font-bold tracking-tight mb-4">Elite talent. <br>Ready when you are.</h2>
+    </div>
+
+    <!-- The scrolling container -->
+    <div class="talents-wrapper flex gap-8 px-4 md:px-[10vw] pt-20" style="width: max-content;">
+                    <div class="w-[350px] md:w-[450px] flex-shrink-0 bg-neutral-900 border border-neutral-800 rounded-3xl p-8 hover:bg-neutral-800 transition-colors duration-500">
+                <div class="flex items-center gap-4 mb-6">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarra&amp;backgroundColor=b6e3f4" alt="Sarra Ben Y." class="w-16 h-16 rounded-full bg-neutral-800 object-cover">
+                    <div>
+                        <h3 class="text-xl font-bold">Sarra Ben Y.</h3>
+                        <p class="text-neutral-400">Senior Frontend Developer</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-6 mb-8 text-sm font-medium">
+                    <div class="flex flex-col">
+                        <span class="text-neutral-500">Rate</span>
+                        <span class="text-lg">$40/hr</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-neutral-500">Earned</span>
+                        <span class="text-lg">$50k+</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-8">
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">React</span>
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">Vue</span>
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">Symfony</span>
+                                    </div>
+
+                <button class="w-full py-4 rounded-xl bg-white text-neutral-950 font-bold hover:bg-neutral-200 transition-colors">
+                    Hire Sarra
+                </button>
+            </div>
+                    <div class="w-[350px] md:w-[450px] flex-shrink-0 bg-neutral-900 border border-neutral-800 rounded-3xl p-8 hover:bg-neutral-800 transition-colors duration-500">
+                <div class="flex items-center gap-4 mb-6">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Mohamed&amp;backgroundColor=c0aede" alt="Mohamed K." class="w-16 h-16 rounded-full bg-neutral-800 object-cover">
+                    <div>
+                        <h3 class="text-xl font-bold">Mohamed K.</h3>
+                        <p class="text-neutral-400">UI/UX Designer</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-6 mb-8 text-sm font-medium">
+                    <div class="flex flex-col">
+                        <span class="text-neutral-500">Rate</span>
+                        <span class="text-lg">$35/hr</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-neutral-500">Earned</span>
+                        <span class="text-lg">$30k+</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-8">
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">Figma</span>
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">Framer</span>
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">Prototyping</span>
+                                    </div>
+
+                <button class="w-full py-4 rounded-xl bg-white text-neutral-950 font-bold hover:bg-neutral-200 transition-colors">
+                    Hire Mohamed
+                </button>
+            </div>
+                    <div class="w-[350px] md:w-[450px] flex-shrink-0 bg-neutral-900 border border-neutral-800 rounded-3xl p-8 hover:bg-neutral-800 transition-colors duration-500">
+                <div class="flex items-center gap-4 mb-6">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Amina&amp;backgroundColor=ffdfbf" alt="Amina T." class="w-16 h-16 rounded-full bg-neutral-800 object-cover">
+                    <div>
+                        <h3 class="text-xl font-bold">Amina T.</h3>
+                        <p class="text-neutral-400">SEO Specialist</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-6 mb-8 text-sm font-medium">
+                    <div class="flex flex-col">
+                        <span class="text-neutral-500">Rate</span>
+                        <span class="text-lg">$25/hr</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-neutral-500">Earned</span>
+                        <span class="text-lg">$10k+</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-8">
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">Google Analytics</span>
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">Ahrefs</span>
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">Content</span>
+                                    </div>
+
+                <button class="w-full py-4 rounded-xl bg-white text-neutral-950 font-bold hover:bg-neutral-200 transition-colors">
+                    Hire Amina
+                </button>
+            </div>
+                    <div class="w-[350px] md:w-[450px] flex-shrink-0 bg-neutral-900 border border-neutral-800 rounded-3xl p-8 hover:bg-neutral-800 transition-colors duration-500">
+                <div class="flex items-center gap-4 mb-6">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Youssef&amp;backgroundColor=d1d4f9" alt="Youssef G." class="w-16 h-16 rounded-full bg-neutral-800 object-cover">
+                    <div>
+                        <h3 class="text-xl font-bold">Youssef G.</h3>
+                        <p class="text-neutral-400">Backend Engineer</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-6 mb-8 text-sm font-medium">
+                    <div class="flex flex-col">
+                        <span class="text-neutral-500">Rate</span>
+                        <span class="text-lg">$45/hr</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-neutral-500">Earned</span>
+                        <span class="text-lg">$80k+</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-8">
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">PHP</span>
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">Laravel</span>
+                                            <span class="px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium border border-neutral-700">Docker</span>
+                                    </div>
+
+                <button class="w-full py-4 rounded-xl bg-white text-neutral-950 font-bold hover:bg-neutral-200 transition-colors">
+                    Hire Youssef
+                </button>
+            </div>
+                <!-- Duplicate for spacing visual -->
+        <div class="w-[350px] md:w-[450px] flex-shrink-0 flex flex-col items-center justify-center border-2 border-dashed border-neutral-800 rounded-3xl">
+            <h3 class="text-2xl font-bold text-neutral-400 mb-4">Find your perfect match</h3>
+            <button class="px-8 py-3 rounded-full bg-neutral-800 text-white font-bold hover:bg-neutral-700 transition-colors">
+                Browse All
+            </button>
+        </div>
+    </div>
+</section>        
+        <!-- PROCESS SECTION -->
+<section class="py-32 bg-background relative z-20">
+    <div class="container mx-auto px-4">
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-20 text-center max-w-3xl mx-auto">
+            How work gets done on Skilora
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+            <!-- Connecting line for desktop -->
+            <div class="hidden md:block absolute top-[40px] left-[15%] right-[15%] h-0.5 bg-gradient-to-r from-border via-primary/50 to-border z-0"></div>
+
+                            <div class="process-step relative z-10 flex flex-col items-center text-center">
+                    <div class="w-20 h-20 rounded-full bg-background border-4 border-primary text-primary flex items-center justify-center text-2xl font-black mb-8 shadow-xl">
+                        01
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Post a job or build a profile</h3>
+                    <p class="text-muted-foreground text-lg leading-relaxed">Tell us what you need done or what skills you offer. Our AI matches the perfect fit.</p>
+                </div>
+                            <div class="process-step relative z-10 flex flex-col items-center text-center">
+                    <div class="w-20 h-20 rounded-full bg-background border-4 border-primary text-primary flex items-center justify-center text-2xl font-black mb-8 shadow-xl">
+                        02
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Connect &amp; Collaborate</h3>
+                    <p class="text-muted-foreground text-lg leading-relaxed">Use our built in messaging, video calls, and workspace features to align on goals.</p>
+                </div>
+                            <div class="process-step relative z-10 flex flex-col items-center text-center">
+                    <div class="w-20 h-20 rounded-full bg-background border-4 border-primary text-primary flex items-center justify-center text-2xl font-black mb-8 shadow-xl">
+                        03
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Get Paid Securely</h3>
+                    <p class="text-muted-foreground text-lg leading-relaxed">Our escrow system guarantees fair payment for quality work, every time.</p>
+                </div>
+                    </div>
+    </div>
+</section>        
+        <!-- CTA PARALLAX SECTION -->
+<section class="cta-section relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden rounded-t-[3rem] mt-10">
+    <!-- Parallax Background image (simulated with gradient/pattern for now) -->
+    <div class="cta-bg absolute inset-0 -top-[30%] h-[130%] bg-zinc-950 w-full z-0">
+        <!-- Abstract gradient mesh -->
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/40 via-zinc-950 to-zinc-950"></div>
+        <div class="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHBhdGggZD0iTTAgMGg0MHY0MEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0wIDIwaDQwTTEwIDIwaDIwIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMSIvPjwvc3ZnPg==')]"></div>
+    </div>
+
+    <div class="container relative z-10 mx-auto px-4 text-center">
+        <h2 class="text-5xl md:text-7xl font-extrabold text-white tracking-tighter mb-8 max-w-4xl mx-auto leading-tight">
+            Ready to find your next great opportunity?
+        </h2>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="#" class="inline-flex h-16 items-center justify-center rounded-full bg-white px-10 text-lg font-bold text-zinc-950 transition-transform hover:scale-105 active:scale-95 shadow-[0_0_40px_rgba(255,255,255,0.2)]">
+                Join as Freelancer
+            </a>
+            <a href="#" class="inline-flex h-16 items-center justify-center rounded-full bg-zinc-800/80 backdrop-blur border border-zinc-700 px-10 text-lg font-bold text-white transition-transform hover:bg-zinc-700 hover:scale-105 active:scale-95">
+                Join as Client
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- MINIMAL FOOTER -->
+<footer class="bg-zinc-950 text-zinc-400 py-12 border-t border-zinc-900/50 relative z-20">
+    <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center text-white font-bold text-2xl tracking-tighter">
+            SKILORA
+        </div>
+        
+        <div class="flex gap-6 text-sm font-medium">
+            <a href="#" class="hover:text-white transition-colors">Terms</a>
+            <a href="#" class="hover:text-white transition-colors">Privacy</a>
+            <a href="#" class="hover:text-white transition-colors">Contact</a>
+        </div>
+
+        <div class="text-sm">
+            © 2026 Skilora Inc.
+        </div>
+    </div>
+</footer>        
+    </main>
+
+                <div x-data x-cloak
+             class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-[380px]">
+            <template x-for="toast in $store.toast.items" :key="toast.id">
+                <div x-show="true"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 translate-y-2"
+                     x-transition:enter-end="opacity-1 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-1 translate-y-0"
+                     x-transition:leave-end="opacity-0 translate-y-2"
+                     :class="{
+                         'border-destructive bg-destructive/10 text-destructive': toast.type === 'destructive',
+                         'border-green-500 bg-green-500/10 text-green-700 dark:text-green-400': toast.type === 'success',
+                         'border-yellow-500 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400': toast.type === 'warning',
+                         'border-border bg-card text-card-foreground': toast.type === 'info'
+                     }"
+                     class="rounded-lg border px-4 py-3 text-sm shadow-lg animate-fade-in">
+                    <div class="flex items-center justify-between gap-2">
+                        <span x-text="toast.message"></span>
+                        <button @click="$store.toast.remove(toast.id)"
+                                class="shrink-0 text-muted-foreground hover:text-foreground">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+                                                                                                
+                    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3/dist/cdn.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3/dist/cdn.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+        <!-- GSAP Core & ScrollTrigger -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+        
+        <script src="https://unpkg.com/lucide@latest"></script>
+
+        <script>
+            document.addEventListener('alpine:init', () => {
+                Alpine.store('toast', {
+                    items: [],
+                    add(message, type = 'info', duration = 4000) {
+                        const id = Date.now();
+                        this.items.push({ id, message, type });
+                        setTimeout(() => this.remove(id), duration);
+                    },
+                    remove(id) {
+                        this.items = this.items.filter(item => item.id !== id);
+                    },
+                    success(message) { this.add(message, 'success'); },
+                    error(message) { this.add(message, 'destructive', 6000); },
+                    info(message) { this.add(message, 'info'); },
+                    warning(message) { this.add(message, 'warning', 5000); },
+                });
+            });
+            document.addEventListener('DOMContentLoaded', () => {
+                lucide.createIcons();
+            });
+        </script>
+        
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            gsap.registerPlugin(ScrollTrigger);
+            
+            // 1. Hero Animations
+            gsap.from(".hero-title", {
+                duration: 1.2,
+                y: 50,
+                opacity: 0,
+                ease: "power4.out",
+                stagger: 0.2,
+                delay: 1.5 // Wait for preloader
+            });
+            
+            gsap.from(".hero-subtitle", {
+                duration: 1,
+                y: 30,
+                opacity: 0,
+                ease: "power3.out",
+                delay: 2
+            });
+
+            gsap.from(".hero-stats", {
+                duration: 1,
+                y: 40,
+                opacity: 0,
+                ease: "power3.out",
+                stagger: 0.15,
+                delay: 2.3
+            });
+
+            // 2. Companies Ribbon Scroll
+            gsap.to(".companies-track", {
+                xPercent: -50,
+                ease: "none",
+                scrollTrigger: {
+                    trigger: ".companies-section",
+                    start: "top bottom",
+                    end: "bottom top",
+                    scrub: 1
+                }
+            });
+
+            // 3. Categories Stagger
+            gsap.from(".category-card", {
+                scrollTrigger: {
+                    trigger: ".categories-section",
+                    start: "top 80%"
+                },
+                y: 50,
+                opacity: 0,
+                duration: 0.8,
+                stagger: 0.1,
+                ease: "back.out(1.7)"
+            });
+
+            // 4. Talents Horizontal Scroll
+            let talentsContainer = document.querySelector(".talents-wrapper");
+            if(talentsContainer) {
+                gsap.to(talentsContainer, {
+                    x: () => -(talentsContainer.scrollWidth - window.innerWidth + 40),
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: ".talents-section",
+                        start: "top 20%",
+                        end: () => "+=" + (talentsContainer.scrollWidth - window.innerWidth),
+                        scrub: 1,
+                        pin: true,
+                        anticipatePin: 1
+                    }
+                });
+            }
+
+            // 5. Process Steps fade up
+            gsap.utils.toArray('.process-step').forEach((step, i) => {
+                gsap.from(step, {
+                    scrollTrigger: {
+                        trigger: step,
+                        start: "top 85%"
+                    },
+                    y: 60,
+                    opacity: 0,
+                    duration: 1,
+                    ease: "power3.out"
+                });
+            });
+            
+            // 6. Parallax bg on CTA
+            gsap.to(".cta-bg", {
+                yPercent: 30,
+                ease: "none",
+                scrollTrigger: {
+                    trigger: ".cta-section",
+                    start: "top bottom",
+                    end: "bottom top",
+                    scrub: true
+                }
+            });
+        });
+    </script>
+    </body>
+</html>

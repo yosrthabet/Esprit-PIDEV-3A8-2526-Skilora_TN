@@ -1,0 +1,93 @@
+{# components/sheet.html.twig — ShadCN Sheet (slide-over panel)
+
+   Usage: {{ include('components/sheet.html.twig', {
+       id: 'settings-sheet',
+       title: 'Settings',
+       description: 'Manage your preferences.',
+       content: '<form>...</form>',
+       side: 'right',
+   }) }}
+
+   Open via: @click="$dispatch('open-sheet', { id: 'settings-sheet' })"
+#}
+{% set id = id|default('sheet') %}
+{% set side = side|default('right') %}
+
+{% set slide_classes = {
+    'left': 'inset-y-0 left-0 h-full w-3/4 sm:max-w-sm border-r',
+    'right': 'inset-y-0 right-0 h-full w-3/4 sm:max-w-sm border-l',
+    'top': 'inset-x-0 top-0 w-full border-b',
+    'bottom': 'inset-x-0 bottom-0 w-full border-t',
+} %}
+
+{% set enter_from = {
+    'left': '-translate-x-full',
+    'right': 'translate-x-full',
+    'top': '-translate-y-full',
+    'bottom': 'translate-y-full',
+} %}
+
+<div
+    x-data="{ open: false }"
+    @open-sheet.window="if ($event.detail.id === '{{ id }}') open = true"
+    @keydown.escape.window="open = false"
+    x-show="open"
+    x-cloak
+    class="relative z-50"
+>
+    {# Backdrop #}
+    <div
+        x-show="open"
+        x-transition:enter="ease-in-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in-out duration-300"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @click="open = false"
+        class="fixed inset-0 bg-black/80"
+    ></div>
+
+    {# Panel #}
+    <div
+        x-show="open"
+        x-transition:enter="ease-in-out duration-300"
+        x-transition:enter-start="{{ enter_from[side] }}"
+        x-transition:enter-end="translate-x-0 translate-y-0"
+        x-transition:leave="ease-in-out duration-300"
+        x-transition:leave-start="translate-x-0 translate-y-0"
+        x-transition:leave-end="{{ enter_from[side] }}"
+        class="fixed {{ slide_classes[side] }} border-border bg-background p-6 shadow-lg {{ class|default('') }}"
+    >
+        {# Close #}
+        <button @click="open = false" class="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        {# Header #}
+        {% if title is defined or description is defined %}
+        <div class="flex flex-col space-y-2 mb-6">
+            {% if title is defined and title %}
+                <h2 class="text-lg font-semibold text-foreground">{{ title }}</h2>
+            {% endif %}
+            {% if description is defined and description %}
+                <p class="text-sm text-muted-foreground">{{ description }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {# Content #}
+        <div class="flex-1 overflow-y-auto">
+            {{ content|default('')|raw }}
+        </div>
+
+        {# Footer #}
+        {% if footer is defined and footer %}
+        <div class="mt-6 flex justify-end gap-2">
+            {{ footer|raw }}
+        </div>
+        {% endif %}
+    </div>
+</div>

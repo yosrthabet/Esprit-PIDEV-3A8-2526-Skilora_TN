@@ -1,0 +1,4 @@
+# Messages du composant Security (domaine "security")
+"Invalid credentials.": "Identifiant ou mot de passe incorrect."
+"Username could not be found.": "Ce nom d’utilisateur est introuvable."
+"Authentication request could not be processed due to a system problem.": "Connexion impossible pour le moment (erreur système). Réessayez plus tard."
