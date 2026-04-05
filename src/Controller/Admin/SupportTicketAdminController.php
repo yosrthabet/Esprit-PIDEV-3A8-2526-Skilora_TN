@@ -23,7 +23,7 @@ class SupportTicketAdminController extends AbstractController
     {
         $query = $request->query->get('q', '');
         $page = max(1, $request->query->getInt('page', 1));
-        $limit = 5;
+        $limit = 3;
 
         $tickets = $ticketRepository->search($query, $page, $limit);
         $totalItems = $ticketRepository->countTotal($query);
@@ -81,7 +81,7 @@ class SupportTicketAdminController extends AbstractController
     {
         $tickets = $ticketRepository->findAll();
         $csv = "ID,Subject,Category,Priority,Status,Created At\n";
-        
+
         foreach ($tickets as $ticket) {
             $csv .= sprintf(
                 "%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
@@ -175,6 +175,37 @@ class SupportTicketAdminController extends AbstractController
             $this->addFlash('success', 'Message updated.');
 
             return $this->redirectToRoute('admin_support_show', ['id' => $ticketId]);
+        } elseif ($request->isMethod('POST')) {
+            $post = $request->request->all();
+            $contenu = null;
+            $attachmentsJson = null;
+            $isInternal = null;
+
+            foreach ($post as $val) {
+                if (\is_array($val)) {
+                    $contenu = $val['contenu'] ?? $contenu;
+                    $attachmentsJson = $val['attachmentsJson'] ?? $attachmentsJson;
+                    $isInternal = $val['isInternal'] ?? $isInternal;
+                }
+            }
+            $contenu ??= ($post['contenu'] ?? null);
+            $attachmentsJson ??= ($post['attachmentsJson'] ?? null);
+            $isInternal ??= ($post['isInternal'] ?? null);
+
+            if ($contenu !== null && trim($contenu) !== '') {
+                $message->setContenu(trim($contenu));
+                if ($attachmentsJson !== null) {
+                    $message->setAttachmentsJson(trim($attachmentsJson));
+                }
+                if ($isInternal !== null) {
+                    $message->setIsInternal((bool) $isInternal);
+                }
+                $entityManager->flush();
+                $this->addFlash('success', 'Message updated.');
+                return $this->redirectToRoute('admin_support_show', ['id' => $ticketId]);
+            }
+            
+            $this->addFlash('error', 'Update failed: Message cannot be empty.');
         }
 
         return $this->render('support/admin/edit_message.html.twig', [
@@ -197,7 +228,7 @@ class SupportTicketAdminController extends AbstractController
             throw $this->createNotFoundException('Message not found.');
         }
 
-        if (!$this->isCsrfTokenValid('delete_message_'.$messageId, (string) $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('delete_message_' . $messageId, (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid delete token.');
 
             return $this->redirectToRoute('admin_support_show', ['id' => $ticketId]);

@@ -69,8 +69,7 @@ class SupportClientController extends AbstractController
         EntityManagerInterface $entityManager,
         MessageTicketRepository $messageRepository,
         FeedbackRepository $feedbackRepository
-    ): Response
-    {
+    ): Response {
         $this->assertTicketOwnership($ticket);
 
         $message = (new MessageTicket())
@@ -165,7 +164,7 @@ class SupportClientController extends AbstractController
             $comment ??= $post['comment'] ?? null;
 
             if ($rating !== null) {
-                $feedback->setRating((int)$rating);
+                $feedback->setRating((int) $rating);
                 if ($comment !== null) {
                     $feedback->setComment(trim($comment));
                 }
@@ -177,8 +176,8 @@ class SupportClientController extends AbstractController
                 foreach ($form->getErrors(true) as $error) {
                     $errors[] = $error->getMessage();
                 }
-                $this->addFlash('error', $errors 
-                    ? 'Validation failed: ' . implode(', ', $errors) 
+                $this->addFlash('error', $errors
+                    ? 'Validation failed: ' . implode(', ', $errors)
                     : 'Form binding failed completely. Make sure to tap a star.');
             }
         }
@@ -190,7 +189,7 @@ class SupportClientController extends AbstractController
     public function closeTicket(Ticket $ticket, Request $request, EntityManagerInterface $entityManager): Response
     {
         $this->assertTicketOwnership($ticket);
-        if (!$this->isCsrfTokenValid('close_ticket_'.$ticket->getId(), (string) $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('close_ticket_' . $ticket->getId(), (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid request.');
 
             return $this->redirectToRoute('support_show', ['id' => $ticket->getId()]);
@@ -236,7 +235,7 @@ class SupportClientController extends AbstractController
     public function deleteTicket(Ticket $ticket, Request $request, EntityManagerInterface $entityManager): Response
     {
         $this->assertTicketOwnership($ticket);
-        if (!$this->isCsrfTokenValid('delete_ticket_'.$ticket->getId(), (string) $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('delete_ticket_' . $ticket->getId(), (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid request.');
 
             return $this->redirectToRoute('support_index');
@@ -263,7 +262,7 @@ class SupportClientController extends AbstractController
         }
 
         if ($message->getUtilisateurId() !== $this->resolveUserId()) {
-             throw $this->createAccessDeniedException('You can only edit your own messages.');
+            throw $this->createAccessDeniedException('You can only edit your own messages.');
         }
 
         $form = $this->createForm(MessageTicketType::class, $message, ['is_admin' => false]);
@@ -274,6 +273,31 @@ class SupportClientController extends AbstractController
             $this->addFlash('success', 'Message updated.');
 
             return $this->redirectToRoute('support_show', ['id' => $ticketId]);
+        } elseif ($request->isMethod('POST')) {
+            $post = $request->request->all();
+            $contenu = null;
+            $attachmentsJson = null;
+
+            foreach ($post as $val) {
+                if (\is_array($val)) {
+                    $contenu = $val['contenu'] ?? $contenu;
+                    $attachmentsJson = $val['attachmentsJson'] ?? $attachmentsJson;
+                }
+            }
+            $contenu ??= ($post['contenu'] ?? null);
+            $attachmentsJson ??= ($post['attachmentsJson'] ?? null);
+
+            if ($contenu !== null && trim($contenu) !== '') {
+                $message->setContenu(trim($contenu));
+                if ($attachmentsJson !== null) {
+                    $message->setAttachmentsJson(trim($attachmentsJson));
+                }
+                $entityManager->flush();
+                $this->addFlash('success', 'Message updated.');
+                return $this->redirectToRoute('support_show', ['id' => $ticketId]);
+            }
+            
+            $this->addFlash('error', 'Update failed: Message cannot be empty.');
         }
 
         return $this->render('support/client/edit_message.html.twig', [
@@ -283,6 +307,8 @@ class SupportClientController extends AbstractController
             'stats' => $this->getHomeStats(),
         ]);
     }
+
+
 
     #[Route('/{ticketId}/messages/{messageId}/delete', name: 'message_delete', methods: ['POST'])]
     public function deleteMessage(
@@ -298,10 +324,10 @@ class SupportClientController extends AbstractController
         }
 
         if ($message->getUtilisateurId() !== $this->resolveUserId()) {
-             throw $this->createAccessDeniedException('You can only delete your own messages.');
+            throw $this->createAccessDeniedException('You can only delete your own messages.');
         }
 
-        if (!$this->isCsrfTokenValid('delete_message_'.$messageId, (string) $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('delete_message_' . $messageId, (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid delete token.');
 
             return $this->redirectToRoute('support_show', ['id' => $ticketId]);
