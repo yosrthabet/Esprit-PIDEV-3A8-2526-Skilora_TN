@@ -1,0 +1,122 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl space-y-6">
+
+    {# Flash messages #}
+    {% for msg in app.flashes('success') %}
+        {{ include('components/alert.html.twig', { variant: 'default', title: 'Success', body: msg }) }}
+    {% endfor %}
+    {% for msg in app.flashes('error') %}
+        {{ include('components/alert.html.twig', { variant: 'destructive', title: 'Error', body: msg }) }}
+    {% endfor %}
+
+    {# Tabs #}
+    <div x-data="{ tab: 'account' }">
+        {# Tab triggers #}
+        <div class="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground mb-6">
+            <button @click="tab = 'account'"
+                    :class="tab === 'account' ? 'bg-background text-foreground shadow-sm' : ''"
+                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                Account
+            </button>
+            <button @click="tab = 'password'"
+                    :class="tab === 'password' ? 'bg-background text-foreground shadow-sm' : ''"
+                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                Password
+            </button>
+            <button @click="tab = 'preferences'"
+                    :class="tab === 'preferences' ? 'bg-background text-foreground shadow-sm' : ''"
+                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                Preferences
+            </button>
+        </div>
+
+        {# Tab: Account #}
+        <div x-show="tab === 'account'" x-cloak>
+            <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Account Information</h3>
+                    <p class="text-sm text-muted-foreground">Update your name and email address.</p>
+                </div>
+                <form action="{{ path('app_settings_profile') }}" method="post">
+                    <input type="hidden" name="_token" value="{{ csrf_token('settings_profile') }}">
+                    <div class="p-6 pt-0 space-y-4">
+                        {{ include('components/input.html.twig', {
+                            name: 'full_name',
+                            label: 'Full Name',
+                            type: 'text',
+                            value: app.user.fullName,
+                            placeholder: 'Your full name',
+                        }) }}
+                        {{ include('components/input.html.twig', {
+                            name: 'email',
+                            label: 'Email',
+                            type: 'email',
+                            value: app.user.email,
+                            placeholder: 'you@example.com',
+                        }) }}
+                    </div>
+                    <div class="flex items-center p-6 pt-0">
+                        {{ include('components/button.html.twig', { label: 'Save Changes', type: 'submit' }) }}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {# Tab: Password #}
+        <div x-show="tab === 'password'" x-cloak>
+            <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Change Password</h3>
+                    <p class="text-sm text-muted-foreground">Update your password. Use at least 6 characters.</p>
+                </div>
+                <form action="{{ path('app_settings_password') }}" method="post">
+                    <input type="hidden" name="_token" value="{{ csrf_token('settings_password') }}">
+                    <div class="p-6 pt-0 space-y-4">
+                        {{ include('components/password-input.html.twig', {
+                            name: 'current_password',
+                            label: 'Current Password',
+                            placeholder: 'Current password',
+                            required: true,
+                        }) }}
+                        {{ include('components/password-input.html.twig', {
+                            name: 'new_password',
+                            label: 'New Password',
+                            placeholder: 'New password',
+                            required: true,
+                        }) }}
+                        {{ include('components/password-input.html.twig', {
+                            name: 'confirm_password',
+                            label: 'Confirm Password',
+                            placeholder: 'Confirm new password',
+                            required: true,
+                        }) }}
+                    </div>
+                    <div class="flex items-center p-6 pt-0">
+                        {{ include('components/button.html.twig', { label: 'Update Password', type: 'submit' }) }}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {# Tab: Preferences #}
+        <div x-show="tab === 'preferences'" x-cloak>
+            <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Preferences</h3>
+                    <p class="text-sm text-muted-foreground">Manage your notification and display preferences.</p>
+                </div>
+                <div class="p-6 pt-0 space-y-4">
+                    <div class="rounded-lg border border-dashed border-border p-6 text-center text-muted-foreground">
+                        <p class="text-sm">Notification preferences coming soon.</p>
+                        <p class="mt-2 text-xs">Use the theme toggle in the top bar to switch between light and dark mode.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
