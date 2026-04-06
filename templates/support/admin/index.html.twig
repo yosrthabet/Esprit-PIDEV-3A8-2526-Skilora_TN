@@ -1,0 +1,189 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let currentStatus = '{{ current_status ?? 'all' }}';
+        let currentSort = '{{ current_sort ?? 'latest' }}';
+
+        function changeTicketPage(page) {
+            const query = document.getElementById('ticketSearch').value;
+            fetch(`{{ path('admin_support_index') }}?q=${query}&page=${page}&status=${currentStatus}&sortBy=${currentSort}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById('ticket-table-wrapper').innerHTML = html;
+            });
+        }
+
+        function setStatusFilters(status) {
+            currentStatus = status;
+            
+            document.querySelectorAll('.status-filter-btn').forEach(btn => {
+                if (btn.dataset.status === status) {
+                    btn.classList.add('bg-primary/20', 'text-primary');
+                    btn.classList.remove('text-muted-foreground');
+                } else {
+                    btn.classList.remove('bg-primary/20', 'text-primary');
+                    btn.classList.add('text-muted-foreground');
+                }
+            });
+
+            changeTicketPage(1);
+        }
+
+        function setSort(sort) {
+            currentSort = sort.value;
+            changeTicketPage(1);
+        }
+
+        let searchTimeout;
+        function searchTickets() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                changeTicketPage(1);
+            }, 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const ctxStatus = document.getElementById('statusChart').getContext('2d');
+            new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys({{ status_stats|json_encode|raw }}),
+                    datasets: [{
+                        data: Object.values({{ status_stats|json_encode|raw }}),
+                        backgroundColor: ['#10b981', '#3b82f6', '#71717a', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const ctxPriority = document.getElementById('priorityChart').getContext('2d');
+            new Chart(ctxPriority, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys({{ priority_stats|json_encode|raw }}),
+                    datasets: [{
+                        label: 'Tickets',
+                        data: Object.values({{ priority_stats|json_encode|raw }}),
+                        backgroundColor: '#6366f1',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto w-full max-w-7xl space-y-6">
+    <div class="rounded-3xl border border-border/70 bg-gradient-to-r from-primary/10 via-card to-card p-6 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-primary">Support Control Center</p>
+                <h2 class="mt-1 text-2xl font-bold tracking-tight">Ticket Operations Dashboard</h2>
+                <p class="mt-2 text-sm text-muted-foreground">Track priority, status, and SLA flow in one place.</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="{{ path('admin_support_export_csv') }}" class="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-muted transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Export CSV
+                </a>
+                <span class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                    {{ tickets|length }} visible
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+        <div class="flex flex-col border-b border-border/70 px-5 py-4 gap-4">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-base font-semibold">Ticket Queue</h3>
+                    <p class="text-xs text-muted-foreground">Prioritize urgent requests and route them quickly.</p>
+                </div>
+                <div class="relative w-full max-w-xs">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" id="ticketSearch" oninput="searchTickets()" placeholder="Search subject or category..." class="w-full rounded-xl border border-border bg-muted/30 py-2 pl-10 pr-4 text-xs outline-none focus:border-primary/50 focus:bg-muted/50" value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-4 mt-2">
+                <div class="flex items-center gap-1.5 bg-muted/20 p-1.5 rounded-xl border border-border overflow-x-auto">
+                    {% set statuses = {
+                        'all': 'All',
+                        'open': 'Open',
+                        'in-progress': 'In Progress',
+                        'resolved': 'Resolved',
+                        'closed': 'Closed'
+                    } %}
+                    {% for key, label in statuses %}
+                        <button 
+                            data-status="{{ key }}"
+                            onclick="setStatusFilters('{{ key }}')"
+                            class="status-filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition 
+                            {{ (current_status ?? 'all') == key ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground' }}">
+                            {{ label }}
+                        </button>
+                    {% endfor %}
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="sortTickets" class="text-xs font-semibold text-muted-foreground">Sort By:</label>
+                    <select id="sortTickets" onchange="setSort(this)" class="rounded-xl border border-border bg-muted/30 py-1.5 pl-3 pr-8 text-xs outline-none focus:border-primary/50 bg-card">
+                        <option value="latest" {{ (current_sort ?? 'latest') == 'latest' ? 'selected' : '' }}>Latest Updates</option>
+                        <option value="oldest" {{ (current_sort ?? 'latest') == 'oldest' ? 'selected' : '' }}>Oldest First</option>
+                        <option value="priority" {{ (current_sort ?? 'latest') == 'priority' ? 'selected' : '' }}>Priority (High-Low)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div id="ticket-table-wrapper">
+            {% include 'support/admin/_ticket_table.html.twig' %}
+        </div>
+    </div>
+
+    {# Analytics Section Below Table #}
+    <div class="grid gap-6">
+        <div class="rounded-3xl border border-border bg-card p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h4 class="text-lg font-bold">Status Distribution</h4>
+                    <p class="text-sm text-muted-foreground">Detailed breakdown of current ticket life-cycles.</p>
+                </div>
+                <div class="flex gap-4">
+                    {% for status, count in status_stats %}
+                        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-muted/20">
+                            <span class="text-[10px] font-bold uppercase">{{ status|replace({'_': ' '}) }}</span>
+                            <span class="text-sm font-bold text-primary">{{ count }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div style="height: 300px; width: 100%; display: flex; justify-content: center;">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <div class="rounded-3xl border border-border bg-card p-6 shadow-sm">
+            <div>
+                <h4 class="text-lg font-bold">Priority Volume</h4>
+                <p class="text-sm text-muted-foreground mb-6">Visualizing urgent vs routine workload distribution.</p>
+            </div>
+            <div style="height: 300px; width: 100%;">
+                <canvas id="priorityChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

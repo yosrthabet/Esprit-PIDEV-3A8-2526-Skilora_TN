@@ -1,0 +1,57 @@
+{# Thème Finance : erreurs sous le champ uniquement (pas d’aide statique), bordure destructive si invalide #}
+{% use 'tailwind_2_layout.html.twig' %}
+
+{%- block form_row -%}
+    {%- set row_attr = row_attr|merge({ class: (row_attr.class|default('')) ~ ' ' ~ row_class|default('mb-5') }) -%}
+    {%- set widget_attr = {attr: {'aria-invalid': errors|length ? 'true' : 'false'}} -%}
+    <div{% with {attr: row_attr} %}{{ block('attributes') }}{% endwith %}>
+        {{- form_label(form) -}}
+        {{- form_widget(form, widget_attr) -}}
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock form_row -%}
+
+{%- block form_errors -%}
+    {%- if errors|length > 0 -%}
+        <ul class="finance-server-errors mt-1.5 list-none space-y-1 pl-0 text-destructive" role="alert" aria-live="polite">
+            {%- for error in errors -%}
+                <li class="text-sm font-medium text-destructive">{{ error.message }}</li>
+            {%- endfor -%}
+        </ul>
+    {%- endif -%}
+{%- endblock form_errors -%}
+
+{%- block form_label -%}
+    {%- set label_attr = label_attr|merge({ class: (label_attr.class|default('')) ~ ' ' ~ label_class|default('block text-sm font-medium text-foreground') }) -%}
+    {{- parent() -}}
+{%- endblock form_label -%}
+
+{%- block widget_attributes -%}
+    {%- set defaultInput = 'mt-1.5 w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-[box-shadow,border-color] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50' -%}
+    {%- set errClass = errors|length ? ' border-destructive ring-2 ring-destructive/25' : ' border-input' -%}
+    {%- set attr = attr|merge({ class: (attr.class|default(defaultInput)) ~ errClass ~ (disabled ? ' cursor-not-allowed opacity-60' : '') }) -%}
+    id="{{ id }}" name="{{ full_name }}"
+    {%- if disabled %} disabled="disabled"{% endif -%}
+    {%- if required %} required="required"{% endif -%}
+    {{ block('attributes') }}
+{%- endblock widget_attributes -%}
+
+{%- block checkbox_row -%}
+    {%- set row_attr = row_attr|merge({ class: (row_attr.class|default('')) ~ ' ' ~ row_class|default('mb-5') }) -%}
+    <div{% with {attr: row_attr} %}{{ block('attributes') }}{% endwith %}>
+        <div class="flex items-start gap-3">
+            <div class="pt-0.5">
+                {{- form_widget(form) -}}
+            </div>
+            <div class="min-w-0 flex-1">
+                {{- form_label(form) -}}
+                {{- form_errors(form) -}}
+            </div>
+        </div>
+    </div>
+{%- endblock checkbox_row -%}
+
+{%- block checkbox_widget -%}
+    {%- set widget_class = widget_class|default('h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-ring') -%}
+    {{- parent() -}}
+{%- endblock checkbox_widget -%}

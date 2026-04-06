@@ -1,0 +1,224 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block title %}Ticket #{{ ticket.id }} · {{ ticket.subject }}{% endblock %}
+
+{% block page_title %}Ticket #{{ ticket.id }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-fade-in pb-6">
+
+    {# ── Back link ── #}
+    <a href="{{ path('support_index') }}"
+       class="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        All Tickets
+    </a>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {# ══════════ LEFT COLUMN ══════════ #}
+        <div class="lg:col-span-2 space-y-5">
+
+            {# ── Ticket Header Card ── #}
+            <div class="relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm">
+                <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/5 blur-3xl"></div>
+                <div class="relative space-y-4">
+                    {# Badges #}
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center rounded-full bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-violet-600 dark:text-violet-400 ring-1 ring-inset ring-violet-500/20">
+                            {{ ticket.category }}
+                        </span>
+                        <span class="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20">
+                            {{ ticket.priority }}
+                        </span>
+                        <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ring-inset
+                            {% if ticket.status in ['RESOLVED','CLOSED'] %}bg-teal-500/10 text-teal-600 dark:text-teal-400 ring-teal-500/20
+                            {% elseif ticket.status == 'IN_PROGRESS' %}bg-blue-500/10 text-blue-600 dark:text-blue-400 ring-blue-500/20
+                            {% else %}bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-emerald-500/20{% endif %}">
+                            <span class="h-1.5 w-1.5 rounded-full
+                                {% if ticket.status in ['RESOLVED','CLOSED'] %}bg-teal-500
+                                {% elseif ticket.status == 'IN_PROGRESS' %}bg-blue-500
+                                {% else %}bg-emerald-500{% endif %}"></span>
+                            {{ ticket.status|replace({'_':' '}) }}
+                        </span>
+                    </div>
+
+                    {# Title & description #}
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight text-foreground">{{ ticket.subject }}</h2>
+                        <p class="mt-2 text-sm text-muted-foreground leading-relaxed">{{ ticket.description }}</p>
+                    </div>
+
+                    {# Close button #}
+                    {% if ticket.status not in ['CLOSED'] %}
+                        <form method="post" action="{{ path('support_close', {id: ticket.id}) }}" class="inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('close_ticket_' ~ ticket.id) }}">
+                            <button type="submit"
+                                    class="inline-flex items-center gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 transition-colors">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6m0-6 6 6"/></svg>
+                                Close ticket
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ── Conversation Card ── #}
+            <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                <div class="flex items-center justify-between border-b border-border px-5 py-4 bg-muted/30">
+                    <div class="flex items-center gap-2">
+                        <span class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <h3 class="text-sm font-semibold text-foreground">Conversation</h3>
+                    </div>
+                    <span class="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        {{ messages|length }} message{{ messages|length != 1 ? 's' : '' }}
+                    </span>
+                </div>
+
+                <div class="max-h-[520px] min-h-[300px] overflow-y-auto p-5 space-y-4" id="msgScroll"
+                     style="scrollbar-width:thin;">
+                    {% for message in messages %}
+                        {% set is_client = message.senderId == ticket.userId %}
+                        <div class="flex gap-3 {{ is_client ? 'flex-row-reverse' : '' }}">
+                            {# Avatar #}
+                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold
+                                {{ is_client
+                                    ? 'bg-primary/10 text-primary ring-1 ring-primary/20'
+                                    : 'bg-muted text-muted-foreground ring-1 ring-border' }}">
+                                {{ is_client ? 'Y' : 'A' }}
+                            </div>
+                            {# Bubble #}
+                            <div class="max-w-[72%] space-y-1 {{ is_client ? 'items-end' : '' }}">
+                                <div class="rounded-2xl px-4 py-2.5 text-sm leading-relaxed
+                                    {{ is_client
+                                        ? 'bg-primary text-primary-foreground rounded-br-md'
+                                        : 'bg-muted text-foreground rounded-bl-md' }}">
+                                    {{ message.message }}
+                                </div>
+                                {% if message.attachmentsJson %}
+                                    <div class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                        {{ message.attachmentsJson }}
+                                    </div>
+                                {% endif %}
+                                <p class="text-[10px] text-muted-foreground/60 px-1 {{ is_client ? 'text-right' : '' }}">
+                                    {{ is_client ? 'You' : 'Support Admin' }} · {{ message.createdDate ? message.createdDate|date('d M, H:i') : '-' }}
+                                </p>
+                                {% if is_client and ticket.status not in ['RESOLVED','CLOSED'] %}
+                                    <div class="flex items-center gap-2 {{ is_client ? 'justify-end' : '' }}">
+                                        <a href="{{ path('support_message_edit', {ticketId: ticket.id, messageId: message.id}) }}"
+                                           class="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-primary transition-colors">
+                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                            Edit
+                                        </a>
+                                        <form method="post" action="{{ path('support_message_delete', {ticketId: ticket.id, messageId: message.id}) }}" onsubmit="return confirm('Delete this message?');" class="inline m-0 p-0">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_message_' ~ message.id) }}">
+                                            <button type="submit"
+                                                    class="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-destructive transition-colors">
+                                                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="flex flex-col items-center justify-center py-12 text-center">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-3">
+                                <svg class="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            </div>
+                            <p class="text-sm font-medium text-foreground">No messages yet</p>
+                            <p class="mt-1 text-xs text-muted-foreground">Start the conversation below!</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {# ══════════ RIGHT COLUMN ══════════ #}
+        <div class="space-y-5 lg:sticky lg:top-24">
+
+            {# ── Send Message Card ── #}
+            <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+                <div class="flex items-center gap-2.5 mb-4">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </div>
+                    <h3 class="text-sm font-semibold text-foreground">Send Message</h3>
+                </div>
+                {{ form_start(message_form, {attr: {class: 'space-y-4', novalidate: 'novalidate'}}) }}
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Your message</label>
+                        {{ form_widget(message_form.message, {attr: {
+                            class: 'flex w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                            rows: 5,
+                            placeholder: 'Write your message here…'
+                        }}) }}
+                        {{ form_errors(message_form.message) }}
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Attachments (JSON)</label>
+                        {{ form_widget(message_form.attachmentsJson, {attr: {
+                            class: 'flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                            rows: 2,
+                            placeholder: 'Optional…'
+                        }}) }}
+                        {{ form_errors(message_form.attachmentsJson) }}
+                    </div>
+                    <button type="submit"
+                            class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Send
+                    </button>
+                {{ form_end(message_form) }}
+            </div>
+
+            {# ── Feedback Card (closed tickets) ── #}
+            {% if ticket.status == 'CLOSED' %}
+            <div id="avis" class="rounded-xl border border-emerald-500/20 bg-card p-5 shadow-sm scroll-mt-24">
+                <div class="flex items-center gap-2.5 mb-4">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </div>
+                    <h3 class="text-sm font-semibold text-foreground">
+                        {{ has_feedback ? 'Your Review' : 'Rate Support' }}
+                    </h3>
+                </div>
+                <p class="text-xs text-muted-foreground mb-4">Note = rating sur 5, message = commentaire optionnel.</p>
+                {{ form_start(feedback_form, {attr: {class: 'space-y-3', novalidate: 'novalidate'}}) }}
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Note (Rating)</label>
+                        {{ form_widget(feedback_form.rating, {attr: {
+                            class: 'flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                        }}) }}
+                        {{ form_errors(feedback_form.rating) }}
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Commentaire (optionnel)</label>
+                        {{ form_widget(feedback_form.comment, {attr: {
+                            class: 'flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                            rows: 3
+                        }}) }}
+                        {{ form_errors(feedback_form.comment) }}
+                    </div>
+                    <button type="submit"
+                            class="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-emerald-700 transition-colors">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        {{ has_feedback ? 'Update Review' : 'Submit Review' }}
+                    </button>
+                {{ form_end(feedback_form) }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        const scroll = document.getElementById('msgScroll');
+        if (scroll) scroll.scrollTop = scroll.scrollHeight;
+    </script>
+{% endblock %}

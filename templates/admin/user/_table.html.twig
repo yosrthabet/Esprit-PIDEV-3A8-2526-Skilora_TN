@@ -1,0 +1,122 @@
+{# admin/user/_table.html.twig — User table fragment (refreshable via AJAX) #}
+{% if users|length == 0 %}
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+        <i data-lucide="users" class="h-12 w-12 text-muted-foreground/30 mb-4"></i>
+        <p class="text-muted-foreground">No users found.</p>
+    </div>
+{% else %}
+<div class="overflow-x-auto">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="border-b border-border bg-muted/30">
+                <th class="h-10 px-5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-muted-foreground">User</th>
+                <th class="h-10 px-5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-muted-foreground">Role</th>
+                <th class="h-10 px-5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
+                <th class="h-10 px-5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-muted-foreground">Joined</th>
+                <th class="h-10 px-5 text-right align-middle text-xs font-semibold uppercase tracking-wider text-muted-foreground">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+            {% for user in users %}
+            <tr class="transition-colors hover:bg-muted/40"
+                id="user-row-{{ user.id }}"
+                data-name="{{ user.displayName|lower }}"
+                data-email="{{ (user.email|default(''))|lower }}"
+                data-role="{{ user.role }}"
+                data-status="{{ user.isActive ? 'active' : 'inactive' }}">
+                <td class="px-5 py-3 align-middle">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                            {{ user.displayName|first|upper }}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-foreground truncate">{{ user.displayName }}</p>
+                            <p class="text-xs text-muted-foreground truncate">{{ user.email|default('—') }}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-5 py-3 align-middle">
+                    {% set role_colors = {
+                        'Administrator': 'destructive',
+                        'Client': 'default',
+                        'Trainer': 'secondary',
+                        'Freelancer': 'outline',
+                    } %}
+                    {{ include('components/badge.html.twig', {
+                        label: user.roleDisplayName,
+                        variant: role_colors[user.roleDisplayName]|default('secondary')
+                    }) }}
+                </td>
+                <td class="px-5 py-3 align-middle">
+                    <div class="flex items-center gap-2">
+                        <span class="h-2 w-2 rounded-full {{ user.isActive ? 'bg-emerald-500' : 'bg-zinc-400' }}"></span>
+                        <span class="text-xs font-medium {{ user.isActive ? 'text-foreground' : 'text-muted-foreground' }}">{{ user.isActive ? 'Active' : 'Inactive' }}</span>
+                    </div>
+                </td>
+                <td class="px-5 py-3 align-middle text-xs text-muted-foreground">
+                    —
+                </td>
+                <td class="px-5 py-3 align-middle">
+                    <div class="flex items-center justify-end gap-1">
+                        {# Edit button — opens dialog #}
+                        <button @click="$dispatch('open-edit-dialog', {
+                                    title: 'Edit User',
+                                    description: 'Update details for {{ user.displayName|e('js') }}',
+                                    url: '{{ path('app_admin_user_edit', {id: user.id}) }}',
+                                    size: 'lg'
+                                })"
+                                class="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                title="Edit">
+                            <i data-lucide="pencil" class="h-4 w-4"></i>
+                        </button>
+
+                        {# Toggle status #}
+                        <button x-data
+                                @click="
+                                    const fd = new FormData();
+                                    fd.append('_token', '{{ csrf_token('toggle-user-status-' ~ user.id) }}');
+                                    const res = await fetch('{{ path('app_admin_user_toggle_status', {id: user.id}) }}', {
+                                        method: 'POST',
+                                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                                        body: fd
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                        Alpine.store('toast').success(data.message);
+                                        $el.closest('#user-table-container').dispatchEvent(new CustomEvent('refresh-table'));
+                                    }
+                                "
+                                class="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                title="{{ user.isActive ? 'Deactivate' : 'Activate' }}">
+                            <i data-lucide="{{ user.isActive ? 'user-x' : 'user-check' }}" class="h-4 w-4"></i>
+                        </button>
+
+                        {# Delete #}
+                        <button x-data
+                                @click="
+                                    if (!confirm('Delete {{ user.displayName|e('js') }}? This cannot be undone.')) return;
+                                    const fd = new FormData();
+                                    fd.append('_token', '{{ csrf_token('delete-user-' ~ user.id) }}');
+                                    const res = await fetch('{{ path('app_admin_user_delete', {id: user.id}) }}', {
+                                        method: 'POST',
+                                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                                        body: fd
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                        Alpine.store('toast').success(data.message);
+                                        $el.closest('#user-table-container').dispatchEvent(new CustomEvent('refresh-table'));
+                                    }
+                                "
+                                class="inline-flex items-center justify-center rounded-lg p-2 text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                title="Delete">
+                            <i data-lucide="trash-2" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}

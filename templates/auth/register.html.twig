@@ -1,0 +1,118 @@
+{# auth/register.html.twig — Registration page with role selection #}
+{% extends 'layouts/auth.html.twig' %}
+
+{% block title %}Create Account — Skilora{% endblock %}
+
+{% block auth_quote %}"Skilora helped me hire top freelancers and grow my business."{% endblock %}
+{% block auth_attribution %}— Fatma, Startup Founder{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="space-y-2">
+        <h1 class="text-2xl font-bold tracking-tight">Create an account</h1>
+        <p class="text-sm text-muted-foreground">Join Skilora and unlock opportunities</p>
+    </div>
+
+    {% if errors is defined and errors %}
+        {% for err in errors %}
+            {{ include('components/alert.html.twig', {
+                variant: 'destructive',
+                body: err,
+            }) }}
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" action="{{ path('app_register') }}" class="space-y-4">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('register') }}">
+        {# Role selection — like JavaFX role picker #}
+        <div class="space-y-2">
+            {{ include('components/label.html.twig', { text: 'I am a...', required: true }) }}
+            <div class="grid grid-cols-2 gap-2" x-data="{ role: '{{ last_role|default('USER') }}' }">
+                <input type="hidden" name="role" :value="role">
+                <button type="button" @click="role = 'USER'"
+                    :class="role === 'USER' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50 hover:bg-muted/30'"
+                    class="flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-center transition-all cursor-pointer">
+                    <i data-lucide="user" class="h-5 w-5"></i>
+                    <span class="text-xs font-medium">Freelancer</span>
+                </button>
+                <button type="button" @click="role = 'EMPLOYER'"
+                    :class="role === 'EMPLOYER' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50 hover:bg-muted/30'"
+                    class="flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-center transition-all cursor-pointer">
+                    <i data-lucide="briefcase" class="h-5 w-5"></i>
+                    <span class="text-xs font-medium">Client</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            {{ include('components/label.html.twig', { for: 'full_name', text: 'Full Name', required: true }) }}
+            {{ include('components/input.html.twig', {
+                type: 'text',
+                name: 'full_name',
+                id: 'full_name',
+                placeholder: 'Enter your full name',
+                value: last_full_name|default(''),
+                required: true,
+            }) }}
+        </div>
+
+        <div class="space-y-2">
+            {{ include('components/label.html.twig', { for: 'username', text: 'Username', required: true }) }}
+            {{ include('components/input.html.twig', {
+                type: 'text',
+                name: 'username',
+                id: 'username',
+                placeholder: 'Choose a username',
+                value: last_username|default(''),
+                required: true,
+            }) }}
+        </div>
+
+        <div class="space-y-2">
+            {{ include('components/label.html.twig', { for: 'email', text: 'Email', required: true }) }}
+            {{ include('components/input.html.twig', {
+                type: 'email',
+                name: 'email',
+                id: 'email',
+                placeholder: 'you@example.com',
+                value: last_email|default(''),
+                required: true,
+            }) }}
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-2">
+                {{ include('components/label.html.twig', { for: 'password', text: 'Password', required: true }) }}
+                {{ include('components/password-input.html.twig', {
+                    name: 'password',
+                    id: 'password',
+                    placeholder: '••••••••',
+                    required: true,
+                }) }}
+            </div>
+            <div class="space-y-2">
+                {{ include('components/label.html.twig', { for: 'confirm_password', text: 'Confirm', required: true }) }}
+                {{ include('components/password-input.html.twig', {
+                    name: 'confirm_password',
+                    id: 'confirm_password',
+                    placeholder: '••••••••',
+                    required: true,
+                }) }}
+            </div>
+        </div>
+
+        {{ include('components/button.html.twig', {
+            type: 'submit',
+            label: 'Create Account',
+            variant: 'default',
+            size: 'lg',
+            class: 'w-full',
+        }) }}
+    </form>
+
+    <p class="text-center text-sm text-muted-foreground">
+        Already have an account?
+        <a href="{{ path('app_login') }}" class="font-medium text-primary hover:underline">Sign in</a>
+    </p>
+</div>
+{% endblock %}

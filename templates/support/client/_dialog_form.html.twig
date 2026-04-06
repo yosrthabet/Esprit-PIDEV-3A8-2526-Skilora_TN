@@ -1,0 +1,63 @@
+{# support/client/_dialog_form.html.twig — Form fragment for new/edit ticket dialog #}
+<form method="post"
+      action="{{ ticket ? path('support_edit', {id: ticket.id}) : path('support_new') }}"
+      @submit.prevent="
+          const fd = new FormData($el);
+          try {
+              const res = await fetch($el.action, {
+                  method: 'POST',
+                  headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                  body: fd
+              });
+              const data = await res.json();
+              if (data.success) {
+                  Alpine.store('toast').success(data.message);
+                  $dispatch('close-edit-dialog');
+                  window.location.reload();
+              } else {
+                  Alpine.store('toast').error(data.message || 'An error occurred.');
+              }
+          } catch (e) {
+              Alpine.store('toast').error('Network error. Please try again.');
+          }
+      "
+      class="space-y-4">
+
+    <div>
+        <label class="block text-sm font-medium text-foreground mb-1">{{ form.subject.vars.label }}</label>
+        {{ form_widget(form.subject, {attr: {class: 'w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring'}}) }}
+        {{ form_errors(form.subject) }}
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ form.category.vars.label }}</label>
+            {{ form_widget(form.category, {attr: {class: 'w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring'}}) }}
+            {{ form_errors(form.category) }}
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-foreground mb-1">{{ form.priority.vars.label }}</label>
+            {{ form_widget(form.priority, {attr: {class: 'w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring'}}) }}
+            {{ form_errors(form.priority) }}
+        </div>
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-foreground mb-1">{{ form.description.vars.label }}</label>
+        {{ form_widget(form.description, {attr: {class: 'w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring', rows: 5}}) }}
+        {{ form_errors(form.description) }}
+    </div>
+
+    {{ form_rest(form) }}
+
+    <div class="flex justify-end gap-3 pt-2 border-t border-border">
+        <button type="button" @click="$dispatch('close-edit-dialog')"
+                class="inline-flex h-9 items-center rounded-md border border-border bg-background px-4 text-sm font-medium text-muted-foreground hover:bg-muted/50 transition-colors">
+            Cancel
+        </button>
+        <button type="submit"
+                class="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors">
+            {{ ticket ? 'Update Ticket' : 'Create Ticket' }}
+        </button>
+    </div>
+</form>

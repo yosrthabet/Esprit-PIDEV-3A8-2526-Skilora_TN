@@ -1,0 +1,84 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}Community Management{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    {# Stats #}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div class="rounded-xl border border-border bg-card p-4">
+            <p class="text-sm text-muted-foreground">Total Posts</p>
+            <p class="text-2xl font-bold">{{ total }}</p>
+        </div>
+    </div>
+
+    {# Flash messages #}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="rounded-lg border px-4 py-3 text-sm
+                {{ label == 'success' ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400' : '' }}
+                {{ label == 'error' ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400' : '' }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    {# Search #}
+    <div class="flex items-center gap-3">
+        <div class="relative flex-1 max-w-md">
+            <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i>
+            <input type="text"
+                   id="searchInput"
+                   value="{{ searchQuery }}"
+                   placeholder="Search posts or authors..."
+                   class="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+        </div>
+    </div>
+
+    {# Posts table #}
+    <div id="postsTableWrapper">
+        {% include 'admin/community/_posts_table.html.twig' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+(function() {
+    const searchInput = document.getElementById('searchInput');
+    const wrapper = document.getElementById('postsTableWrapper');
+    let debounceTimer;
+
+    function loadPosts(page) {
+        page = page || 1;
+        const q = searchInput.value;
+        const url = '{{ path("admin_community_index") }}?q=' + encodeURIComponent(q) + '&page=' + page;
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.text())
+            .then(html => {
+                wrapper.innerHTML = html;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                bindPagination();
+            });
+    }
+
+    function bindPagination() {
+        wrapper.querySelectorAll('[data-page]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                loadPosts(this.dataset.page);
+            });
+        });
+    }
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => loadPosts(1), 300);
+    });
+
+    bindPagination();
+})();
+</script>
+{% endblock %}

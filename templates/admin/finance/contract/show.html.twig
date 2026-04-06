@@ -1,0 +1,57 @@
+{% extends 'admin/finance/layout.html.twig' %}
+{% import 'admin/finance/_macros.html.twig' as fin %}
+
+{% block finance_body %}
+<div class="mx-auto max-w-3xl space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <h2 class="text-2xl font-semibold">Contract #{{ contract.id }}</h2>
+        {% include 'admin/finance/_show_page_actions.html.twig' with {
+            edit_url: path('admin_finance_contract_edit', {id: contract.id}),
+            delete_path: path('admin_finance_contract_delete', {id: contract.id}),
+            token: csrf_token('delete' ~ contract.id),
+            list_url: path('admin_finance_contract_index'),
+        } only %}
+    </div>
+
+    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <dl class="grid gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Employee</dt>
+                <dd class="mt-1 text-sm">{{ contract.user ? (contract.user.fullName ~ ' (' ~ contract.user.username ~ ')') : '—' }}</dd>
+            </div>
+            <div class="sm:col-span-2">
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Company</dt>
+                <dd class="mt-1 text-sm">{{ contract.company ? contract.company.name : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Type</dt>
+                <dd class="mt-1 text-sm">{{ contract.type|default('—') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</dt>
+                <dd class="mt-1 text-sm">{{ fin.status_badge(contract.status) }}</dd>
+            </div>
+            <div class="sm:col-span-2">
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Poste dans notre société</dt>
+                <dd class="mt-1 text-sm">{{ contract.position|default('—') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Salaire de base (TND)</dt>
+                <dd class="mt-1 text-sm">{{ contract.salary is not null ? contract.salary|number_format(2, '.', ' ') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Date de début du travail</dt>
+                <dd class="mt-1 text-sm">{{ contract.startDate ? contract.startDate|date('Y-m-d') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Date de fin du contrat</dt>
+                <dd class="mt-1 text-sm">{{ contract.endDate ? contract.endDate|date('Y-m-d') : '—' }}</dd>
+            </div>
+            <div class="sm:col-span-2">
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Ancienneté</dt>
+                <dd class="mt-1 text-sm font-medium text-foreground">{{ contract.tenureLabel ?? '—' }}</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+{% endblock finance_body %}

@@ -1,0 +1,25 @@
+﻿{% extends 'recrutement/employer/base.html.twig' %}
+
+{% block employer_title %}Lettre de motivation · Skilora{% endblock %}
+{% block page_title %}Lettre de motivation{% endblock %}
+
+{% block employer_content %}
+<div class="mx-auto max-w-3xl space-y-6">
+    <nav class="text-sm text-muted-foreground">
+        <a href="{{ path('app_employer_applications') }}" class="font-medium text-primary hover:underline">← Candidatures</a>
+    </nav>
+    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <h2 class="text-lg font-semibold text-foreground">
+            {{ candidature.candidateName }}
+        </h2>
+        {% if candidature.candidateEmail %}
+            <p class="mt-1 text-sm text-muted-foreground">{{ candidature.candidateEmail }}</p>
+        {% endif %}
+        <p class="mt-2 text-sm text-muted-foreground">
+            Offre : <span class="font-medium text-foreground">{{ candidature.jobTitle }}</span>
+        </p>
+        <hr class="my-6 border-border">
+        <div class="max-w-none whitespace-pre-wrap text-sm leading-relaxed text-foreground">{{ cover_letter }}</div>
+    </div>
+</div>
+{% endblock %}

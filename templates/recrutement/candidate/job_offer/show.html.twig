@@ -1,0 +1,151 @@
+﻿{% extends 'recrutement/candidate/base.html.twig' %}
+
+{% block candidate_title %}{{ job_offer.title }}{% endblock %}
+{% block candidate_page_title %}Détail de l’offre{% endblock %}
+
+{% set wt = job_offer.workType %}
+{% set company_label = job_offer.companyName|default(job_offer.company.name|default('')) %}
+
+{% block candidate_content %}
+<div class="mx-auto max-w-6xl">
+    <nav class="candidate-stagger mb-8 text-sm text-muted-foreground">
+        <a href="{{ path('app_candidate_offres_index') }}" class="inline-flex items-center gap-1 font-medium text-foreground/80 transition hover:text-primary">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            Toutes les offres
+        </a>
+        <span class="mx-2 opacity-50">/</span>
+        <span class="line-clamp-1 text-muted-foreground">{{ job_offer.title }}</span>
+    </nav>
+
+    <div class="candidate-stagger grid gap-8 lg:grid-cols-[1fr_340px] lg:items-start">
+        <article class="space-y-8">
+            <header class="space-y-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    {% if wt %}
+                        <span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">{{ wt|work_type_label }}</span>
+                    {% endif %}
+                    {% if job_offer.postedDate %}
+                        <span class="candidate-pill">Publiée le {{ job_offer.postedDate|date('d/m/Y') }}</span>
+                    {% endif %}
+                </div>
+                <h1 class="candidate-font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl lg:text-[2.35rem]">
+                    {{ job_offer.title }}
+                </h1>
+                {% if company_label %}
+                    <p class="flex flex-wrap items-center gap-2 text-lg text-muted-foreground">
+                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 text-sm font-bold text-primary">{{ company_label|slice(0, 1)|upper }}</span>
+                        {{ company_label }}
+                    </p>
+                {% endif %}
+                {% if job_offer.location %}
+                    <p class="flex items-center gap-2 text-sm text-muted-foreground">
+                        <svg class="h-4 w-4 shrink-0 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        {{ job_offer.location }}
+                    </p>
+                {% endif %}
+            </header>
+
+            <div class="space-y-8 rounded-3xl border border-border/80 bg-card/80 p-6 shadow-sm backdrop-blur-sm sm:p-8">
+                {% if job_offer.minSalary or job_offer.maxSalary %}
+                    <section>
+                        <h2 class="candidate-font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">Rémunération</h2>
+                        <p class="mt-2 text-lg font-semibold text-foreground">
+                            {{ job_offer.minSalary|default('—') }} – {{ job_offer.maxSalary|default('—') }}
+                            <span class="text-base font-medium text-muted-foreground">{{ job_offer.currency }}</span>
+                        </p>
+                    </section>
+                    <hr class="border-border/60">
+                {% endif %}
+                {% if job_offer.experienceLevel %}
+                    <section>
+                        <h2 class="candidate-font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">Expérience</h2>
+                        <p class="mt-2 text-foreground">{{ job_offer.experienceLevel }}</p>
+                    </section>
+                    {% if job_offer.description or job_offer.requirements %}
+                        <hr class="border-border/60">
+                    {% endif %}
+                {% endif %}
+                {% if job_offer.deadline %}
+                    <section>
+                        <h2 class="candidate-font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">Date limite</h2>
+                        <p class="mt-2 text-foreground">{{ job_offer.deadline|date('d/m/Y') }}</p>
+                    </section>
+                    {% if job_offer.description or job_offer.requirements %}
+                        <hr class="border-border/60">
+                    {% endif %}
+                {% endif %}
+                {% if job_offer.description %}
+                    <section>
+                        <h2 class="candidate-font-display text-base font-semibold text-foreground">Description</h2>
+                        <div class="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{{ job_offer.description }}</div>
+                    </section>
+                {% endif %}
+                {% if job_offer.requirements %}
+                    <section class="rounded-2xl border border-border/60 bg-muted/30 p-5">
+                        <h2 class="candidate-font-display text-base font-semibold text-foreground">Exigences</h2>
+                        <div class="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{{ job_offer.requirements }}</div>
+                    </section>
+                {% endif %}
+                {% if job_offer.skillsRequired %}
+                    <section>
+                        <h2 class="candidate-font-display text-base font-semibold text-foreground">Compétences</h2>
+                        <div class="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{{ job_offer.skillsRequired }}</div>
+                    </section>
+                {% endif %}
+                {% if job_offer.benefits %}
+                    <section>
+                        <h2 class="candidate-font-display text-base font-semibold text-foreground">Avantages</h2>
+                        <div class="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{{ job_offer.benefits }}</div>
+                    </section>
+                {% endif %}
+            </div>
+        </article>
+
+        <aside class="lg:sticky lg:top-6">
+            <div class="space-y-4 rounded-3xl border border-border/80 bg-card/90 p-6 shadow-lg shadow-primary/5 backdrop-blur-md">
+                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Candidature</p>
+                {% if has_applied and my_application %}
+                    {% set st = my_application.status %}
+                    {% if st == 'ACCEPTED' %}
+                        {% set tone = 'border-emerald-500/35 bg-emerald-500/10 dark:bg-emerald-500/15 ring-emerald-500/20' %}
+                        {% set icon_bg = 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' %}
+                    {% elseif st == 'REJECTED' %}
+                        {% set tone = 'border-rose-500/35 bg-rose-500/10 dark:bg-rose-500/15 ring-rose-500/20' %}
+                        {% set icon_bg = 'bg-rose-500/20 text-rose-700 dark:text-rose-300' %}
+                    {% else %}
+                        {% set tone = 'border-sky-500/35 bg-sky-500/10 dark:bg-sky-500/15 ring-sky-500/20' %}
+                        {% set icon_bg = 'bg-sky-500/20 text-sky-800 dark:text-sky-200' %}
+                    {% endif %}
+                    <div class="flex items-start gap-3 rounded-2xl border p-4 ring-1 {{ tone }}">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ icon_bg }}">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </span>
+                        <div class="min-w-0">
+                            <p class="font-semibold text-foreground">Votre candidature</p>
+                            <p class="mt-1 inline-flex rounded-full border border-border/80 bg-background/80 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-foreground">
+                                {{ my_application.statusLabelFr }}
+                            </p>
+                            <p class="mt-2 text-sm text-muted-foreground">
+                                Statut défini par le recruteur. Envoyée le {{ my_application.appliedAt|date('d/m/Y à H:i') }}.
+                            </p>
+                        </div>
+                    </div>
+                {% elseif is_employer %}
+                    <p class="rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+                        En tant qu’employeur, vous consultez cette fiche en lecture seule. Les candidatures en ligne sont réservées aux comptes candidats.
+                    </p>
+                {% else %}
+                    <p class="text-sm leading-relaxed text-muted-foreground">
+                        Préparez votre CV (PDF ou Word, 5&nbsp;Mo max). Une lettre de motivation est facultative.
+                    </p>
+                    <a href="{{ path('app_candidate_offres_apply', {id: job_offer.id}) }}"
+                       class="candidate-font-display mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-center text-base font-semibold text-primary-foreground shadow-md transition hover:bg-primary/90 hover:shadow-lg">
+                        Postuler maintenant
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    </a>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}

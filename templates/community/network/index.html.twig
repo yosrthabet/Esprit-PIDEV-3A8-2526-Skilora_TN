@@ -1,0 +1,530 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}Réseau & messagerie{% endblock %}
+
+{% macro invite_badge(status) %}
+    {% if status == 'pending' %}
+        {{ include('components/badge.html.twig', { label: 'En attente', variant: 'warning' }) }}
+    {% elseif status == 'accepted' %}
+        {{ include('components/badge.html.twig', { label: 'Ami', variant: 'success' }) }}
+    {% elseif status == 'declined' %}
+        {{ include('components/badge.html.twig', { label: 'Refusée', variant: 'destructive' }) }}
+    {% elseif status == 'cancelled' %}
+        {{ include('components/badge.html.twig', { label: 'Annulée', variant: 'secondary' }) }}
+    {% else %}
+        {{ include('components/badge.html.twig', { label: status, variant: 'outline' }) }}
+    {% endif %}
+{% endmacro %}
+
+{% block content %}
+<div class="mx-auto max-w-7xl animate-fade-in pb-8" x-data="{ activeTab: '{{ selected_conversation ? 'messages' : 'invitations' }}' }">
+    {% include 'community/_subnav.html.twig' %}
+
+    {# ===== Stats bar ===== #}
+    <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {% set pending_count = 0 %}
+        {% for inv in received_invitations %}
+            {% if inv.isPending %}{% set pending_count = pending_count + 1 %}{% endif %}
+        {% endfor %}
+        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
+                <svg class="h-5 w-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-foreground">{{ friends|length }}</p>
+                <p class="text-xs text-muted-foreground">Ami{{ friends|length != 1 ? 's' : '' }}</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10">
+                <svg class="h-5 w-5 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-foreground">{{ pending_count }}</p>
+                <p class="text-xs text-muted-foreground">En attente</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+                <svg class="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-foreground">{{ conversations|length }}</p>
+                <p class="text-xs text-muted-foreground">Conversation{{ conversations|length != 1 ? 's' : '' }}</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
+                <svg class="h-5 w-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-foreground">{{ sent_invitations|length }}</p>
+                <p class="text-xs text-muted-foreground">Envoyée{{ sent_invitations|length != 1 ? 's' : '' }}</p>
+            </div>
+        </div>
+    </div>
+
+    {# ===== Tab switcher ===== #}
+    <div class="mb-6 inline-flex items-center rounded-xl bg-muted/60 p-1 backdrop-blur-sm">
+        <button type="button" @click="activeTab = 'invitations'"
+                :class="activeTab === 'invitations' ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50' : 'text-muted-foreground hover:text-foreground'"
+                class="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+            Invitations
+            {% if pending_count > 0 %}
+                <span class="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">{{ pending_count }}</span>
+            {% endif %}
+        </button>
+        <button type="button" @click="activeTab = 'messages'"
+                :class="activeTab === 'messages' ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50' : 'text-muted-foreground hover:text-foreground'"
+                class="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            Messages
+        </button>
+        <button type="button" @click="activeTab = 'friends'"
+                :class="activeTab === 'friends' ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50' : 'text-muted-foreground hover:text-foreground'"
+                class="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            Mes amis
+        </button>
+    </div>
+
+    {# ============================================================ #}
+    {# TAB 1 — INVITATIONS                                          #}
+    {# ============================================================ #}
+    <div x-show="activeTab === 'invitations'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
+
+        {# ---- Invite a friend form ---- #}
+        <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div class="flex items-center gap-3 border-b border-border bg-gradient-to-r from-primary/5 to-transparent px-6 py-4">
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                    <svg class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-foreground">Envoyer une invitation</h3>
+                    <p class="text-xs text-muted-foreground">Invitez un membre à rejoindre votre réseau</p>
+                </div>
+            </div>
+            <div class="p-5 sm:p-6">
+                {{ form_start(invite_form, { attr: { class: 'flex flex-col gap-4 lg:flex-row lg:items-end' } }) }}
+                    {{ form_errors(invite_form) }}
+                    <div class="min-w-0 flex-1 space-y-1.5">
+                        {{ form_label(invite_form.invitee, 'Membre', { label_attr: { class: 'text-xs font-semibold text-foreground' } }) }}
+                        {{ form_widget(invite_form.invitee, { attr: { class: 'flex h-10 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring' } }) }}
+                        {{ form_errors(invite_form.invitee) }}
+                    </div>
+                    <div class="min-w-0 flex-[1.4] space-y-1.5">
+                        {{ form_label(invite_form.note, 'Message (optionnel)', { label_attr: { class: 'text-xs font-semibold text-foreground' } }) }}
+                        {{ form_widget(invite_form.note) }}
+                        {{ form_errors(invite_form.note) }}
+                    </div>
+                    <div class="shrink-0">
+                        {{ include('components/button.html.twig', { label: 'Envoyer', type: 'submit', variant: 'default', class: 'h-10 w-full min-w-[140px] lg:w-auto', icon_before: '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>' }) }}
+                    </div>
+                {{ form_end(invite_form) }}
+            </div>
+        </div>
+
+        {# ---- Received invitations ---- #}
+        <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div class="flex items-center justify-between border-b border-border px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-500/10">
+                        <svg class="h-5 w-5 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-foreground">Demandes reçues</h3>
+                        <p class="text-xs text-muted-foreground">{{ pending_count }} en attente</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-5 sm:p-6">
+                {% set has_pending_in = false %}
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {% for inv in received_invitations %}
+                        {% if inv.isPending %}
+                            {% set has_pending_in = true %}
+                            {% set initials = inv.inviter.fullName|default(inv.inviter.username)|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
+                            <article class="group relative overflow-hidden rounded-xl border border-border bg-gradient-to-b from-background to-muted/20 p-5 text-center shadow-sm transition-all duration-200 hover:border-primary/20 hover:shadow-md">
+                                <div class="mx-auto flex justify-center">
+                                    {{ include('components/avatar.html.twig', { initials: initials, size: 'lg', class: 'h-16 w-16 text-base ring-4 ring-primary/10 transition-transform duration-200 group-hover:scale-105' }) }}
+                                </div>
+                                <p class="mt-3 text-sm font-semibold text-foreground">{{ inv.inviter.fullName|default(inv.inviter.username) }}</p>
+                                <p class="text-xs text-muted-foreground">@{{ inv.inviter.username }}</p>
+                                {% if inv.note %}
+                                    <div class="mx-auto mt-3 max-w-[200px] rounded-lg bg-muted/40 px-3 py-2">
+                                        <p class="line-clamp-2 text-xs leading-relaxed text-muted-foreground">« {{ inv.note }} »</p>
+                                    </div>
+                                {% endif %}
+                                <p class="mt-2 text-[10px] tabular-nums text-muted-foreground">{{ inv.createdAt|date('d/m/Y à H:i') }}</p>
+                                <div class="mt-4 flex gap-2">
+                                    <form method="post" action="{{ path('app_community_invitation_accept', { id: inv.id }) }}" class="flex-1">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('invitation_' ~ inv.id) }}">
+                                        <button type="submit" class="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-[0.98]">
+                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            Accepter
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{{ path('app_community_invitation_decline', { id: inv.id }) }}" class="flex-1">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('invitation_' ~ inv.id) }}">
+                                        <button type="submit" class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-background py-2 text-sm font-semibold text-muted-foreground shadow-sm transition-all hover:bg-muted hover:text-foreground active:scale-[0.98]">
+                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            Refuser
+                                        </button>
+                                    </form>
+                                </div>
+                            </article>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% if not has_pending_in %}
+                    <div class="flex flex-col items-center justify-center py-10 text-center">
+                        <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+                            <svg class="h-7 w-7 text-muted-foreground/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                        </div>
+                        <p class="mt-3 text-sm font-medium text-foreground">Aucune demande en attente</p>
+                        <p class="mt-1 max-w-xs text-xs text-muted-foreground">Les nouvelles invitations apparaîtront ici automatiquement.</p>
+                    </div>
+                {% endif %}
+
+                {# History of non-pending received invitations #}
+                {% set has_other_in = false %}
+                {% for inv in received_invitations %}
+                    {% set has_other_in = has_other_in or not inv.isPending %}
+                {% endfor %}
+                {% if has_other_in %}
+                    <div class="mt-6 border-t border-border pt-5">
+                        <p class="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Historique reçu</p>
+                        <div class="flex flex-wrap gap-2">
+                            {% for inv in received_invitations %}
+                                {% if not inv.isPending %}
+                                    {% set initials = inv.inviter.fullName|default(inv.inviter.username)|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
+                                    <div class="inline-flex items-center gap-2 rounded-full border border-border bg-background py-1.5 pl-1.5 pr-3 text-xs shadow-sm">
+                                        {{ include('components/avatar.html.twig', { initials: initials, size: 'sm', class: 'h-6 w-6 text-[10px]' }) }}
+                                        <span class="font-medium text-foreground">{{ inv.inviter.username }}</span>
+                                        {{ _self.invite_badge(inv.status) }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ---- Sent invitations ---- #}
+        <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div class="flex items-center gap-3 border-b border-border px-6 py-4">
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500/10">
+                    <svg class="h-5 w-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-foreground">Invitations envoyées</h3>
+                    <p class="text-xs text-muted-foreground">{{ sent_invitations|length }} invitation{{ sent_invitations|length != 1 ? 's' : '' }}</p>
+                </div>
+            </div>
+            <div class="p-5 sm:p-6">
+                {% if sent_invitations|length > 0 %}
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {% for inv in sent_invitations %}
+                            {% set initials = inv.invitee.fullName|default(inv.invitee.username)|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
+                            <div class="flex items-center gap-3 rounded-xl border border-border bg-background p-3.5 shadow-sm transition-colors hover:bg-muted/30">
+                                {{ include('components/avatar.html.twig', { initials: initials, size: 'sm' }) }}
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-medium text-foreground">{{ inv.invitee.fullName|default(inv.invitee.username) }}</p>
+                                    <p class="text-xs text-muted-foreground">@{{ inv.invitee.username }}</p>
+                                </div>
+                                <div class="flex flex-col items-end gap-1">
+                                    {{ _self.invite_badge(inv.status) }}
+                                    {% if inv.isPending %}
+                                        <form method="post" action="{{ path('app_community_invitation_cancel', { id: inv.id }) }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('invitation_' ~ inv.id) }}">
+                                            <button type="submit" class="text-[11px] font-medium text-muted-foreground transition-colors hover:text-destructive">Annuler</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="flex flex-col items-center justify-center py-8 text-center">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+                            <svg class="h-6 w-6 text-muted-foreground/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                        </div>
+                        <p class="mt-3 text-sm font-medium text-foreground">Aucune invitation envoyée</p>
+                        <p class="mt-1 text-xs text-muted-foreground">Utilisez le formulaire ci-dessus pour inviter un membre.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# ============================================================ #}
+    {# TAB 2 — MESSAGES (Messenger-style)                           #}
+    {# ============================================================ #}
+    <div x-show="activeTab === 'messages'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+
+        {# New conversation form #}
+        {% if friends|length > 0 %}
+            <div class="mb-5 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div class="flex items-center gap-3 border-b border-border bg-gradient-to-r from-blue-500/5 to-transparent px-6 py-3.5">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                        <svg class="h-4 w-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    </div>
+                    <p class="text-sm font-semibold text-foreground">Nouvelle conversation</p>
+                </div>
+                <div class="p-4 sm:p-5">
+                    {{ form_start(start_dm_form, { attr: { class: 'flex flex-col gap-3 md:flex-row md:items-end' } }) }}
+                        {{ form_errors(start_dm_form) }}
+                        <div class="min-w-0 space-y-1.5 md:w-48 lg:w-56">
+                            {{ form_label(start_dm_form.recipient, null, { label_attr: { class: 'text-xs font-medium text-muted-foreground' } }) }}
+                            {{ form_widget(start_dm_form.recipient, { attr: { class: 'flex h-10 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring' } }) }}
+                            {{ form_errors(start_dm_form.recipient) }}
+                        </div>
+                        <div class="min-w-0 flex-1 space-y-1.5">
+                            {{ form_label(start_dm_form.body, null, { label_attr: { class: 'text-xs font-medium text-muted-foreground' } }) }}
+                            {{ form_widget(start_dm_form.body, { attr: { rows: 1, class: 'flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none' } }) }}
+                            {{ form_errors(start_dm_form.body) }}
+                        </div>
+                        <div class="shrink-0">
+                            {{ include('components/button.html.twig', { label: 'Envoyer', type: 'submit', variant: 'default', class: 'h-10 w-full md:w-auto', icon_before: '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>' }) }}
+                        </div>
+                    {{ form_end(start_dm_form) }}
+                </div>
+            </div>
+        {% endif %}
+
+        {# Messenger layout #}
+        <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-md">
+            <div class="flex h-[560px] flex-col md:flex-row">
+                {# -- Sidebar: conversation list -- #}
+                <aside class="flex w-full shrink-0 flex-col border-b border-border bg-muted/5 md:w-72 md:border-b-0 md:border-r lg:w-80">
+                    <div class="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+                        <h3 class="text-sm font-bold text-foreground">Discussions</h3>
+                        <span class="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">{{ conversations|length }}</span>
+                    </div>
+                    <nav class="min-h-0 flex-1 overflow-y-auto">
+                        {% if conversations|length > 0 %}
+                            <ul class="p-2 space-y-0.5">
+                                {% for c in conversations %}
+                                    {% set other = c.otherParticipant(app.user) %}
+                                    {% set oi = other.fullName|default(other.username)|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
+                                    {% set lastMsg = c.messages|last %}
+                                    {% set is_selected = selected_conversation and selected_conversation.id == c.id %}
+                                    <li>
+                                        <a href="{{ path('app_community_network', { c: c.id }) }}"
+                                           class="flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-150
+                                                  {{ is_selected ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-muted/60' }}"
+                                           {% if not is_selected %}@click="activeTab = 'messages'"{% endif %}>
+                                            <div class="relative shrink-0">
+                                                {{ include('components/avatar.html.twig', { initials: oi, size: 'default', class: 'h-11 w-11' }) }}
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center justify-between gap-2">
+                                                    <span class="truncate text-sm font-semibold {{ is_selected ? 'text-primary' : 'text-foreground' }}">{{ other.fullName|default(other.username) }}</span>
+                                                    {% if lastMsg %}
+                                                        <span class="shrink-0 text-[10px] tabular-nums text-muted-foreground">{{ lastMsg.createdAt|date('H:i') }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                <p class="mt-0.5 truncate text-xs text-muted-foreground">
+                                                    {% if lastMsg %}
+                                                        {% if lastMsg.sender.id == app.user.id %}<span class="font-medium text-muted-foreground/80">Vous :</span> {% endif %}
+                                                        {{ lastMsg.body|length > 40 ? lastMsg.body|slice(0, 40) ~ '…' : lastMsg.body }}
+                                                    {% else %}
+                                                        <span class="italic">Aucun message</span>
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="flex flex-col items-center justify-center px-6 py-12 text-center">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+                                    <svg class="h-6 w-6 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                </div>
+                                <p class="mt-3 text-xs font-medium text-foreground">Aucune discussion</p>
+                                <p class="mt-1 text-[11px] text-muted-foreground">
+                                    {% if friends|length > 0 %}
+                                        Démarrez une conversation ci-dessus.
+                                    {% else %}
+                                        Ajoutez des amis d'abord.
+                                    {% endif %}
+                                </p>
+                            </div>
+                        {% endif %}
+                    </nav>
+                </aside>
+
+                {# -- Chat area -- #}
+                <div class="flex min-w-0 flex-1 flex-col">
+                    {% if selected_conversation %}
+                        {% set other = selected_conversation.otherParticipant(app.user) %}
+                        {% set oi = other.fullName|default(other.username)|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
+
+                        {# Chat header #}
+                        <div class="flex items-center gap-3 border-b border-border bg-background/80 px-5 py-3 backdrop-blur-sm">
+                            {{ include('components/avatar.html.twig', { initials: oi, size: 'default' }) }}
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-bold text-foreground">{{ other.fullName|default(other.username) }}</p>
+                                <p class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                                    Ami · @{{ other.username }}
+                                </p>
+                            </div>
+                        </div>
+
+                        {# Messages area #}
+                        <div class="flex-1 space-y-4 overflow-y-auto bg-gradient-to-b from-muted/5 to-background px-4 py-4 sm:px-6" id="chat-messages">
+                            {% for m in selected_conversation.messages %}
+                                {% set mine = m.sender.id == app.user.id %}
+                                {% set si = m.sender.fullName|default(m.sender.username)|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
+                                <div class="group flex gap-2.5 {{ mine ? 'flex-row-reverse' : '' }}">
+                                    <div class="mt-auto shrink-0">
+                                        {{ include('components/avatar.html.twig', { initials: si, size: 'sm', class: 'h-8 w-8 text-[10px]' }) }}
+                                    </div>
+                                    <div class="flex max-w-[70%] flex-col {{ mine ? 'items-end' : 'items-start' }}">
+                                        <span class="mb-1 px-1 text-[11px] font-semibold {{ mine ? 'text-primary' : 'text-muted-foreground' }}">
+                                            {{ mine ? 'Vous' : m.sender.fullName|default(m.sender.username) }}
+                                        </span>
+                                        <div class="relative">
+                                            <div class="rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm
+                                                        {{ mine ? 'rounded-br-md bg-primary text-primary-foreground' : 'rounded-bl-md border border-border bg-card text-card-foreground' }}">
+                                                <p class="whitespace-pre-wrap break-words">{{ m.body }}</p>
+                                            </div>
+                                            {# CRUD action buttons on hover #}
+                                            {% if mine %}
+                                                <div class="absolute {{ mine ? '-left-20' : '-right-20' }} top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                                                    <a href="{{ path('app_community_dm_edit', { id: m.id }) }}"
+                                                       title="Modifier"
+                                                       class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-all hover:bg-primary/10 hover:text-primary hover:border-primary/30">
+                                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                    </a>
+                                                    <form method="post" action="{{ path('app_community_dm_delete', { id: m.id }) }}" onsubmit="return confirm('Supprimer ce message ?');">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_dm_' ~ m.id) }}">
+                                                        <button type="submit"
+                                                                title="Supprimer"
+                                                                class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-all hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30">
+                                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="mt-1 flex items-center gap-1.5 px-1">
+                                            <span class="text-[10px] tabular-nums text-muted-foreground/70">
+                                                {{ m.createdAt|date('H:i') }}
+                                                {% if m.updatedAt > m.createdAt %}<span class="ml-0.5 italic">· modifié</span>{% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="flex flex-1 flex-col items-center justify-center py-16 text-center">
+                                    <div class="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                                        <svg class="h-8 w-8 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                    </div>
+                                    <p class="mt-4 text-sm font-semibold text-foreground">Démarrez la conversation</p>
+                                    <p class="mt-1 max-w-[240px] text-xs text-muted-foreground">Envoyez votre premier message à {{ other.fullName|default(other.username) }}.</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        {# Reply form #}
+                        {% if reply_form %}
+                            <div class="border-t border-border bg-card/95 px-4 py-3 backdrop-blur-sm sm:px-5">
+                                {{ form_start(reply_form, { attr: { class: 'flex items-end gap-3' } }) }}
+                                    <input type="hidden" name="conversation_id" value="{{ selected_conversation.id }}">
+                                    <div class="min-w-0 flex-1">
+                                        {{ form_widget(reply_form.body, { attr: { class: 'w-full resize-none rounded-xl border border-input bg-background px-4 py-2.5 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', placeholder: 'Écrire un message…', rows: 1 } }) }}
+                                        {{ form_errors(reply_form.body) }}
+                                    </div>
+                                    <button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                    </button>
+                                {{ form_end(reply_form) }}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        {# No conversation selected #}
+                        <div class="flex flex-1 flex-col items-center justify-center gap-4 p-10 text-center">
+                            <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-muted to-muted/60">
+                                <svg class="h-10 w-10 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-base font-semibold text-foreground">Sélectionnez une discussion</p>
+                                <p class="mt-1 max-w-xs text-sm text-muted-foreground">
+                                    Choisissez une conversation dans la liste ou démarrez-en une nouvelle avec un ami.
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ============================================================ #}
+    {# TAB 3 — FRIENDS LIST                                         #}
+    {# ============================================================ #}
+    <div x-show="activeTab === 'friends'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div class="flex items-center justify-between border-b border-border px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500/10">
+                        <svg class="h-5 w-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-foreground">Mes amis</h3>
+                        <p class="text-xs text-muted-foreground">{{ friends|length }} connexion{{ friends|length != 1 ? 's' : '' }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 sm:p-6">
+                {% if friends|length > 0 %}
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {% for friend in friends %}
+                            {% set fi = friend.fullName|default(friend.username)|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
+                            <div class="flex items-center gap-3 rounded-xl border border-border bg-background p-4 shadow-sm transition-all hover:border-primary/20 hover:shadow-md">
+                                <div class="relative">
+                                    {{ include('components/avatar.html.twig', { initials: fi, size: 'default', class: 'h-11 w-11' }) }}
+                                    <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-background bg-green-500"></span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-semibold text-foreground">{{ friend.fullName|default(friend.username) }}</p>
+                                    <p class="text-xs text-muted-foreground">@{{ friend.username }}</p>
+                                </div>
+                                {{ include('components/badge.html.twig', { label: 'Ami', variant: 'success' }) }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="flex flex-col items-center justify-center py-12 text-center">
+                        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                            <svg class="h-8 w-8 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        </div>
+                        <p class="mt-4 text-sm font-semibold text-foreground">Aucun ami pour le moment</p>
+                        <p class="mt-1 max-w-xs text-sm text-muted-foreground">Envoyez des invitations ou acceptez des demandes pour ajouter des amis.</p>
+                        <button type="button" @click="activeTab = 'invitations'" class="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                            Voir les invitations
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Auto-scroll to bottom of chat #}
+{% if selected_conversation %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const el = document.getElementById('chat-messages');
+        if (el) el.scrollTop = el.scrollHeight;
+    });
+</script>
+{% endif %}
+{% endblock %}

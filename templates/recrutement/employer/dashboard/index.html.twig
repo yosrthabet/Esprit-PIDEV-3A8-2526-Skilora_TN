@@ -1,0 +1,129 @@
+﻿{% extends 'recrutement/employer/base.html.twig' %}
+
+{% block employer_title %}Tableau de bord · Skilora{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% set status_fr = { 'OPEN': 'Ouverte', 'CLOSED': 'Fermée', 'DRAFT': 'Brouillon' } %}
+
+{% block employer_content %}
+<div class="space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h2 class="text-2xl font-bold tracking-tight text-foreground">
+                Bon retour{% if app.user %}, {{ app.user.fullName|default(app.user.email) }}{% endif %}
+            </h2>
+            <p class="mt-1 text-sm text-muted-foreground">
+                {% if company %}
+                    Gérez les offres pour <span class="font-medium text-foreground">{{ company.name }}</span>.
+                {% else %}
+                    Votre compte employeur n’est pas encore lié à une entreprise.
+                {% endif %}
+            </p>
+        </div>
+        {% if company %}
+            <a href="{{ path('app_employer_job_offer_new') }}"
+               class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-ring">
+                Nouvelle offre
+            </a>
+        {% endif %}
+    </div>
+
+    {% if company is null %}
+        {{ include('components/alert.html.twig', {
+            title: 'Profil entreprise manquant',
+            body: 'Aucune entreprise ne vous est associée en tant que responsable. Demandez à un administrateur de définir <code class="text-xs">companies.owner_id</code> sur votre identifiant utilisateur, ou créez la ligne entreprise en base de données.',
+        }) }}
+    {% else %}
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+                <p class="text-sm font-medium text-muted-foreground">Offres ouvertes</p>
+                <p class="mt-2 text-3xl font-bold text-card-foreground">{{ open_job_count }}</p>
+            </div>
+            <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+                <p class="text-sm font-medium text-muted-foreground">Total des offres</p>
+                <p class="mt-2 text-3xl font-bold text-card-foreground">{{ total_job_count }}</p>
+            </div>
+            <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+                <p class="text-sm font-medium text-muted-foreground">Candidatures reçues</p>
+                <p class="mt-2 text-3xl font-bold text-card-foreground">{{ applications_count }}</p>
+                <a href="{{ path('app_employer_applications') }}" class="mt-3 inline-block text-xs font-medium text-primary hover:underline">Gérer les statuts →</a>
+            </div>
+            <div class="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-center">
+                <a href="{{ path('app_employer_job_offer_index') }}"
+                   class="inline-flex h-9 w-full items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-ring">
+                    Voir toutes les offres
+                </a>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border p-6">
+                <div>
+                    <h3 class="font-semibold leading-none">Offres récentes</h3>
+                    <p class="mt-1 text-sm text-muted-foreground">Dernières publications de votre entreprise</p>
+                </div>
+                <a href="{{ path('app_employer_job_offer_new') }}"
+                   class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-ring">
+                    Nouvelle offre
+                </a>
+            </div>
+            <div class="p-6 pt-0">
+                {% if recent_job_offers is empty %}
+                    <p class="py-8 text-center text-sm text-muted-foreground">Aucune offre pour le moment. Créez votre première annonce.</p>
+                {% else %}
+                    <ul class="divide-y divide-border">
+                        {% for job in recent_job_offers %}
+                            <li class="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-2">
+                                <div>
+                                    <a href="{{ path('app_employer_job_offer_show', {id: job.id}) }}" class="font-medium text-foreground hover:underline">{{ job.title }}</a>
+                                    <p class="mt-0.5 text-xs text-muted-foreground">{{ job.location|default('—') }} · {{ job.postedDate ? job.postedDate|date('d/m/Y') : '' }}</p>
+                                </div>
+                                {{ include('components/badge.html.twig', {
+                                    label: status_fr[job.status]|default(job.status),
+                                    variant: job.status == 'OPEN' ? 'success' : 'secondary',
+                                }) }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border p-6">
+                <div>
+                    <h3 class="font-semibold leading-none">Candidatures récentes</h3>
+                    <p class="mt-1 text-sm text-muted-foreground">Derniers dossiers reçus sur vos offres</p>
+                </div>
+                <a href="{{ path('app_employer_applications') }}"
+                   class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-ring">
+                    Toutes les candidatures
+                </a>
+            </div>
+            <div class="p-6 pt-0">
+                {% if recent_candidatures is empty %}
+                    <p class="py-8 text-center text-sm text-muted-foreground">Aucune candidature pour le moment.</p>
+                {% else %}
+                    <ul class="divide-y divide-border">
+                        {% for c in recent_candidatures %}
+                            <li class="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-2">
+                                <div>
+                                    <p class="font-medium text-foreground">{{ c.candidateName }}</p>
+                                    {% if c.candidateEmail %}
+                                        <p class="mt-0.5 text-xs text-muted-foreground">{{ c.candidateEmail }}</p>
+                                    {% endif %}
+                                    <p class="mt-0.5 text-xs text-muted-foreground">{{ c.jobTitle }} · {{ c.appliedAt|date('d/m/Y H:i') }}</p>
+                                </div>
+                                {{ include('components/badge.html.twig', {
+                                    label: c.statusLabelFr,
+                                    variant: c.statusRaw == 'ACCEPTED' ? 'success' : (c.statusRaw == 'REJECTED' ? 'destructive' : 'secondary'),
+                                }) }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
