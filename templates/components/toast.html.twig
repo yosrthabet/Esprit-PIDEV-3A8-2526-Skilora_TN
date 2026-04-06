@@ -1,0 +1,59 @@
+{# components/toast.html.twig — ShadCN Toast / Sonner notifications
+
+   Usage: Dispatch from anywhere:
+     $dispatch('toast', { title: 'Saved!', description: 'Your changes have been saved.', variant: 'default' })
+   
+   Include once in base.html.twig:
+     {{ include('components/toast.html.twig') }}
+#}
+
+<div
+    x-data="{
+        toasts: [],
+        add(event) {
+            const toast = {
+                id: Date.now(),
+                title: event.detail.title || '',
+                description: event.detail.description || '',
+                variant: event.detail.variant || 'default',
+                duration: event.detail.duration || 5000,
+            };
+            this.toasts.push(toast);
+            setTimeout(() => this.remove(toast.id), toast.duration);
+        },
+        remove(id) {
+            this.toasts = this.toasts.filter(t => t.id !== id);
+        }
+    }"
+    @toast.window="add($event)"
+    class="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none"
+>
+    <template x-for="toast in toasts" :key="toast.id">
+        <div
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 translate-y-2"
+            :class="{
+                'border-border bg-background text-foreground': toast.variant === 'default',
+                'border-destructive bg-destructive text-destructive-foreground': toast.variant === 'destructive',
+                'border-green-500/50 bg-green-50 text-green-900 dark:bg-green-950 dark:text-green-100': toast.variant === 'success',
+            }"
+            class="pointer-events-auto rounded-lg border p-4 shadow-lg"
+        >
+            <div class="flex items-start gap-3">
+                <div class="flex-1">
+                    <p x-show="toast.title" x-text="toast.title" class="text-sm font-semibold"></p>
+                    <p x-show="toast.description" x-text="toast.description" class="text-sm text-muted-foreground mt-1"></p>
+                </div>
+                <button @click="remove(toast.id)" class="shrink-0 rounded-md p-1 opacity-70 hover:opacity-100 transition-opacity">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </template>
+</div>

@@ -1,0 +1,35 @@
+{# components/card.html.twig — ShadCN Card #}
+{#
+  Usage: {{ include('components/card.html.twig', {
+      title: 'Card Title',
+      description: 'Optional description',
+      class: '',
+  }) }}
+  Or use as a block wrapper in parent templates.
+#}
+{% set extra_class = class|default('') %}
+
+<div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm {{ extra_class }}">
+    {% if title is defined or description is defined %}
+    <div class="flex flex-col space-y-1.5 p-6">
+        {% if title is defined and title %}
+            <h3 class="font-semibold leading-none tracking-tight">{{ title }}</h3>
+        {% endif %}
+        {% if description is defined and description %}
+            <p class="text-sm text-muted-foreground">{{ description }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="p-6 pt-0">
+        {% block card_content %}
+            {{ content|default('')|raw }}
+        {% endblock %}
+    </div>
+
+    {% if footer is defined and footer %}
+    <div class="flex items-center p-6 pt-0">
+        {{ footer|raw }}
+    </div>
+    {% endif %}
+</div>

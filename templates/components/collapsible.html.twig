@@ -1,0 +1,23 @@
+{# components/collapsible.html.twig — ShadCN Collapsible
+
+   Usage: {{ include('components/collapsible.html.twig', {
+       trigger: '<button>Toggle</button>',
+       content: '<div>Hidden content here</div>',
+       open: false,
+   }) }}
+#}
+{% set open = open|default(false) %}
+
+<div x-data="{ open: {{ open ? 'true' : 'false' }} }" class="{{ class|default('') }}">
+    <div @click="open = !open" class="cursor-pointer">
+        {{ trigger|default('')|raw }}
+    </div>
+
+    <div
+        x-show="open"
+        x-collapse
+        x-cloak
+    >
+        {{ content|default('')|raw }}
+    </div>
+</div>
