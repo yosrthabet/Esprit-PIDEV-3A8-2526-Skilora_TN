@@ -1,0 +1,81 @@
+{# auth/login.html.twig — Login page using ShadCN components #}
+{% extends 'layouts/auth.html.twig' %}
+
+{% block title %}Sign In — Skilora{% endblock %}
+
+{% block auth_quote %}"The platform that changed how I find freelance work in Tunisia."{% endblock %}
+{% block auth_attribution %}— Ahmed, Senior Developer{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="space-y-2">
+        <h1 class="text-2xl font-bold tracking-tight">Welcome back</h1>
+        <p class="text-sm text-muted-foreground">Enter your credentials to access your account</p>
+    </div>
+
+    {% if login_error %}
+        {{ include('components/alert.html.twig', {
+            variant: 'destructive',
+            title: 'Authentication failed',
+            body: login_error|trans({}, 'security'),
+        }) }}
+    {% endif %}
+
+    <form method="post" action="{{ path('app_login') }}" class="space-y-4">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+        <div class="space-y-2">
+            {{ include('components/label.html.twig', { for: '_username', text: 'Username or email', required: true }) }}
+            {{ include('components/input.html.twig', {
+                type: 'text',
+                name: '_username',
+                id: '_username',
+                placeholder: 'Username or email',
+                value: last_username,
+                required: true,
+                autofocus: true,
+            }) }}
+        </div>
+
+        <div class="space-y-2">
+            {{ include('components/label.html.twig', { for: '_password', text: 'Password', required: true }) }}
+            {{ include('components/password-input.html.twig', {
+                name: '_password',
+                id: '_password',
+                placeholder: 'Enter your password',
+                required: true,
+            }) }}
+        </div>
+
+        <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="_remember_me" class="h-4 w-4 rounded border-input text-primary focus:ring-primary">
+                <span class="text-muted-foreground">Remember me</span>
+            </label>
+            <a href="{{ path('app_forgot_password') }}" class="text-sm font-medium text-primary hover:underline">Forgot password?</a>
+        </div>
+
+        {{ include('components/button.html.twig', {
+            type: 'submit',
+            label: 'Sign In',
+            variant: 'default',
+            size: 'lg',
+            class: 'w-full',
+        }) }}
+    </form>
+
+    <div class="relative">
+        <div class="absolute inset-0 flex items-center">
+            <span class="w-full border-t border-border"></span>
+        </div>
+        <div class="relative flex justify-center text-xs uppercase">
+            <span class="bg-background px-2 text-muted-foreground">Or</span>
+        </div>
+    </div>
+
+    <p class="text-center text-sm text-muted-foreground">
+        Don't have an account?
+        <a href="{{ path('app_register') }}" class="font-medium text-primary hover:underline">Create account</a>
+    </p>
+</div>
+{% endblock %}

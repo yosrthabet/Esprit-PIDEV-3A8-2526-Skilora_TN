@@ -1,0 +1,109 @@
+{% extends 'admin/finance/layout.html.twig' %}
+{% import 'admin/finance/_macros.html.twig' as fin %}
+
+{% block finance_body %}
+<div class="mx-auto max-w-3xl space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <h2 class="text-2xl font-semibold">Payslip #{{ payslip.id }}</h2>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ path('admin_finance_payslip_export_pdf', {id: payslip.id}) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-muted/80">
+                <i data-lucide="file-down" class="h-4 w-4"></i> Export PDF
+            </a>
+            {% include 'admin/finance/_show_page_actions.html.twig' with {
+                edit_url: path('admin_finance_payslip_edit', {id: payslip.id}),
+                delete_path: path('admin_finance_payslip_delete', {id: payslip.id}),
+                token: csrf_token('delete' ~ payslip.id),
+                list_url: path('admin_finance_payslip_index'),
+            } only %}
+        </div>
+    </div>
+
+    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <dl class="grid gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Employee</dt>
+                <dd class="mt-1 text-sm">{{ payslip.user ? (payslip.user.fullName ~ ' (' ~ payslip.user.username ~ ')') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Period</dt>
+                <dd class="mt-1 text-sm">{% if payslip.month and payslip.year %}{{ payslip.month }}/{{ payslip.year }}{% else %}—{% endif %}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Currency</dt>
+                <dd class="mt-1 text-sm">{{ payslip.currency|default('—') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Base salary</dt>
+                <dd class="mt-1 text-sm">{{ payslip.baseSalary is not null ? payslip.baseSalary|number_format(2, '.', ' ') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Overtime hours</dt>
+                <dd class="mt-1 text-sm">{{ payslip.overtimeHours is not null ? payslip.overtimeHours|number_format(2, '.', ' ') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Overtime total</dt>
+                <dd class="mt-1 text-sm">{{ payslip.overtimeTotal is not null ? payslip.overtimeTotal|number_format(2, '.', ' ') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Bonuses</dt>
+                <dd class="mt-1 text-sm">{{ payslip.bonuses is not null ? payslip.bonuses|number_format(2, '.', ' ') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Autres retenues</dt>
+                <dd class="mt-1 text-sm text-destructive">{{ payslip.otherDeductions is not null ? payslip.otherDeductions|number_format(2, '.', ' ') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">CNSS (auto, 9,18 %)</dt>
+                <dd class="mt-1 text-sm font-medium">{{ payslip.computedCnss|number_format(2, '.', ' ') }} {{ payslip.currency|default('') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">IRPP (auto, 26 % après CNSS)</dt>
+                <dd class="mt-1 text-sm font-medium">{{ payslip.computedIrpp|number_format(2, '.', ' ') }} {{ payslip.currency|default('') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Brut (calculé)</dt>
+                <dd class="mt-1 text-sm font-medium">{{ payslip.estimatedGross|number_format(2, '.', ' ') }} {{ payslip.currency|default('') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total retenues (CNSS+IRPP+autres)</dt>
+                <dd class="mt-1 text-sm font-medium text-destructive">{{ payslip.computedTotalDeductions|number_format(2, '.', ' ') }} {{ payslip.currency|default('') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Net estimé</dt>
+                <dd class="mt-1 text-sm font-semibold">{{ payslip.estimatedNet|number_format(2, '.', ' ') }} {{ payslip.currency|default('') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</dt>
+                <dd class="mt-1 text-sm">{{ fin.status_badge(payslip.status) }}</dd>
+            </div>
+            <div class="sm:col-span-2">
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Deductions JSON</dt>
+                <dd class="mt-1 font-mono text-xs break-all">{{ payslip.deductionsJson|default('—') }}</dd>
+            </div>
+            <div class="sm:col-span-2">
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Bonuses JSON</dt>
+                <dd class="mt-1 font-mono text-xs break-all">{{ payslip.bonusesJson|default('—') }}</dd>
+            </div>
+        </dl>
+    </div>
+
+    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <h3 class="text-lg font-semibold">Paiement et notification SMS</h3>
+        <p class="mt-2 text-sm text-muted-foreground">
+            Déclenche l’appel à l’API de paiement (si <code class="rounded bg-muted px-1 py-0.5 text-xs">PAYMENT_API_URL</code> est défini dans <code class="rounded bg-muted px-1 py-0.5 text-xs">.env.local</code>), puis envoie un SMS récapitulatif au numéro indiqué. Les clés et champs supplémentaires du fournisseur peuvent être ajoutés via <code class="rounded bg-muted px-1 py-0.5 text-xs">PAYMENT_EXTRA_JSON</code> / <code class="rounded bg-muted px-1 py-0.5 text-xs">SMS_EXTRA_JSON</code>.
+        </p>
+        <form method="post" action="{{ path('admin_finance_payslip_pay_notify', {id: payslip.id}) }}" class="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+            <input type="hidden" name="_token" value="{{ csrf_token('pay_notify' ~ payslip.id) }}">
+            <div class="min-w-[220px] flex-1">
+                <label for="pay-notify-phone" class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Téléphone (SMS)</label>
+                <input id="pay-notify-phone" name="phone" type="tel" required autocomplete="tel" placeholder="+216 XX XXX XXX"
+                       class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            </div>
+            <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90">
+                <i data-lucide="smartphone" class="h-4 w-4"></i>
+                Payer et envoyer le SMS
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock finance_body %}

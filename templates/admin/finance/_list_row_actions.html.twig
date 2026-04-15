@@ -1,0 +1,19 @@
+{# show_url (optionnel), edit_url, delete_path, token #}
+<div class="inline-flex flex-wrap items-center justify-end gap-2">
+    {% if show_url is defined and show_url %}
+        <a href="{{ show_url }}"
+           class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-sm ring-1 ring-border/60 transition hover:bg-muted/80 hover:ring-border">
+            <i data-lucide="eye" class="h-4 w-4 shrink-0"></i>
+            Voir
+        </a>
+    {% endif %}
+    <a href="{{ edit_url }}"
+       class="inline-flex items-center gap-1.5 rounded-lg border-2 border-primary bg-primary px-3 py-2 text-sm font-bold text-primary-foreground shadow-md transition hover:opacity-95">
+        <i data-lucide="pencil" class="h-4 w-4 shrink-0"></i>
+        Modifier
+    </a>
+    {% include 'admin/finance/_delete_modal.html.twig' with {
+        delete_path: delete_path,
+        token: token,
+    } only %}
+</div>

@@ -1,0 +1,169 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}User Management{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-fade-in"
+     x-data="{
+         search: '',
+         roleFilter: 'all',
+         statusFilter: 'all',
+         currentPage: 1,
+         perPage: 10,
+
+         get filteredRows() {
+             const rows = Array.from(document.querySelectorAll('#user-table-body tbody tr[data-role]'));
+             const q = this.search.toLowerCase();
+             return rows.filter(row => {
+                 const name = row.dataset.name || '';
+                 const email = row.dataset.email || '';
+                 const role = row.dataset.role || '';
+                 const status = row.dataset.status || '';
+                 const matchSearch = !q || name.includes(q) || email.includes(q);
+                 const matchRole = this.roleFilter === 'all' || role === this.roleFilter;
+                 const matchStatus = this.statusFilter === 'all' || status === this.statusFilter;
+                 return matchSearch && matchRole && matchStatus;
+             });
+         },
+
+         get totalPages() {
+             return Math.max(1, Math.ceil(this.filteredRows.length / this.perPage));
+         },
+
+         get visibleCount() {
+             return this.filteredRows.length;
+         },
+
+         applyFilters() {
+             const allRows = document.querySelectorAll('#user-table-body tbody tr[data-role]');
+             const filtered = this.filteredRows;
+             const start = (this.currentPage - 1) * this.perPage;
+             const end = start + this.perPage;
+
+             allRows.forEach(row => row.style.display = 'none');
+             filtered.forEach((row, i) => {
+                 row.style.display = (i >= start && i < end) ? '' : 'none';
+             });
+         },
+
+         changePage(p) {
+             this.currentPage = Math.max(1, Math.min(p, this.totalPages));
+             this.applyFilters();
+         },
+
+         resetFilters() {
+             this.currentPage = 1;
+             this.applyFilters();
+         },
+
+         async refreshTable() {
+             try {
+                 const res = await fetch('{{ path('app_admin_user_list') }}', {
+                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                 });
+                 document.getElementById('user-table-body').innerHTML = await res.text();
+                 this.$nextTick(() => { if (window.lucide) lucide.createIcons(); this.resetFilters(); });
+             } catch(e) {}
+         }
+     }"
+     x-init="$nextTick(() => applyFilters())"
+     id="user-table-container"
+     @refresh-table.window="refreshTable()"
+     @refresh-table="refreshTable()">
+
+    {# Header #}
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h2 class="text-xl font-semibold tracking-tight text-foreground">User Management</h2>
+            <p class="text-sm text-muted-foreground mt-0.5">Manage system users, roles, and permissions.</p>
+        </div>
+        <button @click="$dispatch('open-edit-dialog', {
+                    title: 'Create New User',
+                    description: 'Fill in the details to add a new user.',
+                    url: '{{ path('app_admin_user_new') }}',
+                    size: 'lg'
+                })"
+                class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors">
+            <i data-lucide="plus" class="h-4 w-4"></i>
+            Add User
+        </button>
+    </div>
+
+    {# Filters bar #}
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        {# Search #}
+        <div class="relative flex-1">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"></i>
+            <input type="text"
+                   x-model="search"
+                   @input.debounce.200ms="resetFilters()"
+                       placeholder="Search by name or email..."
+                       class="flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 pl-9 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+        </div>
+
+        {# Role filter #}
+        <select x-model="roleFilter" @change="resetFilters()"
+                class="flex h-9 w-auto rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer">
+            <option value="all">All Roles</option>
+            <option value="ADMIN">Administrator</option>
+            <option value="EMPLOYER">Client</option>
+            <option value="TRAINER">Trainer</option>
+            <option value="USER">Freelancer</option>
+        </select>
+
+        {# Status filter #}
+        <select x-model="statusFilter" @change="resetFilters()"
+                class="flex h-9 w-auto rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+        </select>
+    </div>
+
+    {# Table card #}
+    <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between border-b border-border px-5 py-4">
+            <div>
+                <h3 class="text-sm font-semibold text-foreground">All Users</h3>
+                <p class="text-xs text-muted-foreground mt-0.5">
+                    <span x-text="visibleCount"></span> of {{ users|length }} user{{ users|length != 1 ? 's' : '' }}
+                </p>
+            </div>
+        </div>
+
+        <div id="user-table-body">
+            {{ include('admin/user/_table.html.twig', { users: users }) }}
+        </div>
+
+        {# Pagination #}
+        <div class="flex items-center justify-between border-t border-border px-5 py-3 bg-muted/20">
+            <p class="text-xs font-medium text-muted-foreground">
+                Page <span x-text="currentPage"></span> of <span x-text="totalPages"></span>
+            </p>
+            <div class="flex items-center gap-0.5">
+                <button @click="changePage(1)"
+                        :disabled="currentPage <= 1"
+                        class="inline-flex items-center justify-center rounded-lg p-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                    <i data-lucide="chevrons-left" class="h-4 w-4"></i>
+                </button>
+                <button @click="changePage(currentPage - 1)"
+                        :disabled="currentPage <= 1"
+                        class="inline-flex items-center justify-center rounded-lg p-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                    <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                </button>
+                <span class="inline-flex items-center justify-center rounded-lg bg-primary/10 text-primary text-xs font-semibold min-w-[28px] h-7 px-2" x-text="currentPage"></span>
+                <button @click="changePage(currentPage + 1)"
+                        :disabled="currentPage >= totalPages"
+                        class="inline-flex items-center justify-center rounded-lg p-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                    <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                </button>
+                <button @click="changePage(totalPages)"
+                        :disabled="currentPage >= totalPages"
+                        class="inline-flex items-center justify-center rounded-lg p-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                    <i data-lucide="chevrons-right" class="h-4 w-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

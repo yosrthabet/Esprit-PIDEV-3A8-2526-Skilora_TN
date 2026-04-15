@@ -1,0 +1,66 @@
+{% extends 'admin/finance/layout.html.twig' %}
+
+{% block finance_body %}
+<div class="space-y-6">
+    <div class="flex flex-col gap-4 rounded-2xl border border-border/80 bg-gradient-to-br from-card via-card to-muted/20 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Primes</p>
+            <h2 class="text-xl font-bold tracking-tight text-foreground">Liste des primes</h2>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <form method="get" action="{{ path('admin_finance_bonus_index') }}" class="flex flex-wrap gap-2">
+                <input type="search" name="q" value="{{ search_query }}"
+                       placeholder="Rechercher un employé…"
+                       class="min-w-[12rem] rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+                <button type="submit" class="rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-accent">Rechercher</button>
+            </form>
+            <a href="{{ path('admin_finance_bonus_new') }}"
+               class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md transition hover:opacity-95">
+                <i data-lucide="plus" class="h-4 w-4"></i>
+                Nouvelle prime
+            </a>
+        </div>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-md">
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[640px] text-left text-sm">
+                <thead class="border-b border-border bg-muted/40 text-muted-foreground">
+                    <tr>
+                        <th class="px-4 py-3 font-medium">Employee</th>
+                        <th class="px-4 py-3 font-medium">Amount (TND)</th>
+                        <th class="px-4 py-3 font-medium">Reason</th>
+                        <th class="px-4 py-3 font-medium">Date awarded</th>
+                        <th class="px-4 py-3 font-medium text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                    {% for bonus in bonuses %}
+                        <tr class="hover:bg-muted/30">
+                            <td class="px-4 py-3">{{ bonus.user ? (bonus.user.fullName ?: bonus.user.username) : '—' }}</td>
+                            <td class="px-4 py-3">{{ bonus.amount is not null ? bonus.amount|number_format(2, '.', ' ') : '—' }}</td>
+                            <td class="px-4 py-3 max-w-xs truncate">{{ bonus.reason|default('—') }}</td>
+                            <td class="px-4 py-3">{{ bonus.dateAwarded ? bonus.dateAwarded|date('Y-m-d') : '—' }}</td>
+                            <td class="px-4 py-3 text-right">
+                                {% include 'admin/finance/_list_row_actions.html.twig' with {
+                                    show_url: path('admin_finance_bonus_show', {id: bonus.id}),
+                                    edit_url: path('admin_finance_bonus_edit', {id: bonus.id}),
+                                    delete_path: path('admin_finance_bonus_delete', {id: bonus.id}),
+                                    token: csrf_token('delete' ~ bonus.id),
+                                } only %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="px-4 py-8 text-center text-muted-foreground">No bonuses found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="border-t border-border px-4 py-2 text-right text-sm text-muted-foreground">
+            Total: {{ bonuses|length }}
+        </div>
+    </div>
+</div>
+{% endblock finance_body %}

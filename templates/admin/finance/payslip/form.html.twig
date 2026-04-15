@@ -1,0 +1,141 @@
+{% extends 'admin/finance/layout.html.twig' %}
+{% form_theme form 'form/finance_form_layout.html.twig' %}
+
+{% block finance_body %}
+<div class="mx-auto max-w-6xl space-y-6 pb-10" data-payslip-workbench>
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold tracking-tight text-foreground">
+                <span class="text-primary">+</span> {{ page_title }}
+            </h2>
+        </div>
+        <a href="{{ path('admin_finance_payslip_index') }}" class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
+            <i data-lucide="arrow-left" class="h-4 w-4"></i> Liste
+        </a>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-lg">
+        <div class="border-b border-border bg-muted/40 px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Saisie</p>
+        </div>
+
+        {{ form_start(form, { attr: { class: 'p-5 sm:p-6', novalidate: 'novalidate', id: 'payslip-form' } }) }}
+
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="sm:col-span-2">{{ form_row(form.user) }}</div>
+            <div>{{ form_row(form.month) }}</div>
+            <div>{{ form_row(form.year) }}</div>
+            <div>{{ form_row(form.currency) }}</div>
+            <div>{{ form_row(form.baseSalary) }}</div>
+            <div>{{ form_row(form.overtimeHours) }}</div>
+            <div>{{ form_row(form.overtimeRate) }}</div>
+            <div>{{ form_row(form.bonuses) }}</div>
+            <div class="lg:col-span-2">
+                <label class="mb-1.5 block text-sm font-medium text-foreground">CNSS (auto)</label>
+                <input type="text" readonly id="payslip-cnss-display" value="—"
+                       class="w-full cursor-not-allowed rounded-lg border border-input bg-muted/60 px-3 py-2 text-sm text-muted-foreground" autocomplete="off" />
+            </div>
+            <div class="lg:col-span-2">
+                <label class="mb-1.5 block text-sm font-medium text-foreground">IRPP (auto)</label>
+                <input type="text" readonly id="payslip-irpp-display" value="—"
+                       class="w-full cursor-not-allowed rounded-lg border border-input bg-muted/60 px-3 py-2 text-sm text-muted-foreground" autocomplete="off" />
+            </div>
+            <div class="lg:col-span-2">{{ form_row(form.otherDeductions) }}</div>
+            <div class="lg:col-span-2">{{ form_row(form.status) }}</div>
+        </div>
+
+        <div class="mx-5 mb-6 mt-2 flex flex-wrap gap-2 rounded-xl border border-border bg-muted/35 px-4 py-4 sm:mx-6">
+            <div class="min-w-[140px] flex-1">
+                <p class="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground"><i data-lucide="coins" class="h-3.5 w-3.5"></i> Salaire brut</p>
+                <p id="payslip-gross-display" class="mt-1 text-lg font-bold tabular-nums text-foreground">0,00 TND</p>
+            </div>
+            <div class="min-w-[140px] flex-1">
+                <p class="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground"><i data-lucide="minus-circle" class="h-3.5 w-3.5"></i> Total retenues</p>
+                <p id="payslip-deduct-display" class="mt-1 text-lg font-bold tabular-nums text-destructive">0,00 TND</p>
+            </div>
+            <div class="min-w-[140px] flex-1">
+                <p class="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground"><i data-lucide="badge-check" class="h-3.5 w-3.5"></i> Net</p>
+                <p id="payslip-net-display" class="mt-1 text-lg font-bold tabular-nums text-foreground">0,00 TND</p>
+            </div>
+        </div>
+
+        <p id="payslip-calc-error" class="mx-6 mb-4 hidden text-sm text-destructive" role="alert"></p>
+
+        <div class="flex flex-wrap gap-3 border-t border-border bg-muted/25 px-5 py-4 sm:px-6">
+            <button type="button" id="payslip-btn-calculate" class="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-muted/80">
+                <i data-lucide="calculator" class="h-4 w-4"></i> Calculer
+            </button>
+            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95">
+                <i data-lucide="check" class="h-4 w-4"></i>
+                {{ is_edit ? 'Mettre à jour' : 'Enregistrer le bulletin' }}
+            </button>
+            {% if is_edit and payslip is defined %}
+                <a href="{{ path('admin_finance_payslip_export_pdf', { id: payslip.id }) }}" class="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">
+                    <i data-lucide="file-down" class="h-4 w-4"></i> Export PDF
+                </a>
+            {% endif %}
+            <a href="{{ path('admin_finance_payslip_new') }}" class="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">
+                <i data-lucide="rotate-ccw" class="h-4 w-4"></i> Réinitialiser
+            </a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+
+<script>
+(function () {
+  const url = {{ calc_preview_url|json_encode|raw }};
+  const form = document.getElementById('payslip-form');
+  if (!form) return;
+
+  const nf = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  function readPayload() {
+    const fd = new FormData(form);
+    const pick = (n) => parseFloat(String(fd.get(n) || '0').replace(',', '.')) || 0;
+    return {
+      baseSalary: pick('payslip[baseSalary]'),
+      overtimeHours: pick('payslip[overtimeHours]'),
+      overtimeRate: pick('payslip[overtimeRate]'),
+      bonuses: pick('payslip[bonuses]'),
+      otherDeductions: pick('payslip[otherDeductions]'),
+    };
+  }
+
+  function setDisplay(c) {
+    document.getElementById('payslip-cnss-display').value = nf.format(c.cnss) + ' TND';
+    document.getElementById('payslip-irpp-display').value = nf.format(c.irpp) + ' TND';
+    document.getElementById('payslip-gross-display').textContent = nf.format(c.gross) + ' TND';
+    document.getElementById('payslip-deduct-display').textContent = nf.format(c.total_deductions) + ' TND';
+    document.getElementById('payslip-net-display').textContent = nf.format(c.net) + ' TND';
+  }
+
+  const errEl = document.getElementById('payslip-calc-error');
+
+  async function runCalc() {
+    errEl.classList.add('hidden');
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(readPayload()),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const c = await res.json();
+      setDisplay(c);
+    } catch (e) {
+      errEl.textContent = 'Impossible de calculer (vérifiez les nombres).';
+      errEl.classList.remove('hidden');
+    }
+  }
+
+  form.querySelectorAll('input, select').forEach(function (el) {
+    el.addEventListener('change', function () { runCalc(); });
+    el.addEventListener('keyup', function () { runCalc(); });
+  });
+  document.getElementById('payslip-btn-calculate').addEventListener('click', runCalc);
+  runCalc();
+})();
+</script>
+{% endblock %}

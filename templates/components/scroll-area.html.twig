@@ -1,0 +1,16 @@
+{# components/scroll-area.html.twig — ShadCN Scroll Area
+
+   Usage: {{ include('components/scroll-area.html.twig', {
+       height: 'h-72',
+       content: '<ul>...</ul>',
+   }) }}
+#}
+{% set height = height|default('h-72') %}
+
+<div class="relative overflow-hidden {{ height }} {{ class|default('') }}">
+    <div class="h-full w-full overflow-y-auto overscroll-contain rounded-md
+                scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-muted-foreground/30
+                [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&:hover::-webkit-scrollbar-thumb]:bg-muted-foreground/30">
+        {{ content|default('')|raw }}
+    </div>
+</div>

@@ -1,0 +1,68 @@
+{# Ordre : Contrats → Comptes bancaires → Primes → Bulletins → Rapports & outils #}
+{% set r = app.request.attributes.get('_route') %}
+<div class="finance-entity-nav mb-8">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Skilora</p>
+            <h1 class="text-2xl font-bold tracking-tight text-foreground">Gestion financière</h1>
+        </div>
+    </div>
+    <nav class="mt-5 flex flex-wrap gap-2 rounded-2xl border border-border/80 bg-muted/30 p-1.5 shadow-inner dark:bg-muted/20" aria-label="Entités finance">
+        <a href="{{ path('admin_finance_contract_index') }}"
+           class="group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all
+                  {{ r starts with 'admin_finance_contract'
+                     ? 'border border-border bg-card text-foreground shadow-md'
+                     : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground' }}">
+            <i data-lucide="briefcase" class="h-4 w-4 shrink-0 opacity-80"></i>
+            Contrats
+        </a>
+        <a href="{{ path('admin_finance_bank_account_index') }}"
+           class="group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all
+                  {{ r starts with 'admin_finance_bank_account'
+                     ? 'border border-border bg-card text-foreground shadow-md'
+                     : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground' }}">
+            <i data-lucide="landmark" class="h-4 w-4 shrink-0 opacity-80"></i>
+            Comptes bancaires
+        </a>
+        <a href="{{ path('admin_finance_bonus_index') }}"
+           class="group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all
+                  {{ r starts with 'admin_finance_bonus'
+                     ? 'border border-border bg-card text-foreground shadow-md'
+                     : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground' }}">
+            <i data-lucide="gift" class="h-4 w-4 shrink-0 opacity-80"></i>
+            Primes
+        </a>
+        <a href="{{ path('admin_finance_payslip_index') }}"
+           class="group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all
+                  {{ r starts with 'admin_finance_payslip'
+                     ? 'border border-border bg-card text-foreground shadow-md'
+                     : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground' }}">
+            <i data-lucide="file-text" class="h-4 w-4 shrink-0 opacity-80"></i>
+            Bulletins de paie
+        </a>
+        <a href="{{ path('admin_finance_forecast') }}"
+           class="group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all
+                  {{ r starts with 'admin_finance_forecast'
+                     ? 'border border-border bg-card text-foreground shadow-md'
+                     : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground' }}">
+            <i data-lucide="trending-up" class="h-4 w-4 shrink-0 opacity-80"></i>
+            Prévision paie
+        </a>
+        <a href="{{ path('admin_finance_reports') }}"
+           class="group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all
+                  {{ r starts with 'admin_finance_reports'
+                     ? 'border border-border bg-card text-foreground shadow-md'
+                     : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground' }}">
+            <i data-lucide="bar-chart-2" class="h-4 w-4 shrink-0 opacity-80"></i>
+            Rapports &amp; outils
+        </a>
+        <a href="{{ path('admin_finance_project_payment') }}"
+           class="group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all
+                  {{ r starts with 'admin_finance_project_payment'
+                     ? 'border border-border bg-card text-foreground shadow-md'
+                     : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground' }}">
+            <i data-lucide="credit-card" class="h-4 w-4 shrink-0 opacity-80"></i>
+            Paiement projet
+        </a>
+    </nav>
+</div>

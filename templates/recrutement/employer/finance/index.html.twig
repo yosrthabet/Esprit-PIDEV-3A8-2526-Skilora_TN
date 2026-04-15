@@ -1,0 +1,363 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}Finance{% endblock %}
+
+{% block content %}
+<script>window.__EMP_PORTAL__ = {{ employer_portal_json|raw }};</script>
+<script>
+function employerDashInit() {
+  var portal = window.__EMP_PORTAL__ || { kpis: { headcount: 0, payroll_mass: 0, total_disbursed: 0, bank_alerts: 0 }, members: [], details: {} };
+  var pdfExportUrl = {{ employer_pdf_export_url|json_encode|raw }};
+  var nf = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var months = ['', 'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+  function sanitizeFilename(raw, fallback) {
+    var s = String(raw || '').trim();
+    if (!s) s = fallback;
+    s = s.replace(/[^a-z0-9_.-]+/gi, '_');
+    if (!/\.pdf$/i.test(s)) s += '.pdf';
+    return s;
+  }
+  return {
+    portal: portal,
+    search: '',
+    selectedId: portal.members.length ? portal.members[0].userId : null,
+    tab: 'payslips',
+    fmtMoney: function (v) { return nf.format(Number(v) || 0); },
+    periodHuman: function (p) {
+      if (!p || String(p).length < 7) return '—';
+      var parts = String(p).split('-');
+      var y = parts[0], m = parseInt(parts[1], 10);
+      return (months[m] || parts[1]) + ' ' + y;
+    },
+    get filteredMembers() {
+      var q = this.search.trim().toLowerCase();
+      if (!q) return this.portal.members;
+      return this.portal.members.filter(function (m) {
+        return (m.fullName || '').toLowerCase().includes(q) || String(m.userId).includes(q);
+      });
+    },
+    get d() {
+      if (this.selectedId == null) return null;
+      return this.portal.details[this.selectedId] || null;
+    },
+    pdfEmployeeId: portal.members.length ? portal.members[0].userId : null,
+    pdfStatus: '',
+    pdfStatusError: false,
+    get pdfSuggestedFilename() {
+      var m = this.portal.members.find(function (x) { return x.userId === this.pdfEmployeeId; }.bind(this));
+      var base = (m && m.fullName) ? m.fullName : 'rapport';
+      return 'rapport_finance_' + String(base).replace(/[^a-z0-9_.-]+/gi, '_').toLowerCase() + '.pdf';
+    },
+    selectMember: function (id) {
+      this.selectedId = id;
+      this.pdfEmployeeId = id;
+      this.tab = 'payslips';
+    },
+    refresh: function () { window.location.reload(); },
+    downloadFinancePdf: async function () {
+      var self = this;
+      if (self.pdfEmployeeId == null) {
+        self.pdfStatus = 'Veuillez choisir un employé.';
+        self.pdfStatusError = true;
+        return;
+      }
+      self.pdfStatus = 'Génération du PDF…';
+      self.pdfStatusError = false;
+      var url;
+      try {
+        var u = new URL(pdfExportUrl, window.location.origin);
+        u.searchParams.set('user', String(self.pdfEmployeeId));
+        url = u.toString();
+      } catch (e) {
+        url = pdfExportUrl + (pdfExportUrl.indexOf('?') >= 0 ? '&' : '?') + 'user=' + encodeURIComponent(String(self.pdfEmployeeId));
+      }
+      var name = sanitizeFilename('', self.pdfSuggestedFilename);
+      try {
+        var res = await fetch(url, {
+          credentials: 'same-origin',
+          headers: {
+            'Accept': 'application/pdf,*/*;q=0.8',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+        if (res.status === 401 || res.status === 403) {
+          self.pdfStatus = 'Accès refusé. Reconnectez-vous avec un compte employeur.';
+          self.pdfStatusError = true;
+          return;
+        }
+        if (!res.ok) {
+          self.pdfStatus = 'Erreur serveur (' + res.status + '). Réessayez ou contactez l’administrateur.';
+          self.pdfStatusError = true;
+          return;
+        }
+        var ct = (res.headers.get('Content-Type') || '').toLowerCase();
+        if (ct.indexOf('application/pdf') === -1 && ct.indexOf('application/octet-stream') === -1) {
+          self.pdfStatus = 'La réponse n’est pas un PDF (souvent: session expirée). Reconnectez-vous puis réessayez.';
+          self.pdfStatusError = true;
+          return;
+        }
+        var blob = await res.blob();
+        var usedPicker = false;
+        if (typeof window.showSaveFilePicker === 'function') {
+          try {
+            var handle = await window.showSaveFilePicker({
+              suggestedName: name,
+              types: [{ description: 'PDF', accept: { 'application/pdf': ['.pdf'] } }]
+            });
+            var writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            usedPicker = true;
+            self.pdfStatus = 'Fichier enregistré à l’emplacement choisi.';
+            self.pdfStatusError = false;
+          } catch (pickerErr) {
+            if (pickerErr && pickerErr.name === 'AbortError') {
+              self.pdfStatus = '';
+              self.pdfStatusError = false;
+              return;
+            }
+            usedPicker = false;
+          }
+        }
+        if (!usedPicker) {
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = name;
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(a.href);
+          self.pdfStatus = 'Téléchargement lancé. Utilisez « Enregistrer sous » dans le navigateur si besoin.';
+          self.pdfStatusError = false;
+        }
+      } catch (e) {
+        self.pdfStatus = 'Échec du téléchargement. Réessayez ou vérifiez votre connexion.';
+        self.pdfStatusError = true;
+      }
+    }
+  };
+}
+</script>
+
+<div x-data="employerDashInit()"
+     class="relative mx-auto max-w-7xl animate-fade-in pb-12"
+     x-init="$watch('selectedId', () => { requestAnimationFrame(() => { if (window.lucide) lucide.createIcons(); }); })">
+
+    <div class="pointer-events-none absolute -right-16 top-0 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl dark:bg-sky-500/15"></div>
+    <div class="pointer-events-none absolute left-0 top-40 h-56 w-56 rounded-full bg-primary/10 blur-3xl"></div>
+
+    <header class="relative mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+            <p class="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+                {{ employer_greeting }}, <span x-text="(d && d.member) ? d.member.fullName : '{{ employer_user_display|e('js') }}'">{{ employer_user_display }}</span> !
+            </p>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Tableau de bord financier · {{ employer_date_label }}
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" @click="refresh()"
+                    class="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted/80">
+                <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+                Actualiser
+            </button>
+        </div>
+    </header>
+
+    <section class="group relative mb-8 overflow-hidden rounded-3xl border border-border/80 bg-card shadow-xl ring-1 ring-primary/10">
+        <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary/80 via-teal-500 to-primary/60" aria-hidden="true"></div>
+        <div class="relative p-6 sm:p-8">
+            <div class="mb-4 flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">Export</span>
+                <span class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Rapport consolidé</span>
+            </div>
+            <header class="flex flex-wrap items-start gap-4">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/15 to-teal-500/10 text-primary shadow-inner">
+                    <i data-lucide="folder-open" class="h-6 w-6"></i>
+                </span>
+                <div class="min-w-0 flex-1">
+                    <h2 class="text-xl font-bold tracking-tight text-foreground">Rapport employé complet</h2>
+                    <p class="mt-1 max-w-lg text-sm text-muted-foreground">Même mise en page que l’admin : contrats, banques, primes et bulletins. Choisissez l’employé, le nom du fichier, puis enregistrez où vous voulez (navigateur compatible).</p>
+                </div>
+            </header>
+            <div class="mt-6 space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-4 dark:bg-muted/10 sm:p-5">
+                <template x-if="!portal.members.length">
+                    <p class="text-sm text-muted-foreground">Aucun employé dans le portail finance — impossible d’exporter pour l’instant.</p>
+                </template>
+                <template x-if="portal.members.length">
+                    <div class="space-y-3">
+                        <label class="block text-xs font-medium uppercase tracking-wide text-muted-foreground" for="employer-pdf-employee">Sélectionner l’employé</label>
+                        <div class="relative">
+                            <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i>
+                            <select id="employer-pdf-employee" x-model.number="pdfEmployeeId"
+                                    class="w-full appearance-none rounded-xl border border-input bg-background py-3 pl-10 pr-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50">
+                                <template x-for="m in portal.members" :key="m.userId">
+                                    <option :value="m.userId" x-text="m.fullName + ' (#' + m.userId + ')'"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <p class="text-[11px] text-muted-foreground">Comme dans l’admin : Chromium/Edge proposent le dossier d’enregistrement. Sinon le fichier est téléchargé avec un nom automatique.</p>
+                        <button type="button" @click="downloadFinancePdf()"
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm hover:opacity-95 sm:w-auto">
+                            <i data-lucide="file-text" class="h-4 w-4"></i>
+                            Générer le rapport PDF
+                        </button>
+                    </div>
+                </template>
+            </div>
+            <p class="mt-3 text-xs" :class="pdfStatusError ? 'text-destructive' : 'text-muted-foreground'" x-show="pdfStatus" x-text="pdfStatus"></p>
+        </div>
+    </section>
+
+    <section class="relative mb-8 rounded-3xl border border-border/80 bg-card p-6 shadow-md">
+        <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="text-lg font-bold text-foreground">Répertoire de l'équipe</h2>
+            <p class="text-xs text-muted-foreground">Données synchronisées avec l'admin (contrats, bulletins, primes, comptes).</p>
+        </div>
+        <div class="relative mb-6">
+            <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i>
+            <input type="search" x-model="search" placeholder="Rechercher un employé…"
+                   class="w-full rounded-xl border border-input bg-background py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+        </div>
+
+        <div class="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-2xl border border-border bg-muted/30 p-4 dark:bg-muted/15">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Effectif total</span>
+                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400"><i data-lucide="users" class="h-4 w-4"></i></span>
+                </div>
+                <p class="mt-2 text-2xl font-bold tabular-nums text-foreground" x-text="portal.kpis.headcount">0</p>
+            </div>
+            <div class="rounded-2xl border border-border bg-muted/30 p-4 dark:bg-muted/15">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Masse salariale</span>
+                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-400"><i data-lucide="banknote" class="h-4 w-4"></i></span>
+                </div>
+                <p class="mt-2 text-2xl font-bold tabular-nums text-foreground"><span x-text="fmtMoney(portal.kpis.payroll_mass)">0,00</span> <span class="text-sm font-medium text-muted-foreground">TND</span></p>
+            </div>
+            <div class="rounded-2xl border border-border bg-muted/30 p-4 dark:bg-muted/15">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Total déboursé</span>
+                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"><i data-lucide="coins" class="h-4 w-4"></i></span>
+                </div>
+                <p class="mt-2 text-2xl font-bold tabular-nums text-foreground"><span x-text="fmtMoney(portal.kpis.total_disbursed)">0,00</span> <span class="text-sm font-medium text-muted-foreground">TND</span></p>
+            </div>
+            <div class="rounded-2xl border border-border bg-muted/30 p-4 dark:bg-muted/15">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Alertes bancaires</span>
+                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/15 text-red-600 dark:text-red-400"><i data-lucide="shield-alert" class="h-4 w-4"></i></span>
+                </div>
+                <p class="mt-2 text-2xl font-bold tabular-nums text-foreground" x-text="portal.kpis.bank_alerts">0</p>
+            </div>
+        </div>
+
+        <div class="-mx-2 overflow-x-auto pb-2">
+            <div class="flex min-w-max gap-3 px-2">
+                <template x-for="m in filteredMembers" :key="m.userId">
+                    <button type="button"
+                            @click="selectMember(m.userId)"
+                            class="flex w-[9.5rem] shrink-0 flex-col items-center rounded-2xl border p-4 text-center transition"
+                            :class="selectedId === m.userId ? 'border-primary bg-primary/10 ring-2 ring-primary/40' : 'border-border bg-muted/20 hover:border-primary/30 dark:bg-muted/10'">
+                        <span class="flex h-12 w-12 items-center justify-center rounded-full bg-background text-sm font-bold text-primary ring-2 ring-primary/25 dark:bg-card" x-text="m.initials"></span>
+                        <span class="mt-2 line-clamp-2 text-xs font-semibold text-foreground" x-text="m.fullName"></span>
+                        <span class="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground" x-text="m.roleHint || '—'"></span>
+                    </button>
+                </template>
+            </div>
+        </div>
+    </section>
+
+    <template x-if="d">
+        <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-md">
+            <div class="flex flex-wrap gap-1 border-b border-border bg-muted/30 p-1.5">
+                <button type="button" @click="tab = 'payslips'" :class="tab === 'payslips' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'" class="rounded-lg px-4 py-2 text-sm font-medium transition">Historique des paies</button>
+                <button type="button" @click="tab = 'bonuses'" :class="tab === 'bonuses' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'" class="rounded-lg px-4 py-2 text-sm font-medium transition">Primes &amp; bonus</button>
+                <button type="button" @click="tab = 'banks'" :class="tab === 'banks' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'" class="rounded-lg px-4 py-2 text-sm font-medium transition">Comptes bancaires</button>
+            </div>
+            <div class="p-6">
+                <div x-show="tab === 'payslips'" class="space-y-3">
+                    <template x-if="!d.payslips || d.payslips.length === 0"><p class="text-sm text-muted-foreground">Aucun bulletin.</p></template>
+                    <template x-for="p in d.payslips" :key="p.period">
+                        <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/20 px-4 py-3 dark:bg-muted/10">
+                            <div><p class="text-xs font-medium uppercase text-muted-foreground">Période</p><p class="font-semibold text-foreground" x-text="p.period"></p></div>
+                            <div><p class="text-xs text-muted-foreground">Brut</p><p class="tabular-nums font-medium" x-text="fmtMoney(p.gross_estimated) + ' TND'"></p></div>
+                            <div><p class="text-xs text-muted-foreground">Net</p><p class="tabular-nums font-semibold text-primary" x-text="fmtMoney(p.net_estimated) + ' TND'"></p></div>
+                        </div>
+                    </template>
+                </div>
+                <div x-show="tab === 'bonuses'" class="space-y-3" x-cloak>
+                    <template x-if="!d.bonuses || d.bonuses.length === 0"><p class="text-sm text-muted-foreground">Aucune prime.</p></template>
+                    <template x-for="(b, bIdx) in d.bonuses" :key="bIdx">
+                        <div class="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 dark:bg-amber-950/20">
+                            <p class="text-lg font-bold tabular-nums text-amber-900 dark:text-amber-100" x-text="fmtMoney(b.amount) + ' TND'"></p>
+                            <p class="text-xs text-muted-foreground"><span x-text="b.reason || 'Prime'"></span></p>
+                        </div>
+                    </template>
+                </div>
+                <div x-show="tab === 'banks'" class="space-y-3" x-cloak>
+                    <template x-if="!d.bank_accounts || d.bank_accounts.length === 0"><p class="text-sm text-muted-foreground">Aucun compte.</p></template>
+                    <template x-for="(a, idx) in d.bank_accounts" :key="idx">
+                        <div class="rounded-xl border border-border bg-muted/20 px-4 py-3 dark:bg-muted/10">
+                            <p class="font-semibold text-foreground" x-text="(a.bank_name || 'Banque') + ' — ' + (a.currency || 'TND')"></p>
+                            <p class="mt-1 break-all font-mono text-xs text-muted-foreground" x-text="'IBAN : ' + (a.iban || '—')"></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <section class="mt-10 overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-lg">
+        <div class="border-b border-border bg-muted/30 px-6 py-4">
+            <h2 class="text-lg font-bold text-foreground">Calculateur tunisien (bulletins)</h2>
+            <p class="text-xs text-muted-foreground">CNSS 9,18 % + IRPP 26 % sur (brut − CNSS), aligné sur l'admin.</p>
+        </div>
+        <div class="px-6 py-5">
+            <form method="get" action="{{ path('app_employer_finance') }}" class="flex flex-wrap items-end gap-3">
+                <div class="min-w-[140px] flex-1">
+                    <label class="mb-1 block text-xs font-medium text-muted-foreground">Salaire brut</label>
+                    <input type="number" step="0.01" min="0" name="simp_gross" value="{{ simp_gross_input }}"
+                           class="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50" />
+                </div>
+                <div class="w-28">
+                    <label class="mb-1 block text-xs font-medium text-muted-foreground">Devise</label>
+                    <select name="simp_currency" class="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50">
+                        <option value="TND"{% if simp_currency == 'TND' %} selected{% endif %}>TND</option>
+                        <option value="EUR"{% if simp_currency == 'EUR' %} selected{% endif %}>EUR</option>
+                        <option value="USD"{% if simp_currency == 'USD' %} selected{% endif %}>USD</option>
+                    </select>
+                </div>
+                <button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:opacity-95">Calculer</button>
+            </form>
+            {% if simp_tax %}
+                <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                    <div class="rounded-xl border border-sky-500/35 bg-sky-500/10 p-3 text-sm text-sky-900 dark:text-sky-100">Brut<br><strong class="text-lg text-foreground">{{ simp_tax.gross|number_format(2, ',', ' ') }}</strong></div>
+                    <div class="rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-100">CNSS<br><strong class="text-lg text-foreground">− {{ simp_tax.cnss|number_format(2, ',', ' ') }}</strong></div>
+                    <div class="rounded-xl border border-red-500/35 bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-100">IRPP<br><strong class="text-lg text-foreground">− {{ simp_tax.irpp|number_format(2, ',', ' ') }}</strong></div>
+                    <div class="rounded-xl border border-purple-500/35 bg-purple-500/10 p-3 text-sm text-purple-900 dark:text-purple-100">Total déduc.<br><strong class="text-lg text-foreground">− {{ simp_tax.total_deductions|number_format(2, ',', ' ') }}</strong></div>
+                    <div class="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-900 dark:text-emerald-100 sm:col-span-2">Net<br><strong class="text-2xl text-foreground">{{ simp_tax.net|number_format(2, ',', ' ') }} {{ simp_currency }}</strong></div>
+                </div>
+            {% endif %}
+        </div>
+        <details class="border-t border-border bg-muted/25 px-6 py-3">
+            <summary class="cursor-pointer text-sm text-muted-foreground hover:text-foreground">Barème IRPP annuel (expert)</summary>
+            <form method="get" action="{{ path('app_employer_finance') }}" class="mt-3 flex flex-wrap gap-2">
+                <input type="hidden" name="simp_gross" value="{{ simp_gross_input }}">
+                <input type="hidden" name="simp_currency" value="{{ simp_currency }}">
+                <input type="number" name="gross" value="{{ gross_input }}" placeholder="Brut mensuel TND" class="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+                <button type="submit" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">OK</button>
+            </form>
+            {% if tax_estimate %}
+                <p class="mt-2 text-xs text-muted-foreground">Net (barème) : {{ tax_estimate.net_monthly|number_format(2, '.', ' ') }} TND</p>
+            {% endif %}
+        </details>
+    </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.lucide) lucide.createIcons();
+});
+</script>
+{% endblock %}

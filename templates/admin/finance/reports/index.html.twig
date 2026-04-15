@@ -1,0 +1,401 @@
+{% extends 'admin/finance/layout.html.twig' %}
+
+
+
+{% block finance_body %}
+
+<div class="relative mx-auto max-w-4xl pb-14">
+    <div class="pointer-events-none absolute -right-16 top-8 h-56 w-56 rounded-full bg-primary/15 blur-3xl dark:bg-primary/10" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute -left-20 top-64 h-48 w-48 rounded-full bg-teal-500/10 blur-3xl dark:bg-teal-500/15" aria-hidden="true"></div>
+
+    <div class="relative space-y-14">
+
+    {# ——— Export PDF ——— #}
+    <section class="group relative overflow-hidden rounded-3xl border border-border/80 bg-card shadow-xl ring-1 ring-primary/10 transition hover:shadow-2xl hover:ring-primary/20">
+        <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary/80 via-teal-500 to-primary/60" aria-hidden="true"></div>
+        <div class="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-primary/[0.07] transition group-hover:bg-primary/[0.11] dark:bg-primary/10" aria-hidden="true"></div>
+        <div class="relative p-6 sm:p-8">
+            <div class="mb-4 flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">Export</span>
+                <span class="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Rapport consolidé</span>
+            </div>
+            <header class="flex flex-wrap items-start gap-4">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/15 to-teal-500/10 text-primary shadow-inner">
+                    <i data-lucide="folder-open" class="h-6 w-6"></i>
+                </span>
+                <div class="min-w-0 flex-1">
+                    <h2 class="text-xl font-bold tracking-tight text-foreground">Rapport employé complet</h2>
+                    <p class="mt-1 max-w-lg text-sm text-muted-foreground">Générez un PDF unique : contrats, banques, primes et bulletins — données issues de la gestion finance.</p>
+                </div>
+            </header>
+
+        <div class="mt-6 space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-4 dark:bg-muted/10 sm:p-5">
+
+            <label class="block text-xs font-medium uppercase tracking-wide text-muted-foreground" for="pdf-employee">Sélectionner l’employé</label>
+
+            <div class="relative">
+
+                <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></i>
+
+                <select id="pdf-employee" class="w-full appearance-none rounded-xl border border-input bg-background py-3 pl-10 pr-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50">
+
+                    <option value="">Choisir un employé…</option>
+
+                    {% for u in employees_for_export %}
+
+                        <option value="{{ u.id }}">{{ u.fullName }} (#{{ u.id }})</option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+            <button type="button" id="btn-download-pdf" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm hover:opacity-95 sm:w-auto">
+
+                <i data-lucide="file-text" class="h-4 w-4"></i>
+
+                Générer le rapport PDF
+
+            </button>
+
+        </div>
+
+        <p id="pdf-export-status" class="mt-3 hidden text-xs text-muted-foreground"></p>
+        </div>
+    </section>
+
+    {# Séparateur visuel entre les deux outils #}
+    <div class="relative flex items-center justify-center py-1" aria-hidden="true">
+        <div class="absolute inset-x-8 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-border to-transparent sm:inset-x-16"></div>
+        <span class="relative flex items-center gap-2 rounded-full border border-border bg-background px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground shadow-sm">
+            <span class="h-1 w-1 rounded-full bg-primary/60"></span>
+            Outil suivant
+            <span class="h-1 w-1 rounded-full bg-teal-500/60"></span>
+        </span>
+    </div>
+
+    {# ——— Calculateur ——— #}
+    <section class="group relative overflow-hidden rounded-3xl border border-border/80 bg-card text-card-foreground shadow-xl ring-1 ring-amber-500/15 dark:ring-amber-500/10 transition hover:shadow-2xl">
+        <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-amber-500/90 via-orange-500/70 to-red-600/80 opacity-95 dark:opacity-100" aria-hidden="true"></div>
+        <div class="pointer-events-none absolute -left-8 bottom-0 h-40 w-40 rounded-full bg-amber-500/5 blur-2xl dark:bg-amber-500/10" aria-hidden="true"></div>
+
+        <div class="relative flex flex-wrap items-start justify-between gap-4 border-b border-border/80 bg-gradient-to-r from-muted/40 via-muted/25 to-transparent px-6 py-6 dark:from-muted/30">
+
+            <div class="flex flex-wrap items-start gap-4">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 to-red-500/10 text-amber-700 dark:text-amber-400">
+                    <i data-lucide="calculator" class="h-6 w-6"></i>
+                </span>
+                <div>
+                    <div class="mb-1 inline-flex items-center gap-2">
+                        <span class="rounded-full border border-amber-500/35 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-900 dark:text-amber-200">Simulation</span>
+                    </div>
+                    <h2 class="text-xl font-bold tracking-tight text-foreground">Calculateur de taxes tunisiennes</h2>
+                    <p class="mt-1 text-sm text-muted-foreground">CNSS + IRPP — même logique que les bulletins de paie.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 self-end sm:self-start">
+                <span class="rounded-full border border-amber-500/45 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-900 dark:text-amber-200">CNSS 9,18 %</span>
+                <span class="rounded-full border border-red-500/45 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-800 dark:text-red-200">IRPP 26 %</span>
+            </div>
+
+        </div>
+
+        <div class="relative px-6 pb-6 pt-2">
+
+            <div class="rounded-2xl border border-border/60 bg-muted/20 p-4 dark:bg-muted/10 sm:p-5">
+
+            <form method="get" class="flex flex-wrap items-end gap-3">
+
+                <div class="min-w-[160px] flex-1">
+
+                    <label class="mb-1 block text-xs font-medium text-muted-foreground">Salaire brut</label>
+
+                    <input type="number" step="0.01" min="0" name="simp_gross" value="{{ simp_gross_input }}" placeholder="10000"
+
+                           class="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50" />
+
+                </div>
+
+                <div class="w-32">
+
+                    <label class="mb-1 block text-xs font-medium text-muted-foreground">Devise</label>
+
+                    <select name="simp_currency" class="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50">
+
+                        <option value="TND"{% if simp_currency == 'TND' %} selected{% endif %}>TND</option>
+
+                        <option value="EUR"{% if simp_currency == 'EUR' %} selected{% endif %}>EUR</option>
+
+                        <option value="USD"{% if simp_currency == 'USD' %} selected{% endif %}>USD</option>
+
+                    </select>
+
+                </div>
+
+                <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:opacity-95">
+
+                    <i data-lucide="zap" class="h-4 w-4"></i> Calculer maintenant
+
+                </button>
+
+            </form>
+
+            </div>
+
+            {% if simp_tax %}
+
+                <p class="mt-3 text-right text-xs text-muted-foreground">Calculé le {{ "now"|date('d/m/Y H:i') }}</p>
+
+                <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
+                    <div class="rounded-2xl border border-sky-500/40 bg-sky-500/10 p-4 dark:bg-sky-500/15">
+
+                        <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-sky-800 dark:text-sky-300"><i data-lucide="coins" class="h-4 w-4"></i> Salaire brut</div>
+
+                        <p class="mt-2 text-xl font-bold tabular-nums text-foreground">{{ simp_tax.gross|number_format(2, ',', ' ') }} {{ simp_currency }}</p>
+
+                    </div>
+
+                    <div class="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 dark:bg-amber-500/15">
+
+                        <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-amber-900 dark:text-amber-200">CNSS (9,18 %)</div>
+
+                        <p class="mt-2 text-xl font-bold tabular-nums text-foreground">− {{ simp_tax.cnss|number_format(2, ',', ' ') }} {{ simp_currency }}</p>
+
+                    </div>
+
+                    <div class="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 dark:bg-red-500/15">
+
+                        <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-red-800 dark:text-red-200">IRPP (26 %)</div>
+
+                        <p class="mt-2 text-xl font-bold tabular-nums text-foreground">− {{ simp_tax.irpp|number_format(2, ',', ' ') }} {{ simp_currency }}</p>
+
+                    </div>
+
+                    <div class="rounded-2xl border border-purple-500/40 bg-purple-500/10 p-4 dark:bg-purple-500/15">
+
+                        <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-purple-900 dark:text-purple-200">Total déductions</div>
+
+                        <p class="mt-2 text-xl font-bold tabular-nums text-foreground">− {{ simp_tax.total_deductions|number_format(2, ',', ' ') }} {{ simp_currency }}</p>
+
+                    </div>
+
+                    <div class="rounded-2xl border border-emerald-500/50 bg-emerald-500/10 p-4 ring-2 ring-emerald-500/25 dark:bg-emerald-500/15">
+
+                        <div class="mb-1 inline-block rounded-full bg-emerald-500/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-300">À percevoir</div>
+
+                        <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-emerald-900 dark:text-emerald-200"><i data-lucide="badge-check" class="h-4 w-4"></i> Salaire net</div>
+
+                        <p class="mt-2 text-2xl font-bold tabular-nums text-foreground">{{ simp_tax.net|number_format(2, ',', ' ') }} {{ simp_currency }}</p>
+
+                    </div>
+
+                    <div class="rounded-2xl border border-border bg-muted/50 p-4">
+
+                        <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"><i data-lucide="trending-up" class="h-4 w-4"></i> Taux d’imposition effectif</div>
+
+                        <p class="mt-2 text-xl font-bold tabular-nums text-foreground">{{ simp_tax.effective_tax_rate_percent|number_format(1, ',', ' ') }} %</p>
+
+                    </div>
+
+                </div>
+
+                <div class="mt-6 rounded-xl border border-border bg-muted/40 p-4">
+
+                    <p class="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground"><i data-lucide="briefcase" class="h-4 w-4 text-muted-foreground"></i> Récapitulatif détaillé</p>
+
+                    <pre class="whitespace-pre-wrap font-mono text-xs leading-relaxed text-muted-foreground">Brut: {{ simp_tax.gross|number_format(2, ',', ' ') }} {{ simp_currency }} | CNSS: {{ simp_tax.cnss|number_format(2, ',', ' ') }} {{ simp_currency }} | IRPP: {{ simp_tax.irpp|number_format(2, ',', ' ') }} {{ simp_currency }}
+
+Total retenu: {{ simp_tax.total_deductions|number_format(2, ',', ' ') }} {{ simp_currency }} | Net à percevoir: {{ simp_tax.net|number_format(2, ',', ' ') }} {{ simp_currency }}</pre>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+
+        <details class="group border-t border-border bg-muted/25 px-6 py-4">
+
+            <summary class="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">Mode expert — IRPP progressif (revenu annuel imposable après CNSS)</summary>
+
+            <div class="mt-4 rounded-xl border border-border/60 bg-card p-4">
+
+                <p class="text-xs text-muted-foreground mb-3">Estimation avec barèmes annuels (alternative au mode bulletin simplifié ci-dessus).</p>
+
+                <form method="get" class="grid gap-3 sm:grid-cols-[1fr_auto]">
+
+                    <input type="hidden" name="simp_gross" value="{{ simp_gross_input }}">
+
+                    <input type="hidden" name="simp_currency" value="{{ simp_currency }}">
+
+                    <input type="number" step="0.01" min="0" name="gross" value="{{ gross_input }}" placeholder="Brut mensuel (TND) pour barème annuel" class="rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+
+                    <button type="submit" class="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Estimer (barème)</button>
+
+                </form>
+
+                {% if tax_estimate %}
+
+                    <div class="mt-4 overflow-x-auto rounded-xl border border-border/70">
+
+                        <table class="min-w-full text-sm">
+
+                            <thead class="bg-muted/50"><tr>
+
+                                <th class="px-3 py-2 text-left">Tranche</th><th class="px-3 py-2 text-left">Taux</th><th class="px-3 py-2 text-left">Base</th><th class="px-3 py-2 text-left">Impôt</th>
+
+                            </tr></thead>
+
+                            <tbody>
+
+                            {% for band in tax_estimate.irpp_breakdown %}
+
+                                <tr class="border-t border-border/60">
+
+                                    <td class="px-3 py-2">{{ band.min|number_format(0, '.', ' ') }} – {{ band.max is null ? '∞' : band.max|number_format(0, '.', ' ') }} TND</td>
+
+                                    <td class="px-3 py-2">{{ band.rate_percent|number_format(2, '.', ' ') }}%</td>
+
+                                    <td class="px-3 py-2">{{ band.taxable_amount|number_format(2, '.', ' ') }} TND</td>
+
+                                    <td class="px-3 py-2">{{ band.tax_amount|number_format(2, '.', ' ') }} TND</td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <p class="mt-2 text-xs text-muted-foreground">Net mensuel (barème) : <strong class="text-foreground">{{ tax_estimate.net_monthly|number_format(2, '.', ' ') }} TND</strong></p>
+
+                {% endif %}
+
+            </div>
+
+        </details>
+
+    </section>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+(function () {
+
+  const templateUrl = {{ admin_export_pdf_sample_path|json_encode|raw }};
+
+  const select = document.getElementById('pdf-employee');
+
+  const btn = document.getElementById('btn-download-pdf');
+
+  const statusEl = document.getElementById('pdf-export-status');
+
+
+
+  function buildPdfUrl(id) {
+
+    try {
+
+      const u = new URL(templateUrl, window.location.origin);
+
+      u.pathname = u.pathname.replace(/\/\d+\.pdf$/, '/' + id + '.pdf');
+
+      return u.toString();
+
+    } catch (e) {
+
+      return templateUrl.replace(/\/\d+\.pdf$/, '/' + id + '.pdf');
+
+    }
+
+  }
+
+
+
+  function showStatus(msg, isError) {
+
+    if (!statusEl) return;
+
+    statusEl.textContent = msg;
+
+    statusEl.classList.toggle('hidden', !msg);
+
+    statusEl.classList.toggle('text-destructive', !!isError);
+
+  }
+
+
+
+  async function savePdf() {
+
+    const id = select && select.value;
+
+    if (!id) {
+
+      showStatus('Veuillez choisir un employé.', true);
+
+      return;
+
+    }
+
+    showStatus('Génération du PDF…', false);
+
+    const url = buildPdfUrl(id);
+
+    const employeeLabel = (select.options[select.selectedIndex]?.text || 'rapport').replace(/[^a-z0-9_.-]+/gi, '_');
+    const filename = employeeLabel + '.pdf';
+
+    try {
+      if (window.showSaveFilePicker) {
+        const res = await fetch(url, { credentials: 'same-origin' });
+        if (!res.ok) {
+          throw new Error('HTTP ' + res.status);
+        }
+        const blob = await res.blob();
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{ description: 'PDF', accept: { 'application/pdf': ['.pdf'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        showStatus('PDF enregistré à l’emplacement choisi.', false);
+        return;
+      }
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.setAttribute('download', filename);
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showStatus('Téléchargement lancé (choix dossier non supporté par ce navigateur).', false);
+    } catch (e) {
+      showStatus('Échec du téléchargement PDF. Réessayez.', true);
+    }
+
+  }
+
+
+
+  if (btn) btn.addEventListener('click', savePdf);
+
+})();
+
+</script>
+
+{% endblock %}
+
