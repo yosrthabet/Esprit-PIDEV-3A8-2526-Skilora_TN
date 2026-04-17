@@ -135,6 +135,59 @@
         form ul { list-style: none; padding: 0; margin: 6px 0 0; }
         form ul li { color: #ef4444; font-size: 11.5px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
         form ul li::before { content: "⚠️"; font-size: 10px; }
+
+        .ai-assist-btn {
+            background: rgba(108, 99, 255, 0.1);
+            border: 1px dashed rgba(108, 99, 255, 0.4);
+            color: #a5b4fc;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ai-assist-btn:hover {
+            background: rgba(108, 99, 255, 0.2);
+            border-style: solid;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(108, 99, 255, 0.2);
+        }
+
+        .mic-btn {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px dashed rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .mic-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-style: solid;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+        }
+        .mic-btn.recording {
+            background: rgba(239, 68, 68, 0.4);
+            animation: pulse-red 1.5s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .sparkle-icon { font-size: 12px; }
     </style>
 {% endblock %}
 
@@ -152,27 +205,29 @@
                 <p class="fch-sub">Give us enough detail so we can resolve it quickly.</p>
             </div>
             <div class="form-body">
-                {{ form_start(form, {attr: {style: 'display:contents;', novalidate: 'novalidate'}}) }}
-                    <div>
+                {{ form_start(form, {attr: {id: 'ticketForm', style: 'display:contents;', novalidate: 'novalidate'}}) }}
+                    <div class="form-field">
                         <label class="form-label-dark">Subject</label>
                         {{ form_widget(form.subject, {attr: {class: 'form-input-dark', placeholder: 'Brief summary of your issue…'}}) }}
+                        <div class="js-error" id="error-subject"></div>
                         {{ form_errors(form.subject) }}
                     </div>
                     <div class="form-grid">
-                        <div>
+                        <div class="form-field">
                             <label class="form-label-dark">Category</label>
                             {{ form_widget(form.categorie, {attr: {class: 'form-input-dark'}}) }}
                             {{ form_errors(form.categorie) }}
                         </div>
-                        <div>
+                        <div class="form-field">
                             <label class="form-label-dark">Priority</label>
                             {{ form_widget(form.priorite, {attr: {class: 'form-input-dark'}}) }}
                             {{ form_errors(form.priorite) }}
                         </div>
                     </div>
-                    <div>
+                    <div class="form-field">
                         <label class="form-label-dark">Description</label>
                         {{ form_widget(form.description, {attr: {class: 'form-input-dark', rows: 5, placeholder: 'Describe your issue in detail…'}}) }}
+                        <div class="js-error" id="error-description"></div>
                         {{ form_errors(form.description) }}
                     </div>
                     <button type="submit" class="btn-submit">
@@ -184,4 +239,212 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('ticketForm');
+    const subjectInput = document.querySelector('[name*="[subject]"]');
+    const descriptionInput = document.querySelector('[name*="[description]"]');
+    
+    const badWords = ['badword1', 'badword2', 'offensive', 'spam', 'scam', 'hate', 'stupid', 'idiot'];
+    
+    function validateField(input, errorId, minLen, label) {
+        const errorDiv = document.getElementById(errorId);
+        const value = input.value.trim();
+        let errors = [];
+        
+        if (value.length === 0) {
+            errors.push(`${label} cannot be empty.`);
+        } else if (value.length < minLen) {
+            errors.push(`${label} must be at least ${minLen} characters.`);
+        }
+        
+        // Check bad words
+        const foundBad = badWords.filter(word => {
+            const regex = new RegExp('\\b' + word + '\\b', 'i');
+            return regex.test(value);
+        });
+        
+        if (foundBad.length > 0) {
+            errors.push(`Please avoid offensive language: ${foundBad.join(', ')}`);
+        }
+
+        if (label === 'Subject' && value.length > 0 && !/[a-zA-Z]/.test(value)) {
+            errors.push('Subject must contain at least one letter.');
+        }
+        
+        if (errors.length > 0) {
+            errorDiv.innerHTML = `<ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul>`;
+            input.style.borderColor = '#ef4444';
+            return false;
+        } else {
+            errorDiv.innerHTML = '';
+            input.style.borderColor = '';
+            return true;
+        }
+    }
+
+    // AI Features
+    const suggestBtn = document.createElement('button');
+    suggestBtn.type = 'button';
+    suggestBtn.className = 'ai-assist-btn';
+    suggestBtn.innerHTML = '<span class="sparkle-icon">✨</span> Suggest Subject';
+    suggestBtn.style.margin = '8px 0';
+    subjectInput.parentNode.appendChild(suggestBtn);
+
+    const correctBtn = document.createElement('button');
+    correctBtn.type = 'button';
+    correctBtn.className = 'ai-assist-btn';
+    correctBtn.innerHTML = '<span class="sparkle-icon">🪄</span> Auto-Correct & Polish';
+    correctBtn.style.margin = '8px 0';
+    descriptionInput.parentNode.appendChild(correctBtn);
+
+    // Speech to Text Feature
+    const micBtn = document.createElement('button');
+    micBtn.type = 'button';
+    micBtn.className = 'mic-btn';
+    micBtn.innerHTML = '<span class="sparkle-icon">🎤</span> Dictate Message';
+    micBtn.style.margin = '8px 0 8px 8px';
+    descriptionInput.parentNode.appendChild(micBtn);
+
+    let recognition = null;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US'; 
+
+        let isRecording = false;
+
+        micBtn.addEventListener('click', () => {
+            if (isRecording) {
+                recognition.stop();
+                return;
+            }
+            recognition.start();
+        });
+
+        recognition.onstart = function() {
+            isRecording = true;
+            micBtn.classList.add('recording');
+            micBtn.innerHTML = '<span class="sparkle-icon">🔴</span> Listening... (Click to stop)';
+        };
+
+        recognition.onresult = function(event) {
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                }
+            }
+            
+            if (finalTranscript) {
+                const currentVal = descriptionInput.value;
+                descriptionInput.value = currentVal + (currentVal.endsWith(' ') || currentVal === '' ? '' : ' ') + finalTranscript;
+                validateField(descriptionInput, 'error-description', 10, 'Description');
+            }
+        };
+
+        recognition.onerror = function(event) {
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            micBtn.innerHTML = '<span class="sparkle-icon">🎤</span> Dictate Message';
+            if (event.error !== 'no-speech') {
+                alert('Microphone error: ' + event.error);
+            }
+        };
+
+        recognition.onend = function() {
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            micBtn.innerHTML = '<span class="sparkle-icon">🎤</span> Dictate Message';
+        };
+    } else {
+        micBtn.style.display = 'none';
+    }
+
+    suggestBtn.addEventListener('click', async () => {
+        const desc = descriptionInput.value.trim();
+        if (desc.length < 20) {
+            alert('Please provide a longer description first so I can suggest a subject!');
+            return;
+        }
+        
+        suggestBtn.innerHTML = 'Analyzing...';
+        suggestBtn.disabled = true;
+
+        try {
+            const response = await fetch('{{ path('support_ai_suggest_subject') }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: desc })
+            });
+            const data = await response.json();
+            if (data.suggestion) {
+                subjectInput.value = data.suggestion.replace(/^"|"$/g, '');
+                validateField(subjectInput, 'error-subject', 4, 'Subject');
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            suggestBtn.innerHTML = '<span class="sparkle-icon">✨</span> Suggest Subject';
+            suggestBtn.disabled = false;
+        }
+    });
+
+    correctBtn.addEventListener('click', async () => {
+        const text = descriptionInput.value.trim();
+        if (text.length < 5) return;
+        
+        correctBtn.innerHTML = 'Polishing...';
+        correctBtn.disabled = true;
+
+        try {
+            const response = await fetch('{{ path('support_ai_correct_text') }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+            const data = await response.json();
+            if (data.correction) {
+                descriptionInput.value = data.correction;
+                validateField(descriptionInput, 'error-description', 10, 'Description');
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            correctBtn.innerHTML = '<span class="sparkle-icon">🪄</span> Auto-Correct & Polish';
+            correctBtn.disabled = false;
+        }
+    });
+
+    subjectInput.addEventListener('input', () => validateField(subjectInput, 'error-subject', 4, 'Subject'));
+    descriptionInput.addEventListener('input', () => validateField(descriptionInput, 'error-description', 10, 'Description'));
+    
+    form.addEventListener('submit', function(e) {
+        const isSubjectValid = validateField(subjectInput, 'error-subject', 4, 'Subject');
+        const isDescValid = validateField(descriptionInput, 'error-description', 10, 'Description');
+        
+        if (!isSubjectValid || !isDescValid) {
+            e.preventDefault();
+            // Scroll to first error
+            const firstError = document.querySelector('.js-error ul');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+});
+</script>
+<style>
+    .js-error ul { list-style: none; padding: 0; margin: 6px 0 0; }
+    .js-error ul li { color: #ef4444; font-size: 11.5px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+    .js-error ul li::before { content: "⚠️"; font-size: 10px; }
+    .form-field { margin-bottom: 2px; }
+</style>
 {% endblock %}

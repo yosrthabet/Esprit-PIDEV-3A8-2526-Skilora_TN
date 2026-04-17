@@ -30,6 +30,25 @@ class TicketRepository extends ServiceEntityRepository
     }
 
     /**
+     * @return Ticket[]
+     */
+    public function searchByUser(int $utilisateurId, string $query = ''): array
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->andWhere('t.utilisateurId = :uid')
+            ->setParameter('uid', $utilisateurId);
+
+        if ($query) {
+            $qb->andWhere('t.subject LIKE :q OR t.categorie LIKE :q OR t.description LIKE :q')
+               ->setParameter('q', '%' . $query . '%');
+        }
+
+        return $qb->orderBy('t.dateCreation', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @return array<string, int>
      */
     public function countByStatus(): array
@@ -84,6 +103,47 @@ class TicketRepository extends ServiceEntityRepository
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
+    }
+
+    public function countByCategory(): array
+    {
+        $rows = $this->createQueryBuilder('t')
+            ->select('t.categorie as cat, COUNT(t.id) as total')
+            ->groupBy('t.categorie')
+            ->getQuery()
+            ->getArrayResult();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(string) $row['cat']] = (int) $row['total'];
+        }
+
+        return $result;
+    }
+
+    public function countLast7DaysVolume(): array
+    {
+        $days = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = (new \DateTime())->modify("-$i days")->format('Y-m-d');
+            $days[$date] = 0;
+        }
+
+        $rows = $this->createQueryBuilder('t')
+            ->select('SUBSTRING(t.dateCreation, 1, 10) as day, COUNT(t.id) as total')
+            ->where('t.dateCreation >= :start')
+            ->setParameter('start', (new \DateTime())->modify('-7 days')->format('Y-m-d 00:00:00'))
+            ->groupBy('day')
+            ->getQuery()
+            ->getArrayResult();
+
+        foreach ($rows as $row) {
+            if (isset($days[$row['day']])) {
+                $days[$row['day']] = (int) $row['total'];
+            }
+        }
+
+        return $days;
     }
 
     public function countTotal(string $query = ''): int

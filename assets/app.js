@@ -1,3 +1,4 @@
+import './stimulus_bootstrap.js';
 import './app.css';
 import Alpine from 'alpinejs';
 import collapse from '@alpinejs/collapse';

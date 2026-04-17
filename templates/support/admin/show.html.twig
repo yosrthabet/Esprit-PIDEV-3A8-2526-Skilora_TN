@@ -7,10 +7,26 @@
     <style>
         /* Premium Dark Theme ported from client site */
         :root {
-            --panel-raised: #18181b;
-            --panel-raised2: #27272a;
+            --panel-raised: #ffffff;
+            --panel-raised2: #f8fafc;
+            --panel-edge: rgba(0,0,0,0.08);
+            --card-dark: #ffffff;
+            --border-light: #e2e8f0;
+            --border-dark: rgba(0,0,0,0.1);
+            --text-bright: #0f172a;
+            --text-body: #334155;
+            --text-muted-light: #64748b;
+            --text-muted-dark: #94a3b8;
+            --accent-glow: rgba(99,102,241,0.05);
+            --msg-scroll-bg: #f8fafc;
+        }
+
+        /* ONLY apply dark variables when the .dark class is explicitly present */
+        .dark, [data-theme='dark'] {
+            --panel-raised: #181b1e;
+            --panel-raised2: #212529;
             --panel-edge: rgba(255,255,255,0.06);
-            --card-dark: #18181b;
+            --card-dark: #181b1e;
             --border-light: #3f3f46;
             --border-dark: rgba(255,255,255,0.08);
             --text-bright: #fafafa;
@@ -18,6 +34,7 @@
             --text-muted-light: #a1a1aa;
             --text-muted-dark: #71717a;
             --accent-glow: rgba(108,99,255,0.12);
+            --msg-scroll-bg: #09090b;
         }
 
         .admin-support-layout {
@@ -55,7 +72,7 @@
 
         /* ── Ticket Detail Header ── */
         .ticket-header {
-            background: linear-gradient(180deg, #18181b 0%, #09090b 100%);
+            background: var(--panel-raised);
             border: 1px solid var(--panel-edge);
             border-radius: 16px;
             padding: 24px;
@@ -106,12 +123,14 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            background: #09090b;
+            background: var(--msg-scroll-bg);
             scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,.2) transparent;
+            scrollbar-color: rgba(0,0,0,.1) transparent;
         }
         .messages-scroll::-webkit-scrollbar { width: 6px; }
-        .messages-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius:4px; }
+        .messages-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,.1); border-radius:4px; }
+        .dark .messages-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); }
+        .dark .messages-scroll { scrollbar-color: rgba(255,255,255,.2) transparent; }
 
         .msg-row { display: flex; align-items: flex-end; gap: 10px; animation: msgSlide .28s ease; }
         .msg-row.admin { flex-direction: row-reverse; } /* Admin is "Me" on the right */
@@ -141,16 +160,27 @@
             position: relative;
         }
         .bubble-client {
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+            border-bottom-left-radius: 4px;
+        }
+        .dark .bubble-client {
             background: #27272a;
             color: #e4e4e7;
             border: 1px solid #3f3f46;
-            border-bottom-left-radius: 4px;
         }
         .bubble-admin {
+            background: #0f172a;
+            color: #ffffff;
+            border: 1px solid #1e293b;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,.1);
+        }
+        .dark .bubble-admin {
             background: #3f3f46;
             color: #fafafa;
             border: 1px solid #52525b;
-            border-bottom-right-radius: 4px;
             box-shadow: 0 8px 24px rgba(0,0,0,.4);
         }
         .bubble-internal {
@@ -183,10 +213,22 @@
             transition: all .18s;
             text-decoration: none;
         }
-        .bact-edit  { background: rgba(255,255,255,.08); color: #e4e4e7; border: 1px solid rgba(255,255,255,.12); }
-        .bact-edit:hover { background: rgba(255,255,255,.14); }
-        .bact-del   { background: rgba(127,29,29,.4); color: #fecaca; border: 1px solid rgba(248,113,113,.3); }
-        .bact-del:hover { background: rgba(127,29,29,.55); }
+        .bact-edit  { background: rgba(0,0,0,.05); color: #475569; border: 1px solid rgba(0,0,0,.1); }
+        .bact-edit:hover { background: rgba(0,0,0,.1); }
+        .dark .bact-edit  { background: rgba(255,255,255,.08); color: #e4e4e7; border: 1px solid rgba(255,255,255,.12); }
+        .dark .bact-edit:hover { background: rgba(255,255,255,.14); }
+
+        .bact-del   { background: rgba(239,68,68,.1); color: #ef4444; border: 1px solid rgba(239,68,68,.2); }
+        .bact-del:hover { background: rgba(239,68,68,.2); }
+        .dark .bact-del   { background: rgba(127,29,29,.4); color: #fecaca; border: 1px solid rgba(248,113,113,.3); }
+
+        .bact-ai { background: rgba(99,102,241,0.08); color: #4f46e5; border: 1px solid rgba(99,102,241,0.15); }
+        .bact-ai:hover { background: rgba(99,102,241,0.15); }
+        .dark .bact-ai { background: rgba(108,99,255,0.1); color: #a5b4fc; border: 1px solid rgba(108,99,255,0.2); }
+
+        .bact-mood { background: rgba(168,85,247,0.08); color: #9333ea; border: 1px solid rgba(168,85,247,0.15); }
+        .bact-mood:hover { background: rgba(168,85,247,0.15); }
+        .dark .bact-mood { background: rgba(168,85,247,0.1); color: #c084fc; border: 1px solid rgba(168,85,247,0.2); }
 
         .attachment-pill {
             display: inline-flex; align-items: center; gap: 5px;
@@ -205,13 +247,15 @@
             text-transform: uppercase; color: var(--text-muted-light); margin-bottom: 6px;
         }
         .form-input-custom {
-            width: 100%; background: #0c0c0e; border: 1px solid var(--panel-edge);
+            width: 100%; background: #ffffff; border: 1px solid var(--panel-edge);
             border-radius: 8px; color: var(--text-bright); font-size: 13.5px;
             padding: 10px 14px; outline: none; transition: border-color .2s;
             font-family: inherit;
         }
-        .form-input-custom:focus { border-color: rgba(255,255,255,.2); }
-        select.form-input-custom option { background: #18181b; color: #fafafa; }
+        .dark .form-input-custom { background: #0c0c0e; }
+        .form-input-custom:focus { border-color: #3b82f6; }
+        select.form-input-custom option { background: #ffffff; color: #000; }
+        .dark select.form-input-custom option { background: #18181b; color: #fafafa; }
 
         .btn-custom {
             display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -260,6 +304,41 @@
         form ul li { color: #ef4444; font-size: 11.5px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
         form ul li::before { content: "⚠️"; font-size: 10px; }
 
+        /* ── Modal Styles ── */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; opacity: 0; pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background: var(--panel-raised);
+            border: 1px solid var(--panel-edge);
+            border-radius: 24px;
+            width: 100%; max-width: 550px;
+            padding: 32px;
+            position: relative;
+            transform: scale(0.95) translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,0.8);
+        }
+        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
+        .modal-close {
+            position: absolute; top: 20px; right: 20px;
+            background: transparent; border: none; color: var(--text-muted-light);
+            cursor: pointer; padding: 8px; border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+        .form-icon-btn {
+            width: 34px; height: 34px; border-radius: 8px;
+            background: var(--panel-raised2); border: 1px solid var(--panel-edge);
+            display: flex; align-items: center; justify-content: center; color: #fff;
+        }
+
     </style>
 {% endblock %}
 
@@ -271,7 +350,28 @@
         
         {# Ticket Info block #}
         <div class="ticket-header">
-            <h2 class="th-title">{{ ticket.subject }}</h2>
+            <div class="flex items-center justify-between">
+                <h2 class="th-title">{{ ticket.subject }}</h2>
+            <div class="flex items-center gap-2">
+                <a href="{{ path('admin_support_download_pdf', {id: ticket.id}) }}" class="btn-custom btn-primary" style="font-size: 11px; padding: 6px 14px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" x2="12" y2="3"/></svg>
+                    Print Ticket
+                </a>
+                <div class="flex items-center gap-2 bg-white/5 p-1 rounded-lg border border-white/10">
+                    <select id="targetLanguage" onchange="translateAllMessages()" class="bg-transparent text-[11px] font-bold text-muted-foreground outline-none border-none cursor-pointer px-2">
+                        <option value="en">English</option>
+                        <option value="fr">French</option>
+                        <option value="ar">Arabic</option>
+                        <option value="es">Spanish</option>
+                        <option value="de">German</option>
+                        <option value="it">Italian</option>
+                    </select>
+                    <button onclick="translateAllMessages()" class="btn-custom btn-secondary" style="font-size: 11px; padding: 6px 12px; border-radius: 6px;">
+                        🌍 Translate All
+                    </button>
+                </div>
+            </div>
+            </div>
             <div class="th-desc">{{ ticket.description }}</div>
             
             <div class="th-meta">
@@ -332,7 +432,7 @@
                     </div>
 
                     <div style="margin-bottom:14px;">
-                        {{ form_widget(message_form.contenu, {attr: {class: 'form-input-custom', rows: 5, placeholder: 'Type your message here...', style: 'background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1);'}}) }}
+                        {{ form_widget(message_form.contenu, {attr: {class: 'form-input-custom', rows: 5, placeholder: 'Type your message here...', style: 'border-color: var(--panel-edge);'}}) }}
                         {{ form_errors(message_form.contenu) }}
                     </div>
                     
@@ -386,6 +486,39 @@
     </aside>
 
 </div>
+
+{# Admin Edit Message Modal #}
+<div id="adminEditModal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeEditModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+            <div class="form-icon-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <h3 style="font-size: 18px; font-weight: 700; color: #fff;">Modify Support Message</h3>
+        </div>
+
+        <form id="adminEditForm" method="POST" style="display:flex; flex-direction:column; gap:18px;">
+            <div id="internalWrap" class="internal-checkbox-wrap" style="margin-bottom: 0;">
+                <input type="checkbox" id="editIsInternal" name="message_ticket[isInternal]" value="1">
+                <label for="editIsInternal">Internal Note (Private to Staff)</label>
+            </div>
+
+            <div>
+                <label class="form-label-custom">Message Content</label>
+                <textarea id="editContent" name="message_ticket[contenu]" class="form-input-custom" rows="6" required style="background: rgba(0,0,0,0.2)"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 8px;">
+                <button type="button" onclick="closeEditModal()" class="btn-custom btn-secondary" style="flex: 1;">Cancel</button>
+                <button type="submit" class="btn-custom btn-primary" style="flex: 2;">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
@@ -408,5 +541,381 @@
                 });
             }, 300);
         }
+
+        // Modal Logic
+        const modal = document.getElementById('adminEditModal');
+        const form = document.getElementById('adminEditForm');
+        const textarea = document.getElementById('editContent');
+        const internalCheck = document.getElementById('editIsInternal');
+
+        window.openEditModal = function(actionUrl, content, isInternal) {
+            form.action = actionUrl;
+            textarea.value = content;
+            internalCheck.checked = (isInternal === '1');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => textarea.focus(), 100);
+        };
+
+        window.closeEditModal = function() {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) closeEditModal();
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeEditModal();
+        });
+
+        /* ─── INSTANT DICTIONARY-BASED INTERFACE TRANSLATION ─── */
+        const TRANSLATIONS = {
+            en: {
+                'Conversation': 'Conversation',
+                'Search messages...': 'Search messages...',
+                'Ticket Properties': 'Ticket Properties',
+                'STATUS': 'STATUS',
+                'Update Status': 'Update Status',
+                'Print Ticket': 'Print Ticket',
+                'Translate All': 'Translate All',
+                '💬 Public Reply': '💬 Public Reply',
+                '🔒 Internal Note': '🔒 Internal Note',
+                'Type your message here...': 'Type your message here...',
+                'Attachments JSON (Optional)': 'Attachments JSON (Optional)',
+                'Send Public Reply': 'Send Public Reply',
+                'Add Internal Note': 'Add Internal Note',
+                'This note will only be visible to other administrators.': 'This note will only be visible to other administrators.',
+                'Modify Support Message': 'Modify Support Message',
+                'Message Content': 'Message Content',
+                'Internal Note (Private to Staff)': 'Internal Note (Private to Staff)',
+                'Cancel': 'Cancel',
+                'Save Changes': 'Save Changes',
+                'No messages matching your search.': 'No messages matching your search.',
+                'Edit': 'Edit',
+                '🌍 Translate': '🌍 Translate',
+                '🧠 Analyze Mood': '🧠 Analyze Mood',
+                'Delete': 'Delete',
+                'Delete this message?': 'Delete this message?',
+                'Created on': 'Created on',
+                'Resolved on': 'Resolved on',
+                '🌍 Translate All': '🌍 Translate All'
+            },
+            fr: {
+                'Conversation': 'Conversation',
+                'Search messages...': 'Rechercher des messages...',
+                'Ticket Properties': 'Propriétés du ticket',
+                'STATUS': 'STATUT',
+                'Update Status': 'Mettre à jour',
+                'Print Ticket': 'Imprimer le ticket',
+                'Translate All': 'Tout traduire',
+                '💬 Public Reply': '💬 Réponse publique',
+                '🔒 Internal Note': '🔒 Note interne',
+                'Type your message here...': 'Tapez votre message ici...',
+                'Attachments JSON (Optional)': 'Pièces jointes JSON (Optionnel)',
+                'Send Public Reply': 'Envoyer la réponse',
+                'Add Internal Note': 'Ajouter une note interne',
+                'This note will only be visible to other administrators.': 'Cette note ne sera visible que par les autres administrateurs.',
+                'Modify Support Message': 'Modifier le message',
+                'Message Content': 'Contenu du message',
+                'Internal Note (Private to Staff)': 'Note interne (privée)',
+                'Cancel': 'Annuler',
+                'Save Changes': 'Enregistrer',
+                'No messages matching your search.': 'Aucun message trouvé.',
+                'Edit': 'Modifier',
+                '🌍 Translate': '🌍 Traduire',
+                '🧠 Analyze Mood': '🧠 Analyser',
+                'Delete': 'Supprimer',
+                'Delete this message?': 'Supprimer ce message ?',
+                'Created on': 'Créé le',
+                'Resolved on': 'Résolu le',
+                '🌍 Translate All': '🌍 Tout traduire'
+            },
+            ar: {
+                'Conversation': 'المحادثة',
+                'Search messages...': 'البحث في الرسائل...',
+                'Ticket Properties': 'خصائص التذكرة',
+                'STATUS': 'الحالة',
+                'Update Status': 'تحديث الحالة',
+                'Print Ticket': 'طباعة التذكرة',
+                'Translate All': 'ترجمة الكل',
+                '💬 Public Reply': '💬 رد عام',
+                '🔒 Internal Note': '🔒 ملاحظة داخلية',
+                'Type your message here...': 'اكتب رسالتك هنا...',
+                'Attachments JSON (Optional)': 'المرفقات (اختياري)',
+                'Send Public Reply': 'إرسال الرد',
+                'Add Internal Note': 'إضافة ملاحظة',
+                'This note will only be visible to other administrators.': 'هذه الملاحظة مرئية فقط للمسؤولين.',
+                'Modify Support Message': 'تعديل الرسالة',
+                'Message Content': 'محتوى الرسالة',
+                'Internal Note (Private to Staff)': 'ملاحظة داخلية (خاصة)',
+                'Cancel': 'إلغاء',
+                'Save Changes': 'حفظ',
+                'No messages matching your search.': 'لا توجد رسائل مطابقة.',
+                'Edit': 'تعديل',
+                '🌍 Translate': '🌍 ترجمة',
+                '🧠 Analyze Mood': '🧠 تحليل',
+                'Delete': 'حذف',
+                'Delete this message?': 'هل تريد حذف هذه الرسالة؟',
+                'Created on': 'تم الإنشاء في',
+                'Resolved on': 'تم الحل في',
+                '🌍 Translate All': '🌍 ترجمة الكل'
+            },
+            es: {
+                'Conversation': 'Conversación',
+                'Search messages...': 'Buscar mensajes...',
+                'Ticket Properties': 'Propiedades del ticket',
+                'STATUS': 'ESTADO',
+                'Update Status': 'Actualizar estado',
+                'Print Ticket': 'Imprimir ticket',
+                'Translate All': 'Traducir todo',
+                '💬 Public Reply': '💬 Respuesta pública',
+                '🔒 Internal Note': '🔒 Nota interna',
+                'Type your message here...': 'Escribe tu mensaje aquí...',
+                'Attachments JSON (Optional)': 'Archivos adjuntos (Opcional)',
+                'Send Public Reply': 'Enviar respuesta',
+                'Add Internal Note': 'Agregar nota interna',
+                'This note will only be visible to other administrators.': 'Esta nota solo será visible para otros administradores.',
+                'Modify Support Message': 'Modificar mensaje',
+                'Message Content': 'Contenido del mensaje',
+                'Internal Note (Private to Staff)': 'Nota interna (privada)',
+                'Cancel': 'Cancelar',
+                'Save Changes': 'Guardar cambios',
+                'No messages matching your search.': 'No se encontraron mensajes.',
+                'Edit': 'Editar',
+                '🌍 Translate': '🌍 Traducir',
+                '🧠 Analyze Mood': '🧠 Analizar',
+                'Delete': 'Eliminar',
+                'Delete this message?': '¿Eliminar este mensaje?',
+                'Created on': 'Creado el',
+                'Resolved on': 'Resuelto el',
+                '🌍 Translate All': '🌍 Traducir todo'
+            },
+            de: {
+                'Conversation': 'Gespräch',
+                'Search messages...': 'Nachrichten suchen...',
+                'Ticket Properties': 'Ticket-Eigenschaften',
+                'STATUS': 'STATUS',
+                'Update Status': 'Status aktualisieren',
+                'Print Ticket': 'Ticket drucken',
+                'Translate All': 'Alles übersetzen',
+                '💬 Public Reply': '💬 Öffentliche Antwort',
+                '🔒 Internal Note': '🔒 Interne Notiz',
+                'Type your message here...': 'Nachricht hier eingeben...',
+                'Attachments JSON (Optional)': 'Anhänge (Optional)',
+                'Send Public Reply': 'Antwort senden',
+                'Add Internal Note': 'Notiz hinzufügen',
+                'This note will only be visible to other administrators.': 'Diese Notiz ist nur für Administratoren sichtbar.',
+                'Modify Support Message': 'Nachricht bearbeiten',
+                'Message Content': 'Nachrichteninhalt',
+                'Internal Note (Private to Staff)': 'Interne Notiz (privat)',
+                'Cancel': 'Abbrechen',
+                'Save Changes': 'Speichern',
+                'No messages matching your search.': 'Keine passenden Nachrichten.',
+                'Edit': 'Bearbeiten',
+                '🌍 Translate': '🌍 Übersetzen',
+                '🧠 Analyze Mood': '🧠 Analysieren',
+                'Delete': 'Löschen',
+                'Delete this message?': 'Diese Nachricht löschen?',
+                'Created on': 'Erstellt am',
+                'Resolved on': 'Gelöst am',
+                '🌍 Translate All': '🌍 Alles übersetzen'
+            },
+            it: {
+                'Conversation': 'Conversazione',
+                'Search messages...': 'Cerca messaggi...',
+                'Ticket Properties': 'Proprietà del ticket',
+                'STATUS': 'STATO',
+                'Update Status': 'Aggiorna stato',
+                'Print Ticket': 'Stampa ticket',
+                'Translate All': 'Traduci tutto',
+                '💬 Public Reply': '💬 Risposta pubblica',
+                '🔒 Internal Note': '🔒 Nota interna',
+                'Type your message here...': 'Scrivi il tuo messaggio qui...',
+                'Attachments JSON (Optional)': 'Allegati (Opzionale)',
+                'Send Public Reply': 'Invia risposta',
+                'Add Internal Note': 'Aggiungi nota interna',
+                'This note will only be visible to other administrators.': 'Questa nota sarà visibile solo agli altri amministratori.',
+                'Modify Support Message': 'Modifica messaggio',
+                'Message Content': 'Contenuto del messaggio',
+                'Internal Note (Private to Staff)': 'Nota interna (privata)',
+                'Cancel': 'Annulla',
+                'Save Changes': 'Salva modifiche',
+                'No messages matching your search.': 'Nessun messaggio trovato.',
+                'Edit': 'Modifica',
+                '🌍 Translate': '🌍 Traduci',
+                '🧠 Analyze Mood': '🧠 Analizza',
+                'Delete': 'Elimina',
+                'Delete this message?': 'Eliminare questo messaggio?',
+                'Created on': 'Creato il',
+                'Resolved on': 'Risolto il',
+                '🌍 Translate All': '🌍 Traduci tutto'
+            }
+        };
+
+        // Find the best dictionary match for an element's text
+        function dictTranslate(text, lang) {
+            const dict = TRANSLATIONS[lang];
+            if (!dict) return null;
+            const trimmed = text.trim();
+            if (dict[trimmed]) return dict[trimmed];
+            // Partial match for texts that contain a known key
+            for (const key in dict) {
+                if (trimmed.includes(key) && key.length > 3) {
+                    return trimmed.replace(key, dict[key]);
+                }
+            }
+            return null;
+        }
+
+        // Translate all interface labels INSTANTLY using dictionary
+        function translateInterface(lang) {
+            // All translatable elements on the page
+            const selectors = [
+                '.th-title', '.th-desc',
+                '.admin-card-header h3',
+                '.form-label-custom',
+                '.reply-tab',
+                '.bact-edit', '.bact-ai', '.bact-mood', '.bact-del',
+                '.btn-custom.btn-primary',
+                '.btn-custom.btn-secondary',
+                '.internal-checkbox-wrap label',
+                '.bubble-meta span',
+                '#msgSearch',
+                '.modal-content h3',
+                '.modal-content .form-label-custom',
+                '.modal-content .btn-custom'
+            ];
+
+            selectors.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                    const original = el.tagName === 'INPUT' ? el.placeholder : el.innerText;
+                    const translated = dictTranslate(original, lang);
+                    if (translated) {
+                        if (el.tagName === 'INPUT') {
+                            el.placeholder = translated;
+                        } else {
+                            el.innerText = translated;
+                        }
+                    }
+                });
+            });
+
+            // Translate the "Conversation" header label
+            const convLabel = document.querySelector('.conv-card .uppercase');
+            if (convLabel) {
+                const t = dictTranslate(convLabel.innerText, lang);
+                if (t) convLabel.innerText = t;
+            }
+
+            // Translate textarea placeholder
+            const textarea = document.querySelector('textarea[placeholder]');
+            if (textarea) {
+                const t = dictTranslate(textarea.placeholder, lang);
+                if (t) textarea.placeholder = t;
+            }
+        }
+
+        // Translate dynamic content (ticket subject, description, messages) via API
+        async function translateDynamicContent(lang) {
+            // Translate ticket subject & description via API
+            const titleEl = document.querySelector('.th-title');
+            const descEl = document.querySelector('.th-desc');
+
+            if (titleEl) {
+                titleEl.style.opacity = '0.5';
+                try {
+                    const res = await fetch(`/admin/support/translate-text?text=${encodeURIComponent(titleEl.innerText.trim())}&target=${lang}`);
+                    const data = await res.json();
+                    if (data.translated) titleEl.innerText = data.translated;
+                } catch(e) {}
+                titleEl.style.opacity = '1';
+            }
+
+            if (descEl) {
+                descEl.style.opacity = '0.5';
+                try {
+                    const res = await fetch(`/admin/support/translate-text?text=${encodeURIComponent(descEl.innerText.trim())}&target=${lang}`);
+                    const data = await res.json();
+                    if (data.translated) descEl.innerText = data.translated;
+                } catch(e) {}
+                descEl.style.opacity = '1';
+            }
+
+            // Then translate all messages
+            const buttons = document.querySelectorAll('.bact-ai');
+            buttons.forEach((btn, index) => {
+                setTimeout(() => { btn.click(); }, index * 300);
+            });
+        }
+
+        // MAIN: Translate everything
+        window.translateAllMessages = function() {
+            const lang = document.getElementById('targetLanguage').value;
+            
+            // Step 1: INSTANT dictionary translation for all labels
+            translateInterface(lang);
+
+            // Step 2: API-based translation for dynamic content (subject, desc, messages)
+            translateDynamicContent(lang);
+        };
+
+        window.translateMessage = function(msgId, btn) {
+            const originalText = btn.closest('.bubble-wrap').querySelector('.bubble');
+            const originalBtnHtml = btn.innerHTML;
+            const targetLang = document.getElementById('targetLanguage').value;
+            
+            btn.innerHTML = '⌛ ...';
+            btn.disabled = true;
+
+            fetch(`/admin/support/messages/${msgId}/translate?target=${targetLang}`, {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.translatedText) {
+                    originalText.innerHTML = `${data.translatedText}<br><br><small style="opacity:0.5; font-style:italic;">(Translated)</small>`;
+                    btn.style.display = 'none';
+                } else {
+                    btn.innerHTML = originalBtnHtml;
+                    btn.disabled = false;
+                }
+            })
+            .catch(() => {
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+            });
+        };
+
+        window.analyzeMood = function(msgId, btn) {
+            const originalBtnHtml = btn.innerHTML;
+            btn.innerHTML = '⌛ ...';
+            btn.disabled = true;
+
+            fetch(`/admin/support/messages/${msgId}/analyze-mood`, {
+                method: 'POST',
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.mood) {
+                    searchMessages(); 
+                } else {
+                    alert('Analysis failed.');
+                    btn.innerHTML = originalBtnHtml;
+                    btn.disabled = false;
+                }
+            })
+            .catch(() => {
+                alert('Error connecting to AI service.');
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+            });
+        };
     </script>
 {% endblock %}

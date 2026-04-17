@@ -168,27 +168,29 @@
                 <p class="fch-sub">Update the subject, category, priority or details.</p>
             </div>
             <div class="form-body">
-                {{ form_start(form, {attr: {style: 'display:contents;', novalidate: 'novalidate'}}) }}
-                    <div>
+                {{ form_start(form, {attr: {id: 'ticketForm', style: 'display:contents;', novalidate: 'novalidate'}}) }}
+                    <div class="form-field">
                         <label class="form-label-dark">Subject</label>
                         {{ form_widget(form.subject, {attr: {class: 'form-input-dark'}}) }}
+                        <div class="js-error" id="error-subject"></div>
                         {{ form_errors(form.subject) }}
                     </div>
                     <div class="form-grid">
-                        <div>
+                        <div class="form-field">
                             <label class="form-label-dark">Category</label>
                             {{ form_widget(form.categorie, {attr: {class: 'form-input-dark'}}) }}
                             {{ form_errors(form.categorie) }}
                         </div>
-                        <div>
+                        <div class="form-field">
                             <label class="form-label-dark">Priority</label>
                             {{ form_widget(form.priorite, {attr: {class: 'form-input-dark'}}) }}
                             {{ form_errors(form.priorite) }}
                         </div>
                     </div>
-                    <div>
+                    <div class="form-field">
                         <label class="form-label-dark">Description</label>
                         {{ form_widget(form.description, {attr: {class: 'form-input-dark', rows: 5}}) }}
+                        <div class="js-error" id="error-description"></div>
                         {{ form_errors(form.description) }}
                     </div>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -203,4 +205,75 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('ticketForm');
+    const subjectInput = document.querySelector('[name*="[subject]"]');
+    const descriptionInput = document.querySelector('[name*="[description]"]');
+    
+    const badWords = ['badword1', 'badword2', 'offensive', 'spam', 'scam', 'hate', 'stupid', 'idiot'];
+    
+    function validateField(input, errorId, minLen, label) {
+        const errorDiv = document.getElementById(errorId);
+        const value = input.value.trim();
+        let errors = [];
+        
+        if (value.length === 0) {
+            errors.push(`${label} cannot be empty.`);
+        } else if (value.length < minLen) {
+            errors.push(`${label} must be at least ${minLen} characters.`);
+        }
+        
+        // Check bad words
+        const foundBad = badWords.filter(word => {
+            const regex = new RegExp('\\b' + word + '\\b', 'i');
+            return regex.test(value);
+        });
+        
+        if (foundBad.length > 0) {
+            errors.push(`Please avoid offensive language: ${foundBad.join(', ')}`);
+        }
+
+        if (label === 'Subject' && value.length > 0 && !/[a-zA-Z]/.test(value)) {
+            errors.push('Subject must contain at least one letter.');
+        }
+        
+        if (errors.length > 0) {
+            errorDiv.innerHTML = `<ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul>`;
+            input.style.borderColor = '#ef4444';
+            return false;
+        } else {
+            errorDiv.innerHTML = '';
+            input.style.borderColor = '';
+            return true;
+        }
+    }
+
+    subjectInput.addEventListener('input', () => validateField(subjectInput, 'error-subject', 4, 'Subject'));
+    descriptionInput.addEventListener('input', () => validateField(descriptionInput, 'error-description', 10, 'Description'));
+    
+    form.addEventListener('submit', function(e) {
+        const isSubjectValid = validateField(subjectInput, 'error-subject', 4, 'Subject');
+        const isDescValid = validateField(descriptionInput, 'error-description', 10, 'Description');
+        
+        if (!isSubjectValid || !isDescValid) {
+            e.preventDefault();
+            const firstError = document.querySelector('.js-error ul');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+});
+</script>
+<style>
+    .js-error ul { list-style: none; padding: 0; margin: 6px 0 0; }
+    .js-error ul li { color: #ef4444; font-size: 11.5px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+    .js-error ul li::before { content: "⚠️"; font-size: 10px; }
+    .form-field { margin-bottom: 2px; }
+</style>
 {% endblock %}

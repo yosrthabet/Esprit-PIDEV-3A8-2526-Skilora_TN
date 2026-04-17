@@ -12,16 +12,17 @@
         <h2 class="text-lg font-semibold">Edit message</h2>
         <p class="mt-1 text-sm text-muted-foreground">Update the content or mark this message as internal.</p>
 
-        {{ form_start(form, {attr: {class: 'mt-5 space-y-3'}}) }}
+        {{ form_start(form, {attr: {class: 'mt-5 space-y-3', enctype: 'multipart/form-data'}}) }}
             <div>
                 {{ form_label(form.contenu, null, {label_attr: {class: 'mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground'}}) }}
                 {{ form_widget(form.contenu, {attr: {class: 'w-full rounded-xl border border-input bg-background px-3 py-2 text-sm', rows: 5}}) }}
                 {{ form_errors(form.contenu) }}
             </div>
             <div>
-                {{ form_label(form.attachmentsJson, null, {label_attr: {class: 'mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground'}}) }}
-                {{ form_widget(form.attachmentsJson, {attr: {class: 'w-full rounded-xl border border-input bg-background px-3 py-2 text-sm', rows: 2}}) }}
-                {{ form_errors(form.attachmentsJson) }}
+                {{ form_label(form.attachmentFiles, null, {label_attr: {class: 'mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground'}}) }}
+                {{ form_widget(form.attachmentFiles, {attr: {class: 'w-full rounded-xl border border-input bg-background px-3 py-2 text-sm'}}) }}
+                {{ form_errors(form.attachmentFiles) }}
+                <div style="display:none;">{{ form_widget(form.attachmentsJson) }}</div>
             </div>
             <div class="rounded-xl border border-border px-3 py-2">
                 <label class="flex items-center gap-2 text-sm font-medium">

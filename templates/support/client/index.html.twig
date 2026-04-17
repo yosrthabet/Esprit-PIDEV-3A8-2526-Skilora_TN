@@ -227,82 +227,39 @@
 
         {# Hero bar #}
         <div class="support-hero">
-            <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 24px;">
                 <div>
                     <p class="hero-label">Support Center</p>
                     <h1 class="hero-title">My Tickets</h1>
                     <p class="hero-sub">Create, manage, and track your support requests in real time.</p>
-                    <div class="filter-pills">
-                        <button class="fp" :class="filter==='ALL'?'active':''" @click="filter='ALL'">All</button>
-                        <button class="fp" :class="filter==='OPEN'?'active':''" @click="filter='OPEN'">Open</button>
-                        <button class="fp" :class="filter==='IN_PROGRESS'?'active':''" @click="filter='IN_PROGRESS'">In Progress</button>
-                        <button class="fp" :class="filter==='CLOSED'?'active':''" @click="filter='CLOSED'">Closed</button>
-                        <button class="fp" :class="filter==='RESOLVED'?'active':''" @click="filter='RESOLVED'">Resolved</button>
-                    </div>
                 </div>
-                <a href="{{ path('support_new') }}" class="btn-new" style="align-self:flex-start;">
+                <a href="{{ path('support_new') }}" class="btn-new">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14"/></svg>
                     New Ticket
                 </a>
             </div>
+
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:20px; padding-top: 20px; border-top: 1px solid var(--panel-edge);">
+                <div class="filter-pills" style="margin-top:0;">
+                    <button class="fp" :class="filter==='ALL'?'active':''" @click="filter='ALL'">All</button>
+                    <button class="fp" :class="filter==='OPEN'?'active':''" @click="filter='OPEN'">Open</button>
+                    <button class="fp" :class="filter==='IN_PROGRESS'?'active':''" @click="filter='IN_PROGRESS'">In Progress</button>
+                    <button class="fp" :class="filter==='CLOSED'?'active':''" @click="filter='CLOSED'">Closed</button>
+                    <button class="fp" :class="filter==='RESOLVED'?'active':''" @click="filter='RESOLVED'">Resolved</button>
+                </div>
+                
+                <div style="flex:1; min-width:300px; position:relative;">
+                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" id="clientSearch" oninput="doSearch()" placeholder="Search by subject, category, or description..." 
+                           class="w-full bg-black/40 border border-white/5 rounded-2xl py-3 pl-11 pr-4 text-[13px] text-white outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all shadow-inner"
+                           value="{{ search_query }}">
+                </div>
+            </div>
         </div>
 
-        {# Grid #}
-        <div class="tickets-grid">
-            {% for ticket in tickets %}
-                <article
-                    x-show="filter === 'ALL' || filter === '{{ ticket.statut }}'"
-                    x-transition:enter="transition duration-300 ease-out"
-                    x-transition:enter-start="opacity-0 translate-y-3 scale-95"
-                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                    class="ticket-card"
-                    style="animation-delay:{{ loop.index0 * 0.06 }}s;"
-                >
-                    <div class="card-accent-bar"></div>
-                    <div class="card-body">
-                        <div class="card-badges">
-                            <span class="cbadge cbadge-cat">{{ ticket.categorie }}</span>
-                            <span class="cbadge cbadge-prio">{{ ticket.priorite }}</span>
-                            <span class="cbadge
-                                {% if ticket.statut in ['RESOLVED','CLOSED'] %}cbadge-resolved
-                                {% elseif ticket.statut == 'IN_PROGRESS' %}cbadge-progress
-                                {% else %}cbadge-open{% endif %}">
-                                {{ ticket.statut|replace({'_':' '}) }}
-                            </span>
-                        </div>
-                        <h3 class="card-subject">{{ ticket.subject }}</h3>
-                        <p class="card-desc">{{ ticket.description }}</p>
-                        <p class="card-date">{{ ticket.dateCreation ? ticket.dateCreation|date('d M Y') : '-' }}</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{{ path('support_show', {id: ticket.id}) }}" class="btn-view">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            View
-                        </a>
-                        {% if ticket.statut != 'CLOSED' %}
-                            <a href="{{ path('support_edit', {id: ticket.id}) }}" class="btn-edit-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                                Edit
-                            </a>
-                        {% else %}
-                            <a href="{{ path('support_show', {id: ticket.id}) }}#avis" class="btn-edit-sm" style="color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">
-                                ⭐ Avis
-                            </a>
-                        {% endif %}
-                        <form method="post" action="{{ path('support_delete', {id: ticket.id}) }}" onsubmit="return confirm('Delete this ticket?');" style="margin:0;">
-                            <input type="hidden" name="_token" value="{{ csrf_token('delete_ticket_' ~ ticket.id) }}">
-                            <button type="submit" class="btn-del-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                            </button>
-                        </form>
-                    </div>
-                </article>
-            {% else %}
-                <div class="empty-state">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6m-4 5H8m4 4H8m8-8H8"/></svg>
-                    <p>No tickets yet.<br>Click <strong>New Ticket</strong> to get started.</p>
-                </div>
-            {% endfor %}
+        {# Grid Wrapper for AJAX #}
+        <div id="tickets-grid-wrapper">
+            {% include 'support/client/_ticket_grid.html.twig' %}
         </div>
 
     </div>
@@ -311,4 +268,25 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <script>
+        let searchTimeout;
+        function doSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = document.getElementById('clientSearch').value;
+                const wrapper = document.getElementById('tickets-grid-wrapper');
+                
+                wrapper.style.opacity = '0.4';
+                
+                fetch(`{{ path('support_index') }}?q=${query}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.text())
+                .then(html => {
+                    wrapper.innerHTML = html;
+                    wrapper.style.opacity = '1';
+                });
+            }, 300);
+        }
+    </script>
 {% endblock %}

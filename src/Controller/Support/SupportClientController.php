@@ -8,11 +8,14 @@ use App\Entity\Ticket;
 use App\Form\FeedbackType;
 use App\Form\MessageTicketType;
 use App\Form\TicketType;
+use App\Service\GeminiService;
+use Symfony\Component\String\Slugger\SluggerInterface;
 use App\Repository\FeedbackRepository;
 use App\Repository\MessageTicketRepository;
 use App\Repository\TicketRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,12 +23,46 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/support', name: 'support_')]
 class SupportClientController extends AbstractController
 {
-    #[Route('', name: 'index', methods: ['GET'])]
-    public function index(TicketRepository $ticketRepository): Response
+    public function __construct(
+        private SluggerInterface $slugger
+    ) {}
+    #[Route('/ai/suggest-subject', name: 'ai_suggest_subject', methods: ['POST'])]
+    public function suggestSubject(Request $request, GeminiService $gemini): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+        $description = $data['description'] ?? '';
+        
+        $suggestion = $gemini->suggestSubject($description);
+        
+        return new JsonResponse(['suggestion' => trim($suggestion)]);
+    }
+
+    #[Route('/ai/correct-text', name: 'ai_correct_text', methods: ['POST'])]
+    public function correctText(Request $request, GeminiService $gemini): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $text = $data['text'] ?? '';
+        
+        $correction = $gemini->correctText($text);
+        
+        return new JsonResponse(['correction' => trim($correction)]);
+    }
+    #[Route('', name: 'index', methods: ['GET'])]
+    public function index(Request $request, TicketRepository $ticketRepository): Response
+    {
+        $query = $request->query->get('q', '');
+        $tickets = $ticketRepository->searchByUser($this->resolveUserId(), $query);
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('support/client/_ticket_grid.html.twig', [
+                'tickets' => $tickets,
+            ]);
+        }
+
         return $this->render('support/client/index.html.twig', [
-            'tickets' => $ticketRepository->findByUser($this->resolveUserId()),
+            'tickets' => $tickets,
             'stats' => $this->getHomeStats(),
+            'search_query' => $query,
         ]);
     }
 
@@ -68,7 +105,8 @@ class SupportClientController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         MessageTicketRepository $messageRepository,
-        FeedbackRepository $feedbackRepository
+        FeedbackRepository $feedbackRepository,
+        GeminiService $gemini
     ): Response {
         $this->assertTicketOwnership($ticket);
 
@@ -82,23 +120,30 @@ class SupportClientController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $files = $form->get('attachmentFiles')->getData();
+            if ($files) {
+                $filenames = $this->handleFileUploads($files);
+                $message->setAttachmentsJson(json_encode($filenames));
+            }
+
+            // Analyze Emotional Sentiment
+            $sentiment = $gemini->detectTone($message->getContenu());
+            $message->setSentiment($sentiment);
+
             $entityManager->persist($message);
             $entityManager->flush();
-            $this->addFlash('success', 'Reply sent.');
+            $this->addFlash('success', 'Reply sent with emotional awareness.');
         } else {
-            // Fallback: parse POST directly (handles form block-prefix mismatch)
             $post = $request->request->all();
             $contenu = null;
             $attachmentsJson = null;
 
-            // Check nested keys (e.g. message_ticket[contenu])
             foreach ($post as $val) {
                 if (\is_array($val)) {
                     $contenu = $val['contenu'] ?? $contenu;
                     $attachmentsJson = $val['attachmentsJson'] ?? $attachmentsJson;
                 }
             }
-            // Check flat keys as last resort
             $contenu ??= ($post['contenu'] ?? null);
             $attachmentsJson ??= ($post['attachmentsJson'] ?? null);
 
@@ -107,17 +152,16 @@ class SupportClientController extends AbstractController
                 if ($attachmentsJson !== null && trim($attachmentsJson) !== '') {
                     $message->setAttachmentsJson(trim($attachmentsJson));
                 }
+                
+                // Analyze Emotional Sentiment for fallback path too
+                $sentiment = $gemini->detectTone($message->getContenu());
+                $message->setSentiment($sentiment);
+
                 $entityManager->persist($message);
                 $entityManager->flush();
                 $this->addFlash('success', 'Reply sent.');
             } else {
-                $errors = [];
-                foreach ($form->getErrors(true) as $error) {
-                    $errors[] = $error->getMessage();
-                }
-                $this->addFlash('error', $errors
-                    ? 'Validation failed: ' . implode(', ', $errors)
-                    : 'Message could not be sent. Please fill in your message.');
+                $this->addFlash('error', 'Message could not be sent. Please check files and content.');
             }
         }
 
@@ -248,6 +292,39 @@ class SupportClientController extends AbstractController
         return $this->redirectToRoute('support_index');
     }
 
+    #[Route('/{id}/pdf', name: 'download_pdf', methods: ['GET'])]
+    public function downloadPdf(Ticket $ticket): Response
+    {
+        $this->assertTicketOwnership($ticket);
+        
+        if ($ticket->getStatut() !== 'CLOSED') {
+            $this->addFlash('error', 'PDF is only available for closed tickets.');
+            return $this->redirectToRoute('support_show', ['id' => $ticket->getId()]);
+        }
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'Helvetica');
+        $options->set('isHtml5ParserEnabled', true);
+        
+        $dompdf = new \Dompdf\Dompdf($options);
+        
+        $html = $this->renderView('support/client/pdf_export.html.twig', [
+            'ticket' => $ticket,
+        ]);
+        
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $output = $dompdf->output();
+        
+        $response = new Response($output);
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', 'attachment; filename="Ticket_' . $ticket->getId() . '.pdf"');
+
+        return $response;
+    }
+
     #[Route('/{ticketId}/messages/{messageId}/edit', name: 'message_edit', methods: ['GET', 'POST'])]
     public function editMessage(
         int $ticketId,
@@ -269,6 +346,11 @@ class SupportClientController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $files = $form->get('attachmentFiles')->getData();
+            if ($files) {
+                $filenames = $this->handleFileUploads($files);
+                $message->setAttachmentsJson(json_encode($filenames));
+            }
             $entityManager->flush();
             $this->addFlash('success', 'Message updated.');
 
@@ -338,6 +420,31 @@ class SupportClientController extends AbstractController
         $this->addFlash('success', 'Message deleted.');
 
         return $this->redirectToRoute('support_show', ['id' => $ticketId]);
+    }
+
+    private function handleFileUploads(array $files): array
+    {
+        $filenames = [];
+        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/tickets';
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        foreach ($files as $file) {
+            $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $this->slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
+
+            try {
+                $file->move($uploadDir, $newFilename);
+                $filenames[] = $newFilename;
+            } catch (\Exception $e) {
+                // Silently skip or log
+            }
+        }
+
+        return $filenames;
     }
 
     private function assertTicketOwnership(Ticket $ticket): void

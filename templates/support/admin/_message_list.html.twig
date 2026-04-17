@@ -10,12 +10,35 @@
         <div class="bubble-wrap">
             <div class="bubble {{ message.isInternal ? 'bubble-internal' : (is_admin ? 'bubble-admin' : 'bubble-client') }}">
                 {{ message.contenu }}
+                
+                {% if message.sentiment %}
+                    {% set sentiment_map = {
+                        'Friendly':     {'icon': '😊', 'color': '#22c55e', 'bg': 'rgba(34,197,94,0.1)'},
+                        'Professional': {'icon': '💼', 'color': '#3b82f6', 'bg': 'rgba(59,130,246,0.1)'},
+                        'Frustrated':   {'icon': '😟', 'color': '#f97316', 'bg': 'rgba(249,115,22,0.1)'},
+                        'Angry':        {'icon': '😡', 'color': '#ef4444', 'bg': 'rgba(239,68,68,0.1)'},
+                        'Sad':          {'icon': '😢', 'color': '#a855f7', 'bg': 'rgba(168,85,247,0.1)'},
+                        'Urgent':       {'icon': '🚨', 'color': '#eab308', 'bg': 'rgba(234,179,8,0.1)'},
+                        'Neutral':      {'icon': '😐', 'color': '#94a3b8', 'bg': 'rgba(148,163,184,0.1)'}
+                    } %}
+                    {% set s = sentiment_map[message.sentiment] ?? sentiment_map['Neutral'] %}
+                    
+                    <div style="margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; color: {{ s.color }}; background: {{ s.bg }}; border: 1px solid {{ s.color }}20;">
+                        <span>{{ s.icon }}</span>
+                        <span style="text-transform: uppercase; letter-spacing: 0.5px;">{{ message.sentiment }} Mood</span>
+                    </div>
+                {% endif %}
             </div>
             
             {% if message.attachmentsJson %}
-                <span class="attachment-pill {{ message.isInternal ? 'app-internal' : (is_admin ? 'app-admin' : 'app-client') }}">
-                    📎 {{ message.attachmentsJson }}
-                </span>
+                <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+                    {% set files = message.attachmentsJson|json_decode|default([]) %}
+                    {% for file in files %}
+                        <a href="{{ asset('uploads/tickets/' ~ file) }}" target="_blank" class="attachment-pill {{ message.isInternal ? 'app-internal' : (is_admin ? 'app-admin' : 'app-client') }}" style="text-decoration:none;">
+                            📎 {{ file|split('-')|last }}
+                        </a>
+                    {% endfor %}
+                </div>
             {% endif %}
             
             <div class="bubble-meta">
@@ -28,9 +51,21 @@
             </div>
             
             <div class="bubble-actions">
-                <a href="{{ path('admin_support_message_edit', {ticketId: ticket.id, messageId: message.id}) }}" class="bact bact-edit">
+                <button type="button" 
+                        class="bact bact-edit"
+                        onclick="openEditModal('{{ path('admin_support_message_edit', {ticketId: ticket.id, messageId: message.id}) }}', `{{ message.contenu|escape('js') }}`, '{{ message.isInternal ? 1 : 0 }}')">
                     Edit
-                </a>
+                </button>
+                <button type="button" 
+                        class="bact bact-ai" 
+                        onclick="translateMessage({{ message.id }}, this)">
+                    🌍 Translate
+                </button>
+                <button type="button" 
+                        class="bact bact-mood" 
+                        onclick="analyzeMood({{ message.id }}, this)">
+                    🧠 Analyze Mood
+                </button>
                 <form method="post" action="{{ path('admin_support_message_delete', {ticketId: ticket.id, messageId: message.id}) }}" onsubmit="return confirm('Delete this message?');" style="margin:0;">
                     <input type="hidden" name="_token" value="{{ csrf_token('delete_message_' ~ message.id) }}">
                     <button type="submit" class="bact bact-del">

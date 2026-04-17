@@ -5,7 +5,9 @@ namespace App\Form;
 use App\Entity\MessageTicket;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
@@ -20,10 +22,15 @@ class MessageTicketType extends AbstractType
                 'label' => 'Votre message',
                 'attr' => ['rows' => 4],
             ])
-            ->add('attachmentsJson', TextareaType::class, [
-                'label' => 'Attachments (JSON)',
+            ->add('attachmentsJson', HiddenType::class, [
                 'required' => false,
-                'attr' => ['rows' => 2, 'placeholder' => '["url1","url2"]'],
+            ])
+            ->add('attachmentFiles', FileType::class, [
+                'label' => 'Attach files',
+                'mapped' => false,
+                'required' => false,
+                'multiple' => true,
+                'attr' => ['accept' => 'image/*,.pdf,.doc,.docx,.txt'],
             ])
             ->add('isInternal', CheckboxType::class, [
                 'label' => 'Interne (admin only)',

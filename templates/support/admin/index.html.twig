@@ -6,12 +6,18 @@
     <script>
         function changeTicketPage(page) {
             const query = document.getElementById('ticketSearch').value;
+            const wrapper = document.getElementById('ticket-table-wrapper');
+            wrapper.style.opacity = '0.5';
+            wrapper.style.pointerEvents = 'none';
+            
             fetch(`{{ path('admin_support_index') }}?q=${query}&page=${page}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
             .then(res => res.text())
             .then(html => {
-                document.getElementById('ticket-table-wrapper').innerHTML = html;
+                wrapper.innerHTML = html;
+                wrapper.style.opacity = '1';
+                wrapper.style.pointerEvents = 'auto';
             });
         }
 
@@ -36,6 +42,8 @@
                     }]
                 },
                 options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
                     cutout: '70%',
                     plugins: { legend: { display: false } }
                 }
@@ -54,8 +62,53 @@
                     }]
                 },
                 options: {
-                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } },
                     plugins: { legend: { display: false } }
+                }
+            });
+
+            const ctxVolume = document.getElementById('volumeTrendChart').getContext('2d');
+            new Chart(ctxVolume, {
+                type: 'line',
+                data: {
+                    labels: Object.keys({{ daily_stats|json_encode|raw }}).map(d => d.split('-').slice(1).join('/')),
+                    datasets: [{
+                        label: 'Inbound Volume',
+                        data: Object.values({{ daily_stats|json_encode|raw }}),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const ctxCategory = document.getElementById('categoryChart').getContext('2d');
+            new Chart(ctxCategory, {
+                type: 'polarArea',
+                data: {
+                    labels: Object.keys({{ category_stats|json_encode|raw }}),
+                    datasets: [{
+                        data: Object.values({{ category_stats|json_encode|raw }}),
+                        backgroundColor: ['rgba(99, 102, 241, 0.5)', 'rgba(244, 63, 94, 0.5)', 'rgba(34, 197, 94, 0.5)', 'rgba(245, 158, 11, 0.5)'],
+                        borderColor: 'rgba(255,255,255,0.1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { color: '#a1a1aa', font: { size: 10 } } } 
+                    },
+                    scales: { r: { grid: { color: 'rgba(255,255,255,0.05)' }, angleLines: { color: 'rgba(255,255,255,0.05)' } } }
                 }
             });
         });
@@ -71,23 +124,45 @@
                 <h2 class="mt-1 text-2xl font-bold tracking-tight">Ticket Operations Dashboard</h2>
                 <p class="mt-2 text-sm text-muted-foreground">Track priority, status, and SLA flow in one place.</p>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 text-right">
+                <div class="hidden md:block">
+                    <div class="text-2xl font-bold">{{ tickets|length }}</div>
+                    <div class="text-[10px] uppercase text-muted-foreground font-bold tracking-widest">Active Requests</div>
+                </div>
+                <div class="h-10 w-px bg-border mx-4 hidden md:block"></div>
+                <a href="{{ path('admin_support_calendar') }}" class="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-muted transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    View Calendar
+                </a>
                 <a href="{{ path('admin_support_export_csv') }}" class="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-muted transition flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                     Export CSV
                 </a>
-                <span class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    {{ tickets|length }} visible
-                </span>
+            </div>
+        </div>
+    </div>
+
+    {# Charts Row 1: Volume & Category #}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2 rounded-3xl border border-border bg-card p-6 shadow-sm flex flex-col">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Ticket Volume (Last 7 Days)</h4>
+            <div class="h-[250px] w-full">
+                <canvas id="volumeTrendChart"></canvas>
+            </div>
+        </div>
+        <div class="rounded-3xl border border-border bg-card p-6 shadow-sm flex flex-col">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Topic Distribution</h4>
+            <div class="h-[250px] w-full">
+                <canvas id="categoryChart"></canvas>
             </div>
         </div>
     </div>
 
     <div class="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-        <div class="flex flex-wrap items-center justify-between border-b border-border/70 px-5 py-4 gap-4">
+        <div class="flex flex-wrap items-center justify-between border-b border-border/70 px-5 py-4 gap-4 bg-muted/10">
             <div>
-                <h3 class="text-base font-semibold">Ticket Queue</h3>
-                <p class="text-xs text-muted-foreground">Prioritize urgent requests and route them quickly.</p>
+                <h3 class="text-base font-semibold">Live Ticket Queue</h3>
+                <p class="text-xs text-muted-foreground">Real-time status of all inbound support requests.</p>
             </div>
             <div class="relative w-full max-w-xs">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -99,34 +174,29 @@
         </div>
     </div>
 
-    {# Analytics Section Below Table #}
-    <div class="grid gap-6">
+    {# Charts Row 2: Status & Priority #}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="rounded-3xl border border-border bg-card p-6 shadow-sm">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h4 class="text-lg font-bold">Status Distribution</h4>
-                    <p class="text-sm text-muted-foreground">Detailed breakdown of current ticket life-cycles.</p>
+                    <h4 class="text-sm font-bold uppercase tracking-wider text-muted-foreground">Status Breakdown</h4>
                 </div>
-                <div class="flex gap-4">
+                <div class="flex flex-wrap gap-2">
                     {% for status, count in status_stats %}
-                        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-muted/20">
-                            <span class="text-[10px] font-bold uppercase">{{ status|replace({'_': ' '}) }}</span>
-                            <span class="text-sm font-bold text-primary">{{ count }}</span>
+                        <div class="text-[10px] font-bold px-2 py-1 rounded-md bg-muted/30 border border-border/50">
+                            {{ status|replace({'_': ' '}) }}: {{ count }}
                         </div>
                     {% endfor %}
                 </div>
             </div>
-            <div style="height: 300px; width: 100%; display: flex; justify-content: center;">
+            <div class="h-[250px] w-full relative">
                 <canvas id="statusChart"></canvas>
             </div>
         </div>
 
         <div class="rounded-3xl border border-border bg-card p-6 shadow-sm">
-            <div>
-                <h4 class="text-lg font-bold">Priority Volume</h4>
-                <p class="text-sm text-muted-foreground mb-6">Visualizing urgent vs routine workload distribution.</p>
-            </div>
-            <div style="height: 300px; width: 100%;">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-6">Urgency Metrics</h4>
+            <div class="h-[250px] w-full">
                 <canvas id="priorityChart"></canvas>
             </div>
         </div>
