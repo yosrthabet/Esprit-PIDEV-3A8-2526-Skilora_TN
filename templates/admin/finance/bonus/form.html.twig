@@ -1,0 +1,29 @@
+{% extends 'admin/finance/layout.html.twig' %}
+{% form_theme form 'form/finance_form_layout.html.twig' %}
+
+{% block finance_body %}
+<div class="mx-auto max-w-3xl space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <h2 class="text-2xl font-bold tracking-tight">{{ page_title }}</h2>
+        <a href="{{ path('admin_finance_bonus_index') }}" class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
+            <i data-lucide="arrow-left" class="h-4 w-4"></i>
+            Retour à la liste
+        </a>
+    </div>
+
+    <div class="rounded-2xl border border-border/80 bg-gradient-to-br from-card via-card to-muted/15 p-6 shadow-md sm:p-8">
+        {{ form_start(form, {'attr': {'class': 'space-y-5', 'novalidate': 'novalidate'}}) }}
+            {{ form_row(form.user) }}
+            {{ form_row(form.amount) }}
+            {{ form_row(form.reason) }}
+            {{ form_row(form.dateAwarded) }}
+            <div class="flex flex-wrap gap-3 pt-4">
+                <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition hover:opacity-95">
+                    <i data-lucide="check" class="h-4 w-4"></i>
+                    {{ is_edit ? 'Enregistrer' : 'Créer la prime' }}
+                </button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock finance_body %}

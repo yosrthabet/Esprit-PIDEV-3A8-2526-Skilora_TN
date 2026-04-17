@@ -1,0 +1,27 @@
+{# Header public formations #}
+<header class="f-topbar">
+    <div class="f-container f-topbar__inner">
+        <a href="{{ path('app_home') }}" class="f-brand">
+            <span class="f-brand__logo">S</span>
+            <span>Skilora</span>
+        </a>
+        <nav class="f-nav" aria-label="Compte">
+            {% if app.user %}
+                <a href="{{ path('app_formation_index') }}">Catalogue</a>
+                {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('app_admin_formation_index') }}" class="hidden sm:inline-flex">Gérer</a>
+                {% endif %}
+                {% if is_granted('ROLE_TRAINER') %}
+                    <a href="{{ path('app_dashboard') }}" class="hidden sm:inline-flex">Mes cours</a>
+                {% endif %}
+                <a href="{{ path('app_my_formations') }}" class="hidden sm:inline-flex">Mes formations</a>
+                <a href="{{ path('app_dashboard') }}" class="f-nav--cta">
+                    {{ app.user.displayName }}
+                </a>
+            {% else %}
+                <a href="{{ path('app_login') }}" class="f-nav--cta">Connexion</a>
+                <a href="{{ path('app_register') }}" class="f-nav--outline">Inscription</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>

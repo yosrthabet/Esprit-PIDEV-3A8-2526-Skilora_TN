@@ -1,0 +1,43 @@
+{# components/tabs.html.twig — ShadCN Tabs #}
+{#
+  Usage: {{ include('components/tabs.html.twig', {
+      id: 'my-tabs',
+      default_tab: 'tab1',
+      tabs: [
+          { id: 'tab1', label: 'Account', content: '<p>Account settings here</p>' },
+          { id: 'tab2', label: 'Password', content: '<p>Password settings here</p>' },
+      ],
+  }) }}
+#}
+{% set default_tab = default_tab|default(tabs[0].id|default('')) %}
+
+<div x-data="{ activeTab: '{{ default_tab }}' }" class="{{ class|default('') }}">
+    {# Tab list #}
+    <div class="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+        {% for tab in tabs %}
+            <button
+                type="button"
+                @click="activeTab = '{{ tab.id }}'"
+                :class="activeTab === '{{ tab.id }}'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'hover:text-foreground/80'"
+                class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+                {{ tab.label }}
+            </button>
+        {% endfor %}
+    </div>
+
+    {# Tab panels #}
+    {% for tab in tabs %}
+        <div
+            x-show="activeTab === '{{ tab.id }}'"
+            x-transition:enter="transition ease-out duration-150"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+            {{ tab.content|raw }}
+        </div>
+    {% endfor %}
+</div>

@@ -1,0 +1,147 @@
+{% extends 'admin/finance/layout.html.twig' %}
+
+{% block finance_body %}
+{% set hist = forecast_data.historical %}
+{% set fc = forecast_data.forecast %}
+{% set meta = forecast_data.meta %}
+{% set ai = forecast_data.ai %}
+
+<div class="relative mx-auto max-w-5xl pb-14">
+    <div class="pointer-events-none absolute -right-12 top-0 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" aria-hidden="true"></div>
+
+    <section class="relative overflow-hidden rounded-3xl border border-border/80 bg-card p-6 shadow-xl sm:p-8">
+        <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-emerald-600/90 via-teal-500/80 to-primary/70" aria-hidden="true"></div>
+        <div class="mb-6 flex flex-wrap items-start gap-4">
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                <i data-lucide="trending-up" class="h-6 w-6"></i>
+            </span>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">IA &amp; pilotage</p>
+                <h2 class="text-xl font-bold tracking-tight text-foreground">Prévision de la masse salariale (net estimé)</h2>
+            </div>
+        </div>
+
+        {% if meta.message is defined and meta.message %}
+            <div class="mb-4 rounded-xl border border-red-500/35 bg-red-500/10 px-4 py-3 text-sm text-red-900 dark:text-red-100">
+                {{ meta.message }}
+            </div>
+        {% endif %}
+
+        <div class="mb-6 rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-100">
+            <strong>Avertissement :</strong> estimation indicative, non opposable. Ne remplace pas la comptabilité ni les obligations légales.
+        </div>
+
+        <form method="get" action="{{ path('admin_finance_forecast') }}" class="mb-8 grid gap-4 rounded-2xl border border-border/60 bg-muted/20 p-4 sm:grid-cols-2 lg:grid-cols-4 dark:bg-muted/10">
+            <div>
+                <label class="mb-1 block text-xs font-medium text-muted-foreground">Mois d’historique analysés</label>
+                <input type="number" name="history" min="3" max="36" value="{{ form_history }}"
+                       class="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50" />
+            </div>
+            <div>
+                <label class="mb-1 block text-xs font-medium text-muted-foreground">Mois à prévoir</label>
+                <input type="number" name="ahead" min="1" max="12" value="{{ form_ahead }}"
+                       class="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50" />
+            </div>
+            <div>
+                <label class="mb-1 block text-xs font-medium text-muted-foreground">Scénario : % sur la prévision</label>
+                <input type="number" name="pct" step="0.1" value="{{ form_pct }}"
+                       class="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50" placeholder="0" />
+            </div>
+            <div>
+                <label class="mb-1 block text-xs font-medium text-muted-foreground">+ Net TND / mois (fixe)</label>
+                <input type="number" name="extra" step="1" value="{{ form_extra }}"
+                       class="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50" placeholder="0" />
+            </div>
+            <div class="flex flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-4">
+                <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95">
+                    <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+                    Recalculer
+                </button>
+                <a href="{{ path('admin_finance_forecast_export', { history: form_history, ahead: form_ahead, pct: form_pct, extra: form_extra }) }}"
+                   class="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-muted/40">
+                    <i data-lucide="file-spreadsheet" class="h-4 w-4"></i>
+                    Exporter CSV
+                </a>
+            </div>
+        </form>
+
+        {% if hist is empty %}
+            <p class="text-sm text-muted-foreground">Aucune donnée : ajoutez des bulletins de paie pour afficher la courbe.</p>
+        {% else %}
+            <div class="mb-6 overflow-x-auto rounded-2xl border border-border bg-muted/10 p-4 dark:bg-muted/5">
+                {% if forecast_chart is defined and forecast_chart %}
+                    <div class="relative h-72 w-full min-w-[280px]">
+                        <canvas id="forecastMassChart" class="max-h-72"></canvas>
+                    </div>
+                    <p class="mt-2 text-xs text-muted-foreground">Graphique interactif Chart.js pour suivre l'historique et la projection.</p>
+                {% else %}
+                    <p class="text-sm text-muted-foreground">Graphique indisponible.</p>
+                {% endif %}
+                <div class="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                    <span class="inline-flex items-center gap-1.5"><span class="h-2 w-6 rounded-sm bg-blue-500"></span> Historique (somme des nets)</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="h-2 w-6 rounded-sm bg-emerald-500"></span> Prévision</span>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="rounded-2xl border border-border/60 bg-card p-4">
+                    <h3 class="mb-3 text-sm font-bold text-foreground">Historique utilisé ({{ meta.history_months_used }} mois)</h3>
+                    <div class="max-h-56 overflow-auto text-sm">
+                        <table class="w-full border-collapse text-left">
+                            <thead><tr class="border-b border-border text-xs text-muted-foreground"><th class="py-1 pr-2">Période</th><th class="py-1">Net estimé (TND)</th></tr></thead>
+                            <tbody>
+                            {% for row in hist %}
+                                <tr class="border-b border-border/50"><td class="py-1.5 font-mono text-xs">{{ row.period }}</td><td class="tabular-nums">{{ row.total_net|number_format(2, ',', ' ') }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="rounded-2xl border border-border/60 bg-card p-4">
+                    <h3 class="mb-3 text-sm font-bold text-foreground">Prévision ({{ meta.forecast_months }} mois)</h3>
+                    <div class="max-h-56 overflow-auto text-sm">
+                        <table class="w-full border-collapse text-left">
+                            <thead><tr class="border-b border-border text-xs text-muted-foreground"><th class="py-1 pr-2">Période</th><th class="py-1">Net (TND)</th><th class="py-1 text-xs">Fourchette</th></tr></thead>
+                            <tbody>
+                            {% for row in fc %}
+                                <tr class="border-b border-border/50">
+                                    <td class="py-1.5 font-mono text-xs">{{ row.period }}</td>
+                                    <td class="tabular-nums font-semibold text-emerald-700 dark:text-emerald-300">{{ row.total_net|number_format(2, ',', ' ') }}</td>
+                                    <td class="text-xs text-muted-foreground">{{ row.band_low|number_format(0, ',', ' ') }} – {{ row.band_high|number_format(0, ',', ' ') }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="mt-8 rounded-2xl border border-primary/25 bg-primary/5 p-5 dark:bg-primary/10">
+            <div class="mb-2 flex flex-wrap items-center gap-2">
+                <span class="rounded-full border border-primary/40 bg-primary/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">Synthèse IA</span>
+                <span class="text-[10px] font-medium uppercase text-muted-foreground">Source : {{ ai.source|upper }}</span>
+            </div>
+            <p class="text-sm leading-relaxed text-foreground">{{ ai.text }}</p>
+        </div>
+    </section>
+</div>
+
+{% if hist is not empty and forecast_chart is defined and forecast_chart %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    var view = {{ forecast_chart.createView()|json_encode|raw }};
+    var el = document.getElementById('forecastMassChart');
+    if (!el || typeof Chart === 'undefined') return;
+    new Chart(el, view);
+})();
+</script>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.lucide) lucide.createIcons();
+});
+</script>
+{% endblock %}

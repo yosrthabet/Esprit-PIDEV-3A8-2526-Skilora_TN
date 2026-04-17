@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>CV — {{ cv.fullName }}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 10pt;
+            color: #1f2937;
+            margin: 0;
+            padding: 20pt 24pt;
+            background: #ffffff;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 1.5pt solid #374151;
+            padding-bottom: 12pt;
+            margin-bottom: 16pt;
+        }
+        h1 {
+            font-size: 22pt;
+            margin: 0 0 7pt 0;
+            font-weight: bold;
+            color: #111827;
+            letter-spacing: 0.4pt;
+        }
+        .subtitle {
+            margin: 0 0 8pt 0;
+            font-size: 8.8pt;
+            color: #6b7280;
+            letter-spacing: 1pt;
+            text-transform: uppercase;
+        }
+        .contact {
+            font-size: 9.2pt;
+            line-height: 1.5;
+            color: #374151;
+        }
+        .contact p { margin: 0 0 2pt 0; }
+        .photo {
+            max-height: 86px;
+            border-radius: 50%;
+            border: 1pt solid #d1d5db;
+            margin-bottom: 7pt;
+        }
+        h2 {
+            font-size: 10.8pt;
+            text-transform: uppercase;
+            letter-spacing: 1pt;
+            margin: 15pt 0 7pt 0;
+            border-bottom: 0.7pt solid #d1d5db;
+            padding-bottom: 4pt;
+            color: #111827;
+        }
+        h2:first-of-type { margin-top: 0; }
+        .summary {
+            line-height: 1.55;
+            text-align: justify;
+            color: #374151;
+        }
+        .item {
+            margin-bottom: 9pt;
+            page-break-inside: avoid;
+        }
+        .item-title {
+            font-weight: bold;
+            color: #111827;
+            font-size: 10pt;
+        }
+        .item-meta {
+            font-size: 8.9pt;
+            color: #6b7280;
+            margin-top: 2pt;
+        }
+        .item-desc {
+            margin-top: 4pt;
+            line-height: 1.45;
+            font-size: 9.4pt;
+            color: #4b5563;
+        }
+        .chip {
+            display: inline-block;
+            margin: 0 5pt 5pt 0;
+            padding: 3pt 7pt;
+            border: 0.6pt solid #d1d5db;
+            border-radius: 3pt;
+            background: #f9fafb;
+            font-size: 8.8pt;
+            color: #111827;
+        }
+        .lang-line {
+            margin: 0 0 4pt 0;
+            padding-left: 8pt;
+            border-left: 2pt solid #e5e7eb;
+            color: #374151;
+            font-size: 9.2pt;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if cv.photoDataUri %}
+            <div><img src="{{ cv.photoDataUri }}" alt="" class="photo"/></div>
+        {% endif %}
+        <h1>{{ cv.fullName }}</h1>
+        <p class="subtitle">Curriculum Vitae</p>
+        <div class="contact">
+            <p>{{ cv.email }}</p>
+            {% if cv.phone %}<p>{{ cv.phone }}</p>{% endif %}
+            {% if cv.address %}<p>{{ cv.address|nl2br }}</p>{% endif %}
+        </div>
+    </div>
+
+    <h2>Résumé professionnel</h2>
+    <div class="summary">{{ cv.professionalSummary|nl2br }}</div>
+
+    {% if cv.experience is not empty %}
+        <h2>Expérience professionnelle</h2>
+        {% for x in cv.experience %}
+            <div class="item">
+                <div class="item-title">{{ x.jobTitle }}</div>
+                <div class="item-meta">{{ x.company }}{% if x.duration %} — {{ x.duration }}{% endif %}</div>
+                {% if x.description %}
+                    <div class="item-desc">{{ x.description|nl2br }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if cv.education is not empty %}
+        <h2>Formation</h2>
+        {% for e in cv.education %}
+            <div class="item">
+                <div class="item-title">{{ e.degree }}</div>
+                <div class="item-meta">{{ e.institution }}{% if e.year %} — {{ e.year }}{% endif %}</div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <h2>Compétences</h2>
+    <div>
+        {% for s in cv.skillsAsList() %}
+            <span class="chip">{{ s }}</span>
+        {% endfor %}
+    </div>
+
+    {% if cv.languagesAsList() is not empty %}
+        <h2>Langues</h2>
+        {% for l in cv.languagesAsList() %}
+            <p class="lang-line">{{ l }}</p>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>

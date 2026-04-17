@@ -1,0 +1,142 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block title %}{{ formation.title }} · Skilora{% endblock %}
+{% block page_title %}{{ formation.title }}{% endblock %}
+
+{% block content %}
+{% set lvl = formation.level.value %}
+{% set levelMod = lvl == 'BEGINNER' ? 'beginner' : (lvl == 'INTERMEDIATE' ? 'intermediate' : 'advanced') %}
+{% set levelColor = {
+    'beginner':     'bg-emerald-500/10 text-emerald-700 ring-emerald-600/20',
+    'intermediate': 'bg-amber-500/10 text-amber-700 ring-amber-600/20',
+    'advanced':     'bg-rose-500/10 text-rose-700 ring-rose-600/20',
+} %}
+
+<div class="space-y-6 animate-fade-in">
+    {# ── Breadcrumb + title ── #}
+    <div>
+        <nav class="mb-3 text-xs text-muted-foreground" aria-label="Fil d'Ariane">
+            <a href="{{ path('app_formation_index') }}" class="hover:text-foreground hover:underline">Formations</a>
+            <span class="mx-1">/</span>
+            <span class="text-foreground">{{ formation.title }}</span>
+        </nav>
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{{ formation.title }}</h1>
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                    <span class="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset bg-secondary/50 text-secondary-foreground ring-border">{{ formation.categoryLabelFr }}</span>
+                    <span class="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset {{ levelColor[levelMod] }}">{{ formation.levelLabelFr }}</span>
+                </div>
+            </div>
+            <a href="{{ path('app_formation_index') }}"
+               class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                <i data-lucide="arrow-left" class="mr-2 h-4 w-4"></i> Retour au catalogue
+            </a>
+        </div>
+    </div>
+
+    {# ── Stats row ── #}
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <i data-lucide="clock" class="h-4 w-4"></i> Durée
+            </div>
+            <p class="mt-2 text-2xl font-bold text-card-foreground">{{ formation.duration }}<span class="ml-1 text-sm font-normal text-muted-foreground">h</span></p>
+        </div>
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <i data-lucide="book-open" class="h-4 w-4"></i> Leçons
+            </div>
+            <p class="mt-2 text-2xl font-bold text-card-foreground">{{ formation.lessonsCount }}</p>
+        </div>
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <i data-lucide="folder" class="h-4 w-4"></i> Catégorie
+            </div>
+            <p class="mt-2 text-sm font-semibold text-card-foreground">{{ formation.categoryLabelFr }}</p>
+        </div>
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <i data-lucide="banknote" class="h-4 w-4"></i> Tarif
+            </div>
+            <p class="mt-2 text-2xl font-bold text-card-foreground">
+                {% if formation.price is null %}
+                    <span class="text-muted-foreground">—</span>
+                {% elseif formation.price <= 0 %}
+                    <span class="text-emerald-600">Gratuit</span>
+                {% else %}
+                    {{ formation.priceDisplayFr }} <span class="ml-1 text-sm font-normal text-muted-foreground">TND</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    {# ── Content + sidebar ── #}
+    <div class="grid gap-6 lg:grid-cols-3">
+        {# Description (2/3) #}
+        <div class="lg:col-span-2">
+            <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-card-foreground">À propos de cette formation</h2>
+                <div class="mt-4 text-sm leading-relaxed text-muted-foreground whitespace-pre-line">{{ formation.description }}</div>
+            </div>
+        </div>
+
+        {# Sidebar (1/3) #}
+        <div class="space-y-4">
+            <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+                {% if app.user %}
+                    {% if enrollment %}
+                        {% if enrollment.completed %}
+                            <div class="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-700">
+                                <i data-lucide="check-circle" class="h-5 w-5"></i>
+                                Formation terminée
+                            </div>
+                            {% if certificate %}
+                                <a href="{{ path('app_certificate_pdf', { id: certificate.id }) }}"
+                                   class="mt-3 inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+                                    <i data-lucide="download" class="mr-2 h-4 w-4"></i> Télécharger le PDF
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <p class="mb-3 text-sm font-medium text-foreground">Déjà inscrit</p>
+                            <form method="post" action="{{ path('app_formation_complete', { id: formation.id }) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('formation_complete_' ~ formation.id) }}">
+                                <button type="submit"
+                                        class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+                                    Marquer comme terminée
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <form method="post" action="{{ path('app_formation_enroll', { id: formation.id }) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('formation_enroll_' ~ formation.id) }}">
+                            <button type="submit"
+                                    class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+                                S'inscrire maintenant
+                            </button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ path('app_login') }}"
+                       class="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                        Connexion pour s'inscrire
+                    </a>
+                {% endif %}
+
+                <div class="mt-4 space-y-2">
+                    <a href="{{ path('app_formation_index') }}"
+                       class="inline-flex h-9 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                        <i data-lucide="arrow-left" class="mr-2 h-4 w-4"></i> Retour au catalogue
+                    </a>
+                    {% if app.user %}
+                        <a href="{{ path('app_my_formations') }}"
+                           class="inline-flex h-9 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                            Mes formations
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

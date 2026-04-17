@@ -1,0 +1,29 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@hotwired/stimulus": "^3.0.0",
+    "@symfony/stimulus-bridge": "^3.2.0 || ^4.0.0",
+    "@symfony/ux-chartjs": "file:vendor/symfony/ux-chartjs/assets",
+    "@tailwindcss/cli": "^4.2.2",
+    "@tailwindcss/vite": "^4.2.2",
+    "alpinejs": "^3.15.9",
+    "chart.js": "^3.4.1 || ^4.0",
+    "tailwindcss": "^4.2.2",
+    "vite": "^8.0.3"
+  },
+  "dependencies": {
+    "@alpinejs/collapse": "^3.15.9",
+    "vite-plugin-symfony": "^8.2.4"
+  }
+}

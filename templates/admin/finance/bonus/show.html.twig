@@ -1,0 +1,36 @@
+{% extends 'admin/finance/layout.html.twig' %}
+
+{% block finance_body %}
+<div class="mx-auto max-w-3xl space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <h2 class="text-2xl font-semibold">Bonus #{{ bonus.id }}</h2>
+        {% include 'admin/finance/_show_page_actions.html.twig' with {
+            edit_url: path('admin_finance_bonus_edit', {id: bonus.id}),
+            delete_path: path('admin_finance_bonus_delete', {id: bonus.id}),
+            token: csrf_token('delete' ~ bonus.id),
+            list_url: path('admin_finance_bonus_index'),
+        } only %}
+    </div>
+
+    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <dl class="grid gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Employee</dt>
+                <dd class="mt-1 text-sm">{{ bonus.user ? (bonus.user.fullName ~ ' (' ~ bonus.user.username ~ ')') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Amount (TND)</dt>
+                <dd class="mt-1 text-sm">{{ bonus.amount is not null ? bonus.amount|number_format(2, '.', ' ') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Date awarded</dt>
+                <dd class="mt-1 text-sm">{{ bonus.dateAwarded ? bonus.dateAwarded|date('Y-m-d') : '—' }}</dd>
+            </div>
+            <div class="sm:col-span-2">
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Reason</dt>
+                <dd class="mt-1 text-sm whitespace-pre-wrap">{{ bonus.reason|default('—') }}</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+{% endblock finance_body %}

@@ -1,0 +1,76 @@
+{% set isEnrolled = f.id in enrolledFormationIds %}
+{% set lvl = f.level.value %}
+{% set catSlug = f.category|lower|replace({'_': '-'}) %}
+{% set levelMod = lvl == 'BEGINNER' ? 'beginner' : (lvl == 'INTERMEDIATE' ? 'intermediate' : 'advanced') %}
+{% set levelColor = {
+    'beginner':     'bg-emerald-500/10 text-emerald-700 ring-emerald-600/20',
+    'intermediate': 'bg-amber-500/10 text-amber-700 ring-amber-600/20',
+    'advanced':     'bg-rose-500/10 text-rose-700 ring-rose-600/20',
+} %}
+
+<article class="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+    {# Card banner #}
+    <a href="{{ path('app_formation_show', { id: f.id }) }}" class="relative block h-36 bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+        <div class="absolute bottom-3 left-3 flex items-center gap-2">
+            <span class="rounded-md bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground backdrop-blur-sm">Formation</span>
+            <span class="rounded-md bg-primary/80 px-2 py-0.5 text-[10px] font-semibold text-primary-foreground backdrop-blur-sm">Skilora</span>
+        </div>
+    </a>
+
+    {# Card body #}
+    <div class="flex flex-1 flex-col p-4">
+        <h2 class="text-sm font-semibold leading-snug text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+            <a href="{{ path('app_formation_show', { id: f.id }) }}">{{ f.title }}</a>
+        </h2>
+        <p class="mt-1.5 text-xs leading-relaxed text-muted-foreground line-clamp-2">{{ f.description }}</p>
+
+        <div class="mt-3 flex flex-wrap items-center gap-1.5">
+            <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset bg-secondary/50 text-secondary-foreground ring-border">{{ f.categoryLabelFr }}</span>
+            <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset {{ levelColor[levelMod] }}">{{ f.levelLabelFr }}</span>
+        </div>
+
+        <div class="mt-auto pt-3 flex items-center justify-between text-xs text-muted-foreground">
+            <span class="inline-flex items-center gap-1">
+                <i data-lucide="clock" class="h-3.5 w-3.5"></i>
+                {{ f.duration }}&nbsp;h
+            </span>
+            <span class="font-semibold text-foreground">
+                {% if f.price is null %}
+                    —
+                {% elseif f.price <= 0 %}
+                    <span class="text-emerald-600">Gratuit</span>
+                {% else %}
+                    {{ f.priceDisplayFr }} <span class="text-muted-foreground font-normal">TND</span>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    {# Card footer #}
+    <div class="border-t border-border px-4 py-3 flex items-center gap-2">
+        <a href="{{ path('app_formation_show', { id: f.id }) }}"
+           class="inline-flex h-8 flex-1 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+            Voir le détail
+            <i data-lucide="arrow-right" class="ml-1.5 h-3.5 w-3.5"></i>
+        </a>
+        {% if app.user %}
+            {% if isEnrolled %}
+                <span class="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2.5 py-1.5 text-[10px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                    <i data-lucide="check" class="h-3 w-3"></i> Inscrit
+                </span>
+            {% else %}
+                <form method="post" action="{{ path('app_formation_enroll', { id: f.id }) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('formation_enroll_' ~ f.id) }}">
+                    <button type="submit" class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                        S'inscrire
+                    </button>
+                </form>
+            {% endif %}
+        {% else %}
+            <a href="{{ path('app_login') }}" class="text-[10px] text-muted-foreground hover:text-foreground">
+                Connexion · pour s'inscrire
+            </a>
+        {% endif %}
+    </div>
+</article>

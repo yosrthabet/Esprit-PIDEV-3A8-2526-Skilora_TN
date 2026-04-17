@@ -1,0 +1,97 @@
+{# Menu ⋮ : choisir le statut (POST) ou ouvrir le profil #}
+{% set raw = application.statusRaw %}
+{% set st = raw in ['ACCEPTED', 'REJECTED'] ? raw : 'IN_PROGRESS' %}
+{% set order = ['ACCEPTED', 'REJECTED', 'IN_PROGRESS'] %}
+{% set labels = {
+    'ACCEPTED': 'Accepter',
+    'REJECTED': 'Refuser',
+    'IN_PROGRESS': 'En cours',
+} %}
+<div
+    x-data="{
+        open: false,
+        menuStyle: {},
+        toggle() {
+            if (this.open) { this.open = false; return; }
+            this.open = true;
+            this.$nextTick(() => {
+                const trigger = this.$refs.trigger.getBoundingClientRect();
+                const menu = this.$refs.menu;
+                const menuH = menu.offsetHeight;
+                const menuW = menu.offsetWidth;
+                const spaceBelow = window.innerHeight - trigger.bottom;
+                const spaceAbove = trigger.top;
+                let top;
+                if (spaceBelow >= menuH + 8 || spaceBelow >= spaceAbove) {
+                    top = trigger.bottom + 4;
+                } else {
+                    top = trigger.top - menuH - 4;
+                }
+                let left = trigger.right - menuW;
+                if (left < 8) left = 8;
+                if (left + menuW > window.innerWidth - 8) {
+                    left = window.innerWidth - menuW - 8;
+                }
+                this.menuStyle = { position: 'fixed', top: top + 'px', left: left + 'px', zIndex: 9999 };
+            });
+        }
+    }"
+    @keydown.escape.window="open = false"
+    class="relative inline-flex justify-end"
+>
+    <button
+        type="button"
+        x-ref="trigger"
+        @click.stop="toggle()"
+        class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-haspopup="menu"
+        :aria-expanded="open"
+        aria-label="Actions sur la candidature"
+    >
+        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+        </svg>
+    </button>
+
+    <div
+        x-ref="menu"
+        x-show="open"
+        x-transition.opacity
+        @click.outside="open = false"
+        x-cloak
+        :style="menuStyle"
+        class="fixed w-56 min-w-[13rem] overflow-hidden rounded-xl border border-border bg-card py-1 shadow-lg ring-1 ring-black/5 dark:ring-white/10"
+    >
+        <p class="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Statut</p>
+        {% for code in order %}
+            <form method="post" action="{{ path('app_employer_applications_status', {id: application.id}) }}" class="block">
+                <input type="hidden" name="_token" value="{{ csrf_token('employer_app_status_' ~ application.id) }}">
+                <input type="hidden" name="status" value="{{ code }}">
+                <input type="hidden" name="return" value="{{ return_to }}">
+                <button
+                    type="submit"
+                    class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition hover:bg-muted/80
+                        {% if st == code %}bg-muted/60 font-medium{% endif %}"
+                >
+                    {% if st == code %}
+                        <svg class="h-4 w-4 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    {% else %}
+                        <span class="inline-block w-4 shrink-0" aria-hidden="true"></span>
+                    {% endif %}
+                    <span>{{ labels[code] }}</span>
+                </button>
+            </form>
+        {% endfor %}
+        {% if show_profile_link %}
+            <div class="my-1 border-t border-border" role="separator"></div>
+            <a
+                href="{{ path('app_employer_applications_profile', {id: application.id}) }}"
+                class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-foreground hover:bg-muted/80"
+                @click="open = false"
+            >
+                <span class="inline-block w-4 shrink-0" aria-hidden="true"></span>
+                Voir le profil
+            </a>
+        {% endif %}
+    </div>
+</div>

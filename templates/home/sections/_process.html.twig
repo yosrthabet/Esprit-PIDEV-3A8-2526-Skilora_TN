@@ -1,0 +1,23 @@
+<!-- PROCESS SECTION -->
+<section class="py-32 bg-background relative z-20">
+    <div class="container mx-auto px-4">
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-20 text-center max-w-3xl mx-auto">
+            How work gets done on Skilora
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+            <!-- Connecting line for desktop -->
+            <div class="hidden md:block absolute top-[40px] left-[15%] right-[15%] h-1 bg-gradient-to-r from-transparent via-border to-transparent z-0"></div>
+
+            {% for step in process %}
+                <div class="process-step relative z-10 flex flex-col items-center text-center">
+                    <div class="w-20 h-20 rounded-full bg-background border-4 border-primary text-primary flex items-center justify-center text-2xl font-black mb-8 shadow-xl">
+                        {{ step.number }}
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">{{ step.title }}</h3>
+                    <p class="text-muted-foreground text-lg leading-relaxed">{{ step.desc }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>

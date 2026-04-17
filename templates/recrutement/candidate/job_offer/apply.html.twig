@@ -1,0 +1,88 @@
+﻿{% extends 'recrutement/candidate/base.html.twig' %}
+
+{% block candidate_title %}Postuler · {{ job_offer.title }}{% endblock %}
+{% block candidate_page_title %}Postuler{% endblock %}
+
+{% block candidate_content %}
+<div class="mx-auto max-w-2xl space-y-8">
+    {% for msg in app.flashes('error') %}
+        <div class="rounded-2xl border border-red-500/45 bg-red-500/10 px-4 py-3 shadow-sm dark:border-red-500/35 dark:bg-red-950/40"
+             role="alert"
+             aria-live="assertive">
+            <p class="text-sm font-semibold text-red-900 dark:text-red-100">Contenu de candidature non accepté</p>
+            <p class="mt-1.5 text-sm leading-relaxed text-red-800 dark:text-red-200/95">{{ msg }}</p>
+        </div>
+    {% endfor %}
+    {% for msg in app.flashes('warning') %}
+        <div class="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-950/35 dark:text-amber-100"
+             role="status">
+            {{ msg }}
+        </div>
+    {% endfor %}
+
+    <div class="candidate-stagger space-y-3">
+        <a href="{{ path('app_candidate_offres_show', {id: job_offer.id}) }}" class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-primary">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            {{ job_offer.title }}
+        </a>
+        <h1 class="candidate-font-display text-3xl font-semibold tracking-tight text-foreground">Envoyer votre candidature</h1>
+        <p class="text-sm leading-relaxed text-muted-foreground">
+            Téléversez votre CV au format <strong class="font-medium text-foreground">PDF, Word ou image (JPG/PNG/WebP)</strong> (maximum 5&nbsp;Mo).
+            Vous pouvez ajouter une lettre de motivation si vous le souhaitez.
+        </p>
+        <p class="text-xs text-muted-foreground">
+            Besoin d’un CV ? <a href="{{ path('app_candidate_cv_builder') }}" class="font-medium text-primary hover:underline">Créer un CV professionnel</a>
+        </p>
+    </div>
+
+    <div class="candidate-stagger rounded-3xl border border-border/80 bg-card/85 p-6 shadow-lg shadow-primary/5 backdrop-blur-sm sm:p-8">
+        {{ form_start(form, { attr: { class: 'space-y-8', enctype: 'multipart/form-data' } }) }}
+
+        <div class="space-y-3 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-5 dark:border-primary/25 dark:bg-primary/10">
+            <div class="flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                </span>
+                <div>
+                    {{ form_label(form.cv, null, { label_attr: { class: 'text-sm font-semibold text-foreground' } }) }}
+                    <p class="text-xs text-muted-foreground">Fichier obligatoire pour valider votre envoi.</p>
+                </div>
+            </div>
+            {{ form_widget(form.cv) }}
+            {{ form_errors(form.cv) }}
+            <div class="pt-1">
+                {% if has_saved_generated_cv|default(false) %}
+                    <label class="inline-flex items-center gap-2 text-xs text-foreground">
+                        {{ form_widget(form.useGeneratedCv) }}
+                        <span>Utiliser mon CV généré enregistré</span>
+                    </label>
+                {% else %}
+                    <p class="text-xs text-muted-foreground">
+                        Aucun CV généré enregistré pour l’instant.
+                        <a href="{{ path('app_candidate_cv_builder') }}" class="font-medium text-primary hover:underline">Générer maintenant</a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            {{ form_label(form.coverLetter, null, { label_attr: { class: 'text-sm font-semibold text-foreground candidate-font-display' } }) }}
+            {{ form_widget(form.coverLetter) }}
+            {{ form_errors(form.coverLetter) }}
+        </div>
+
+        <div class="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
+            <a href="{{ path('app_candidate_offres_show', {id: job_offer.id}) }}"
+               class="candidate-font-display inline-flex h-12 items-center justify-center rounded-2xl border border-input bg-background px-6 text-sm font-semibold transition hover:bg-accent hover:text-accent-foreground">
+                Annuler
+            </a>
+            <button type="submit"
+                    class="candidate-font-display inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-md transition hover:bg-primary/90 hover:shadow-lg">
+                Envoyer ma candidature
+            </button>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

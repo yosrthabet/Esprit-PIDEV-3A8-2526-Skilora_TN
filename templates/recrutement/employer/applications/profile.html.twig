@@ -1,0 +1,77 @@
+﻿{% extends 'recrutement/employer/base.html.twig' %}
+
+{% block employer_title %}Candidature · {{ candidature.candidateName }} · Skilora{% endblock %}
+{% block page_title %}Candidature{% endblock %}
+
+{% block employer_content %}
+<div class="mx-auto max-w-4xl space-y-6">
+    <nav class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground" aria-label="Fil d’Ariane">
+        <a href="{{ path('app_employer_applications') }}" class="inline-flex shrink-0 items-center gap-1.5 font-medium text-primary hover:underline">
+            <span aria-hidden="true">←</span> Candidatures
+        </a>
+        <span class="hidden text-border sm:inline" aria-hidden="true">|</span>
+        <a href="{{ path('app_employer_job_offer_show', {id: candidature.jobOfferId}) }}" class="min-w-0 truncate hover:underline sm:max-w-none">Voir l’offre</a>
+    </nav>
+
+    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <div class="min-w-0 flex-1 space-y-1">
+                <h2 class="text-xl font-semibold leading-tight tracking-tight text-foreground">{{ candidature.candidateName }}</h2>
+                {% if candidature.candidateEmail %}
+                    <p class="text-sm text-muted-foreground">{{ candidature.candidateEmail }}</p>
+                {% endif %}
+                <p class="pt-1 text-sm text-muted-foreground">
+                    Offre : <span class="font-medium text-foreground">{{ candidature.jobTitle }}</span>
+                    {% if candidature.jobWorkType %}
+                        <span class="text-muted-foreground"> · {{ candidature.jobWorkType|work_type_label }}</span>
+                    {% endif %}
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Candidature reçue le <span class="font-medium text-foreground">{{ candidature.appliedAt|date('d/m/Y à H:i') }}</span>
+                    {% if candidature.matchPercentage is not null %}
+                        <span class="mt-2 block text-sm text-foreground">
+                            <span class="font-medium">Correspondance CV / offre :</span>
+                            <span class="tabular-nums font-semibold text-primary">{{ candidature.matchPercentage|number_format(1) }}%</span>
+                        </span>
+                    {% endif %}
+                </p>
+            </div>
+            <p class="shrink-0 self-start rounded-full border border-border bg-muted/40 px-3 py-1.5 text-xs font-medium leading-none text-foreground sm:self-center">
+                {{ candidature.statusLabelFr }}
+            </p>
+        </div>
+
+        <div class="mt-8 border-t border-border pt-6">
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
+            <div class="mt-3 flex justify-end">
+                {{ include('recrutement/employer/applications/_status_actions.html.twig', {
+                    application: candidature,
+                    return_to: 'profile',
+                    show_profile_link: false,
+                }) }}
+            </div>
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+                <a href="{{ path('app_employer_applications_cv', {id: candidature.id, inline: 1}) }}"
+                   target="_blank" rel="noopener"
+                   class="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-xs font-medium shadow-sm hover:bg-accent">
+                    Ouvrir le CV
+                </a>
+                <a href="{{ path('app_employer_applications_cv', {id: candidature.id}) }}"
+                   class="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
+                    Télécharger le CV
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <h3 class="text-sm font-semibold text-foreground">Lettre de motivation</h3>
+        {% set letter = candidature.coverLetter %}
+        {% if letter is not null and letter|trim != '' %}
+            <div class="mt-4 max-w-none whitespace-pre-wrap text-sm leading-relaxed text-foreground">{{ letter }}</div>
+        {% else %}
+            <p class="mt-4 text-sm text-muted-foreground">Aucune lettre de motivation renseignée pour cette candidature.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

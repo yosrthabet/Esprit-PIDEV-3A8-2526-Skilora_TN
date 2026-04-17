@@ -1,0 +1,28 @@
+{# FormationType — use form_row so Symfony renders label, errors, widget, help #}
+<div class="space-y-5">
+    {{ form_row(form.title, { row_attr: { class: 'space-y-2' } }) }}
+
+    <div
+        class="space-y-2"
+        x-data="{ count: {{ form.description.vars.value|default('')|length }} }"
+    >
+        {{ form_row(form.description, {
+            row_attr: { class: 'space-y-2' },
+            attr: form.description.vars.attr|merge({
+                '@input': 'count = $event.target.value.length',
+            }),
+        }) }}
+        <p class="text-right text-xs text-muted-foreground -mt-1">
+            <span x-text="count">0</span> / 500
+        </p>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {{ form_row(form.price, { row_attr: { class: 'space-y-2' } }) }}
+        {{ form_row(form.duration, { row_attr: { class: 'space-y-2' } }) }}
+        {{ form_row(form.lessonsCount, { row_attr: { class: 'space-y-2' } }) }}
+        {{ form_row(form.level, { row_attr: { class: 'space-y-2' } }) }}
+    </div>
+
+    {{ form_row(form.category, { row_attr: { class: 'space-y-2' } }) }}
+</div>

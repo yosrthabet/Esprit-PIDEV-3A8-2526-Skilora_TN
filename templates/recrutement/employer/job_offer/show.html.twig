@@ -1,0 +1,141 @@
+﻿{% extends 'recrutement/employer/base.html.twig' %}
+
+{% block employer_title %}{{ job_offer.title }} · Skilora{% endblock %}
+{% block page_title %}{{ job_offer.title }}{% endblock %}
+
+{% set status_fr = { 'OPEN': 'Ouverte', 'CLOSED': 'Fermée', 'DRAFT': 'Brouillon' } %}
+{% set work_fr = {
+    'ONSITE': 'Sur site',
+    'REMOTE': 'Télétravail',
+    'PART_TIME': 'Temps partiel',
+    'FREELANCE': 'Freelance',
+    'INTERNSHIP': 'Stage',
+} %}
+
+{% block employer_content %}
+<div class="max-w-3xl space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+            <p class="text-sm text-muted-foreground">
+                <a href="{{ path('app_employer_job_offer_index') }}" class="hover:text-foreground hover:underline">Mes offres</a>
+                <span class="mx-1">/</span>
+                <span>{{ job_offer.title }}</span>
+            </p>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-foreground">{{ job_offer.title }}</h2>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+                {{ include('components/badge.html.twig', {
+                    label: status_fr[job_offer.status]|default(job_offer.status),
+                    variant: job_offer.status == 'OPEN' ? 'success' : 'secondary',
+                }) }}
+                {% if job_offer.isFeatured %}
+                    {{ include('components/badge.html.twig', { label: 'À la une', variant: 'secondary' }) }}
+                {% endif %}
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            {% if can_manage|default(false) %}
+                <a href="{{ path('app_employer_job_offer_edit', {id: job_offer.id}) }}"
+                   class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-ring">
+                    Modifier
+                </a>
+                <form method="post" action="{{ path('app_employer_job_offer_delete', {id: job_offer.id}) }}"
+                      onsubmit="return confirm('Supprimer cette offre ? Cette action est irréversible.');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_job_offer_' ~ job_offer.id) }}"/>
+                    <button type="submit"
+                            class="inline-flex h-9 items-center justify-center rounded-md bg-destructive px-4 text-sm font-medium text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90 focus-ring">
+                        Supprimer
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if global_view_readonly|default(false) %}
+        <div class="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+            Consultation seule: cette offre n'appartient pas a votre entreprise, mais elle est visible car la vue globale des candidatures est active.
+        </div>
+    {% endif %}
+
+    <div class="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+        <dl class="grid gap-4 sm:grid-cols-2 text-sm">
+            <div>
+                <dt class="text-muted-foreground">Entreprise</dt>
+                <dd class="mt-1 font-medium text-card-foreground">{{ job_offer.companyName|default(job_offer.company.name|default('—')) }}</dd>
+            </div>
+            <div>
+                <dt class="text-muted-foreground">Lieu</dt>
+                <dd class="mt-1 font-medium text-card-foreground">{{ job_offer.location|default('—') }}</dd>
+            </div>
+            <div>
+                <dt class="text-muted-foreground">Type de travail</dt>
+                <dd class="mt-1 font-medium text-card-foreground">
+                    {% set wt = job_offer.workType %}
+                    {{ wt ? (work_fr[wt]|default(wt|replace({'_': ' '}))) : '—' }}
+                </dd>
+            </div>
+            <div>
+                <dt class="text-muted-foreground">Expérience</dt>
+                <dd class="mt-1 font-medium text-card-foreground">{{ job_offer.experienceLevel|default('—') }}</dd>
+            </div>
+            <div>
+                <dt class="text-muted-foreground">Rémunération</dt>
+                <dd class="mt-1 font-medium text-card-foreground">
+                    {% if job_offer.minSalary or job_offer.maxSalary %}
+                        {{ job_offer.minSalary|default('—') }} – {{ job_offer.maxSalary|default('—') }} {{ job_offer.currency }}
+                    {% else %}
+                        Négociable ({{ job_offer.currency }})
+                    {% endif %}
+                </dd>
+            </div>
+            <div>
+                <dt class="text-muted-foreground">Date limite</dt>
+                <dd class="mt-1 font-medium text-card-foreground">{{ job_offer.deadline ? job_offer.deadline|date('d/m/Y') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-muted-foreground">Publiée le</dt>
+                <dd class="mt-1 font-medium text-card-foreground">{{ job_offer.postedDate ? job_offer.postedDate|date('d/m/Y à H:i') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-muted-foreground">Dernière mise à jour</dt>
+                <dd class="mt-1 font-medium text-card-foreground">{{ job_offer.updatedAt ? job_offer.updatedAt|date('d/m/Y à H:i') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-muted-foreground">Vues</dt>
+                <dd class="mt-1 font-medium text-card-foreground">{{ job_offer.viewsCount }}</dd>
+            </div>
+            <div>
+                <dt class="text-muted-foreground">Candidatures</dt>
+                <dd class="mt-1 font-medium text-card-foreground">{{ job_offer.applicationsCount }}</dd>
+            </div>
+        </dl>
+
+        {% if job_offer.description %}
+            <div>
+                <h3 class="text-sm font-semibold">Description</h3>
+                <div class="mt-2 whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">{{ job_offer.description }}</div>
+            </div>
+        {% endif %}
+
+        {% if job_offer.requirements %}
+            <div>
+                <h3 class="text-sm font-semibold">Exigences</h3>
+                <div class="mt-2 whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">{{ job_offer.requirements }}</div>
+            </div>
+        {% endif %}
+
+        {% if job_offer.skillsRequired %}
+            <div>
+                <h3 class="text-sm font-semibold">Compétences</h3>
+                <div class="mt-2 whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">{{ job_offer.skillsRequired }}</div>
+            </div>
+        {% endif %}
+
+        {% if job_offer.benefits %}
+            <div>
+                <h3 class="text-sm font-semibold">Avantages</h3>
+                <div class="mt-2 whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">{{ job_offer.benefits }}</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

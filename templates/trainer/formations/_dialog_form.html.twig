@@ -1,0 +1,51 @@
+{# trainer/formations/_dialog_form.html.twig — Form fragment loaded inside edit-dialog #}
+{% set is_edit = formation is not null %}
+{% set action_url = is_edit
+    ? path('app_trainer_formation_edit', { id: formation.id })
+    : path('app_trainer_formation_new')
+%}
+
+{{ form_start(form, {
+    attr: {
+        class: 'space-y-5',
+        'x-data': '{ submitting: false }',
+        '@submit.prevent': "
+            submitting = true;
+            const fd = new FormData($el);
+            const res = await fetch('" ~ action_url ~ "', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: fd
+            });
+            const data = await res.json();
+            submitting = false;
+            if (data.success) {
+                Alpine.store('toast').success(data.message);
+                $dispatch('close-edit-dialog');
+                window.location.reload();
+            } else {
+                Alpine.store('toast').error(data.message || 'An error occurred.');
+            }
+        "
+    }
+}) }}
+    {{ form_errors(form) }}
+
+    {% include 'admin/formation/_form.html.twig' %}
+
+    <div class="flex items-center justify-end gap-3 border-t border-border pt-4">
+        <button type="button"
+                @click="$dispatch('close-edit-dialog')"
+                class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent">
+            Cancel
+        </button>
+        <button type="submit"
+                :disabled="submitting"
+                class="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50">
+            <template x-if="submitting">
+                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+            </template>
+            {{ is_edit ? 'Save' : 'Create' }}
+        </button>
+    </div>
+{{ form_end(form) }}

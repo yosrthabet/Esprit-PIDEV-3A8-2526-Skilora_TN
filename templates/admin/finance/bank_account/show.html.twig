@@ -1,0 +1,49 @@
+{% extends 'admin/finance/layout.html.twig' %}
+{% import 'admin/finance/_macros.html.twig' as fin %}
+
+{% block finance_body %}
+<div class="mx-auto max-w-3xl space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <h2 class="text-2xl font-semibold">Bank account #{{ account.id }}</h2>
+        {% include 'admin/finance/_show_page_actions.html.twig' with {
+            edit_url: path('admin_finance_bank_account_edit', {id: account.id}),
+            delete_path: path('admin_finance_bank_account_delete', {id: account.id}),
+            token: csrf_token('delete' ~ account.id),
+            list_url: path('admin_finance_bank_account_index'),
+        } only %}
+    </div>
+
+    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <dl class="grid gap-4 sm:grid-cols-2">
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Employee</dt>
+                <dd class="mt-1 text-sm">{{ account.user ? (account.user.fullName ~ ' (' ~ account.user.username ~ ')') : '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Bank name</dt>
+                <dd class="mt-1 text-sm">{{ account.bankName|default('—') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">IBAN</dt>
+                <dd class="mt-1 font-mono text-sm">{{ account.iban|default('—') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">SWIFT</dt>
+                <dd class="mt-1 font-mono text-sm">{{ account.swift|default('—') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Currency</dt>
+                <dd class="mt-1 text-sm">{{ account.currency|default('—') }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Primary</dt>
+                <dd class="mt-1 text-sm">{{ account.isPrimary ? 'Yes' : 'No' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Verified</dt>
+                <dd class="mt-1 text-sm">{{ account.isVerified ? fin.status_badge('VERIFIED') : 'No' }}</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+{% endblock finance_body %}

@@ -1,0 +1,37 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}Modifier la publication{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-xl space-y-6 animate-fade-in">
+    {% include 'community/_subnav.html.twig' %}
+
+    <div>
+        <h2 class="text-2xl font-semibold tracking-tight">Modifier la publication</h2>
+        <p class="mt-1 text-sm text-muted-foreground">Les mêmes règles de saisie s’appliquent (texte obligatoire, URL d’image optionnelle valide).</p>
+    </div>
+
+    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        {{ form_start(form, { attr: { class: 'space-y-4' } }) }}
+            {{ form_errors(form) }}
+            <div class="space-y-1">
+                {{ form_label(form.content, null, { label_attr: { class: 'text-sm font-medium' } }) }}
+                {{ form_widget(form.content) }}
+                {{ form_errors(form.content) }}
+            </div>
+            <div class="space-y-1">
+                {{ form_label(form.imageUrl, null, { label_attr: { class: 'text-sm font-medium' } }) }}
+                {{ form_widget(form.imageUrl) }}
+                {{ form_errors(form.imageUrl) }}
+            </div>
+            <div class="flex flex-wrap gap-2">
+                {{ include('components/button.html.twig', { label: 'Enregistrer', type: 'submit', variant: 'default' }) }}
+                <a href="{{ path('app_community_posts') }}"
+                   class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                    Annuler
+                </a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

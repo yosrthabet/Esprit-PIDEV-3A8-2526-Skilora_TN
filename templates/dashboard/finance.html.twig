@@ -1,0 +1,180 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}My Finance{% endblock %}
+
+{% block content %}
+{% set report = finance_report %}
+{% set summary = finance_summary %}
+{% set latestContract = report.contracts|first %}
+{% set latestPayslip = report.payslips|first %}
+
+<div class="space-y-6 pb-6">
+    <div class="rounded-2xl border border-border bg-gradient-to-r from-emerald-500/10 via-primary/5 to-transparent p-6">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Finance personnelle</p>
+                <h2 class="mt-1 text-2xl font-bold tracking-tight text-foreground">{{ report.employee.full_name }}</h2>
+                <p class="mt-2 max-w-2xl text-sm text-muted-foreground">
+                    Suivez votre salaire, vos contrats, vos primes, vos paiements et exportez votre rapport PDF.
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ finance_pdf_export_url }}" class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95">
+                    <i data-lucide="file-text" class="h-4 w-4"></i>
+                    Télécharger le rapport PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dernier net estimé</p>
+            <p class="mt-3 text-2xl font-bold text-foreground">{{ report.metrics.latest_estimated_net|number_format(2, ',', ' ') }} TND</p>
+            <p class="mt-1 text-xs text-muted-foreground">{{ latestPayslip.period|default('Aucun bulletin') }}</p>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contrats</p>
+            <p class="mt-3 text-2xl font-bold text-foreground">{{ report.metrics.contracts_count }}</p>
+            <p class="mt-1 text-xs text-muted-foreground">{{ latestContract.tenure_label|default('Ancienneté indisponible') }}</p>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Primes</p>
+            <p class="mt-3 text-2xl font-bold text-foreground">{{ report.metrics.bonus_total|number_format(2, ',', ' ') }} TND</p>
+            <p class="mt-1 text-xs text-muted-foreground">{{ report.metrics.bonuses_count }} versement(s)</p>
+        </div>
+        <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Comptes bancaires</p>
+            <p class="mt-3 text-2xl font-bold text-foreground">{{ report.metrics.bank_accounts_count }}</p>
+            <p class="mt-1 text-xs text-muted-foreground">{{ summary.bankAccountsCount|default(report.metrics.bank_accounts_count) }} lié(s) à votre dossier</p>
+        </div>
+    </div>
+
+    <div class="grid gap-6 xl:grid-cols-[1.4fr,0.9fr]">
+        <section class="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div class="mb-4 flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <i data-lucide="sparkles" class="h-5 w-5"></i>
+                </span>
+                <div>
+                    <h3 class="text-lg font-semibold text-foreground">Synthèse IA</h3>
+                    <p class="text-xs uppercase tracking-wider text-muted-foreground">Source : {{ report.ai_summary.source|default('local')|upper }}</p>
+                </div>
+            </div>
+            <p class="text-sm leading-7 text-foreground">{{ report.ai_summary.text|default(report.summary) }}</p>
+        </section>
+
+        <section class="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-foreground">Statut financier</h3>
+            <dl class="mt-4 space-y-4 text-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <dt class="text-muted-foreground">Salaire de base</dt>
+                    <dd class="font-semibold text-foreground">{{ latestPayslip.base_salary|default(0)|number_format(2, ',', ' ') }} TND</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <dt class="text-muted-foreground">Salaire brut estimé</dt>
+                    <dd class="font-semibold text-foreground">{{ latestPayslip.gross_estimated|default(0)|number_format(2, ',', ' ') }} TND</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <dt class="text-muted-foreground">CNSS</dt>
+                    <dd class="font-semibold text-foreground">{{ summary.latestCnss|default(0)|number_format(2, ',', ' ') }} TND</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <dt class="text-muted-foreground">IRPP</dt>
+                    <dd class="font-semibold text-foreground">{{ summary.latestIrpp|default(0)|number_format(2, ',', ' ') }} TND</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <dt class="text-muted-foreground">Dernier paiement</dt>
+                    <dd class="font-semibold text-foreground">{{ summary.latestPeriod|default('Non disponible') }}</dd>
+                </div>
+            </dl>
+        </section>
+    </div>
+
+    <div class="grid gap-6 xl:grid-cols-2">
+        <section class="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div class="mb-4 flex items-center justify-between gap-3">
+                <h3 class="text-lg font-semibold text-foreground">Contrat</h3>
+                {% if latestContract and latestContract.status %}
+                    <span class="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">{{ latestContract.status }}</span>
+                {% endif %}
+            </div>
+            {% if latestContract %}
+                <dl class="grid gap-4 sm:grid-cols-2 text-sm">
+                    <div><dt class="text-muted-foreground">Poste</dt><dd class="mt-1 font-semibold text-foreground">{{ latestContract.position ?: 'Non renseigné' }}</dd></div>
+                    <div><dt class="text-muted-foreground">Type</dt><dd class="mt-1 font-semibold text-foreground">{{ latestContract.type ?: 'Non renseigné' }}</dd></div>
+                    <div><dt class="text-muted-foreground">Début</dt><dd class="mt-1 font-semibold text-foreground">{{ latestContract.start_date ?: 'Non renseigné' }}</dd></div>
+                    <div><dt class="text-muted-foreground">Fin</dt><dd class="mt-1 font-semibold text-foreground">{{ latestContract.end_date ?: 'En cours' }}</dd></div>
+                    <div><dt class="text-muted-foreground">Ancienneté</dt><dd class="mt-1 font-semibold text-foreground">{{ latestContract.tenure_label ?: 'Non renseignée' }}</dd></div>
+                    <div><dt class="text-muted-foreground">Salaire contractuel</dt><dd class="mt-1 font-semibold text-foreground">{{ latestContract.salary|number_format(2, ',', ' ') }} TND</dd></div>
+                </dl>
+            {% else %}
+                <p class="text-sm text-muted-foreground">Aucun contrat enregistré.</p>
+            {% endif %}
+        </section>
+
+        <section class="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-foreground">Coordonnées bancaires</h3>
+            <div class="mt-4 space-y-3">
+                {% for account in report.bank_accounts %}
+                    <div class="rounded-xl border border-border bg-muted/20 p-4">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <p class="font-semibold text-foreground">{{ account.bank_name ?: 'Banque' }}</p>
+                            <span class="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">{{ account.currency ?: 'TND' }}</span>
+                            {% if account.is_primary %}<span class="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">Principal</span>{% endif %}
+                            {% if account.is_verified %}<span class="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Vérifié</span>{% endif %}
+                        </div>
+                        <p class="mt-2 text-sm text-muted-foreground">IBAN : {{ account.iban ?: 'Non renseigné' }}</p>
+                        <p class="text-sm text-muted-foreground">SWIFT : {{ account.swift ?: 'Non renseigné' }}</p>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-muted-foreground">Aucun compte bancaire enregistré.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <div class="grid gap-6 xl:grid-cols-2">
+        <section class="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-foreground">Historique de paie</h3>
+            <div class="mt-4 space-y-3">
+                {% for payslip in report.payslips|slice(0, 6) %}
+                    <div class="rounded-xl border border-border bg-muted/20 p-4">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <p class="font-semibold text-foreground">{{ payslip.period }}</p>
+                                <p class="text-sm text-muted-foreground">Brut : {{ payslip.gross_estimated|number_format(2, ',', ' ') }} TND</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-lg font-bold text-foreground">{{ payslip.net_estimated|number_format(2, ',', ' ') }} TND</p>
+                                <p class="text-xs text-muted-foreground">{{ payslip.status ?: 'DRAFT' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-muted-foreground">Aucun bulletin de paie disponible.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-foreground">Primes & paiements</h3>
+            <div class="mt-4 space-y-3">
+                {% for bonus in report.bonuses|slice(0, 6) %}
+                    <div class="rounded-xl border border-border bg-muted/20 p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="font-semibold text-foreground">{{ bonus.reason ?: 'Prime' }}</p>
+                                <p class="text-sm text-muted-foreground">{{ bonus.date_awarded ?: 'Date indisponible' }}</p>
+                            </div>
+                            <p class="text-lg font-bold text-foreground">{{ bonus.amount|number_format(2, ',', ' ') }} TND</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-muted-foreground">Aucune prime enregistrée.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

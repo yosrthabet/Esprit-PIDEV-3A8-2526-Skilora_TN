@@ -1,0 +1,55 @@
+﻿{% extends 'recrutement/employer/base.html.twig' %}
+
+{% block employer_title %}{{ title }} · Skilora{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block employer_content %}
+<div class="max-w-3xl space-y-6">
+    <div>
+        <p class="text-sm text-muted-foreground">
+            <a href="{{ path('app_employer_job_offer_index') }}" class="hover:text-foreground hover:underline">Mes offres</a>
+            <span class="mx-1">/</span>
+            <span>{{ title }}</span>
+        </p>
+        <h2 class="mt-2 text-2xl font-bold tracking-tight text-foreground">{{ title }}</h2>
+        {% if company %}
+            <p class="mt-1 text-sm text-muted-foreground">Publication au nom de {{ company.name }}</p>
+        {% endif %}
+    </div>
+
+    {{ form_start(form, { attr: { class: 'space-y-6' } }) }}
+    {% for field in form %}
+        {% if field.vars.name == 'isFeatured' %}
+            <div class="flex items-center gap-3 rounded-lg border border-border bg-card/50 px-4 py-3">
+                {{ form_widget(field, { attr: { class: 'h-4 w-4 rounded border-input' } }) }}
+                {{ form_label(field, null, { label_attr: { class: 'text-sm font-medium cursor-pointer' } }) }}
+                {{ form_errors(field) }}
+            </div>
+        {% else %}
+            <div class="space-y-2">
+                {{ form_label(field, null, { label_attr: { class: 'text-sm font-medium leading-none' } }) }}
+                {{ form_widget(field) }}
+                {{ form_errors(field) }}
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    <div class="flex flex-wrap gap-3 pt-2">
+        <button type="submit"
+                class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-ring">
+            {{ submit_label }}
+        </button>
+        <a href="{{ path('app_employer_job_offer_index') }}"
+           class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-ring">
+            Annuler
+        </a>
+        {% if job_offer is defined %}
+            <a href="{{ path('app_employer_job_offer_show', {id: job_offer.id}) }}"
+               class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md border border-transparent px-4 text-sm font-medium text-primary hover:underline">
+                Voir la fiche
+            </a>
+        {% endif %}
+    </div>
+    {{ form_end(form, { render_rest: false }) }}
+</div>
+{% endblock %}

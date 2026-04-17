@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>CV — {{ cv.fullName }}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 10pt;
+            color: #1f3a4d;
+            margin: 0;
+            padding: 0;
+            background: #eceff3;
+        }
+        .page {
+            width: 100%;
+            padding: 18pt 14pt;
+        }
+        .sheet {
+            border: 1pt solid #d8dde5;
+            background: #ffffff;
+        }
+        .layout { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .layout td { vertical-align: top; padding: 0; }
+        .sidebar {
+            width: 31%;
+            background: #d9dde3;
+            color: #1f3a4d;
+            padding: 20pt 16pt 18pt 16pt;
+        }
+        .main {
+            background: #f8fafc;
+            padding: 0 22pt 18pt 22pt;
+        }
+        .photo-wrap {
+            margin: 0 0 16pt 0;
+            text-align: left;
+        }
+        .photo {
+            width: 118pt;
+            height: 128pt;
+            border: 3pt solid #f8fafc;
+            object-fit: cover;
+        }
+        .side-title {
+            font-size: 12pt;
+            color: #1a3e63;
+            font-weight: bold;
+            margin: 16pt 0 8pt 0;
+        }
+        .coord-item {
+            margin-bottom: 8pt;
+            font-size: 9.2pt;
+            line-height: 1.35;
+            color: #284f74;
+        }
+        .coord-icon {
+            display: inline-block;
+            width: 12pt;
+            color: #1a3e63;
+            font-weight: bold;
+        }
+        .skill-line {
+            margin: 0 0 5pt 0;
+            font-size: 9.5pt;
+            color: #284f74;
+        }
+        .lang-row {
+            margin: 0 0 7pt 0;
+            font-size: 9.4pt;
+            color: #284f74;
+        }
+        .lang-name {
+            display: inline-block;
+            width: 46pt;
+        }
+        .lang-bar-wrap {
+            display: inline-block;
+            width: 34pt;
+            height: 5pt;
+            background: #f2f5f8;
+            border-radius: 8pt;
+            vertical-align: middle;
+            margin-left: 4pt;
+            overflow: hidden;
+        }
+        .lang-bar {
+            height: 5pt;
+            background: #2a5b87;
+            border-radius: 8pt;
+        }
+        .hero {
+            background: #133f69;
+            margin: 22pt -22pt 16pt -22pt;
+            padding: 18pt 22pt 14pt 22pt;
+            color: #ffffff;
+        }
+        .hero-name {
+            margin: 0;
+            font-size: 25pt;
+            line-height: 1.25;
+            font-weight: bold;
+            letter-spacing: 0.3pt;
+        }
+        .hero-role {
+            margin: 4pt 0 0 0;
+            font-size: 14pt;
+            color: #d8e4f0;
+            font-style: italic;
+        }
+        h2 {
+            font-size: 17pt;
+            margin: 14pt 0 8pt 0;
+            font-weight: bold;
+            color: #173e63;
+            letter-spacing: 0.2pt;
+        }
+        .summary {
+            line-height: 1.55;
+            text-align: justify;
+            color: #355a78;
+            margin-bottom: 8pt;
+        }
+        .edu-item {
+            margin-bottom: 10pt;
+            page-break-inside: avoid;
+        }
+        .row-title {
+            margin: 0;
+            font-size: 10.8pt;
+            color: #1a3e63;
+            font-weight: bold;
+        }
+        .row-meta {
+            margin: 2pt 0 0 0;
+            color: #4e6f8a;
+            font-style: italic;
+            font-size: 10pt;
+        }
+        .row-duration {
+            float: right;
+            color: #4e6f8a;
+            font-style: italic;
+            font-size: 9pt;
+            margin-top: 2pt;
+        }
+        .exp-wrap {
+            border-left: 1.2pt solid #3f6688;
+            margin-left: 5pt;
+            padding-left: 14pt;
+        }
+        .exp-item {
+            margin: 0 0 12pt 0;
+            position: relative;
+            page-break-inside: avoid;
+        }
+        .exp-item:before {
+            content: "";
+            position: absolute;
+            left: -18pt;
+            top: 4pt;
+            width: 7pt;
+            height: 7pt;
+            background: #1f4e79;
+            border-radius: 50%;
+        }
+        .exp-desc {
+            margin: 5pt 0 0 0;
+            line-height: 1.45;
+            color: #355a78;
+            font-size: 9.4pt;
+        }
+        .skills {
+            margin-top: 6pt;
+        }
+        .skills span {
+            display: inline-block;
+            margin: 0 4pt 5pt 0;
+            padding: 3pt 8pt;
+            background: #dfeaf4;
+            color: #1a3e63;
+            border-radius: 9pt;
+            font-size: 8.7pt;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="sheet">
+        <table class="layout">
+            <tr>
+                <td class="sidebar">
+                    {% if cv.photoDataUri %}
+                        <div class="photo-wrap">
+                            <img src="{{ cv.photoDataUri }}" alt="" class="photo"/>
+                        </div>
+                    {% endif %}
+                    <p class="side-title">Coordonnées</p>
+                    <p class="coord-item"><span class="coord-icon">✆</span> {{ cv.phone ?: '—' }}</p>
+                    <p class="coord-item"><span class="coord-icon">✉</span> {{ cv.email }}</p>
+                    <p class="coord-item"><span class="coord-icon">⌂</span> {{ cv.address ?: '—' }}</p>
+                    {% if cv.languagesAsList() is not empty %}
+                        <p class="side-title">Langues</p>
+                        {% for l in cv.languagesAsList() %}
+                            <div class="lang-row">
+                                <span class="lang-name">{{ l }}</span>
+                                <span class="lang-bar-wrap"><span class="lang-bar" style="width:78%;"></span></span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <p class="side-title">Compétences</p>
+                    {% for s in cv.skillsAsList() %}
+                        <p class="skill-line">{{ s }}</p>
+                    {% endfor %}
+                </td>
+                <td class="main">
+                    <div class="hero">
+                        <p class="hero-name">{{ cv.fullName }}</p>
+                        <p class="hero-role">Profil professionnel</p>
+                    </div>
+
+                    <h2>Formation</h2>
+                    {% for e in cv.education %}
+                        <div class="edu-item">
+                            {% if e.year %}<span class="row-duration">{{ e.year }}</span>{% endif %}
+                            <p class="row-title">{{ e.degree }}</p>
+                            <p class="row-meta">{{ e.institution }}</p>
+                        </div>
+                    {% endfor %}
+
+                    <h2>Résumé</h2>
+                    <div class="summary">{{ cv.professionalSummary|nl2br }}</div>
+
+                    {% if cv.experience is not empty %}
+                        <h2>Expérience Professionnelle</h2>
+                        <div class="exp-wrap">
+                        {% for x in cv.experience %}
+                            <div class="exp-item">
+                                {% if x.duration %}<span class="row-duration">{{ x.duration }}</span>{% endif %}
+                                <p class="row-title">{{ x.jobTitle }}</p>
+                                <p class="row-meta">{{ x.company }}</p>
+                                {% if x.description %}
+                                    <p class="exp-desc">{{ x.description|nl2br }}</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if cv.skillsAsList() is not empty %}
+                        <h2>Compétences Clés</h2>
+                        <div class="skills">
+                            {% for s in cv.skillsAsList() %}
+                                <span>{{ s }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if cv.education is empty and cv.experience is empty and cv.skillsAsList() is empty %}
+                        <h2>Informations</h2>
+                        <div class="summary">Complétez les sections du formulaire pour enrichir le contenu de votre CV.</div>
+                    {% endif %}
+{#
+                    Variante historique conservée en commentaire pour fallback rapide.
+                        {% for e in cv.education %}
+                            <div class="item">
+                                <div class="item-title">{{ e.degree }}</div>
+                                <div class="item-meta">{{ e.institution }}{% if e.year %} · {{ e.year }}{% endif %}</div>
+                            </div>
+                    {% endfor %}
+#}
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+</body>
+</html>

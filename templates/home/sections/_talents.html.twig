@@ -1,0 +1,49 @@
+<!-- TOP TALENTS HORIZONTAL SCROLL -->
+<section class="talents-section relative h-screen bg-zinc-950 text-white flex items-center overflow-hidden">
+    <div class="container mx-auto px-4 absolute top-20 left-0 right-0 z-10 pointer-events-none">
+        <h2 class="text-4xl md:text-6xl font-bold tracking-tight mb-4">Elite talent. <br>Ready when you are.</h2>
+    </div>
+
+    <!-- The scrolling container -->
+    <div class="talents-wrapper flex gap-8 px-4 md:px-[10vw] pt-20" style="width: max-content;">
+        {% for talent in talents %}
+            <div class="w-[350px] md:w-[450px] flex-shrink-0 bg-zinc-900 border border-zinc-800 rounded-3xl p-8 hover:bg-zinc-800 transition-colors duration-500">
+                <div class="flex items-center gap-4 mb-6">
+                    <img src="{{ talent.image }}" alt="{{ talent.name }}" class="w-16 h-16 rounded-full bg-zinc-800 object-cover">
+                    <div>
+                        <h3 class="text-xl font-bold">{{ talent.name }}</h3>
+                        <p class="text-zinc-400">{{ talent.role }}</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-6 mb-8 text-sm font-medium">
+                    <div class="flex flex-col">
+                        <span class="text-zinc-500">Rate</span>
+                        <span class="text-lg">{{ talent.rate }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-zinc-500">Earned</span>
+                        <span class="text-lg">{{ talent.earned }}</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-8">
+                    {% for skill in talent.skills %}
+                        <span class="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full text-sm font-medium border border-zinc-700">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+
+                <button class="w-full py-4 rounded-xl bg-white text-zinc-950 font-bold hover:bg-zinc-200 transition-colors">
+                    Hire {{ talent.name|split(' ')|first }}
+                </button>
+            </div>
+        {% endfor %}
+        <!-- Duplicate for spacing visual -->
+        <div class="w-[350px] md:w-[450px] flex-shrink-0 flex flex-col items-center justify-center border-2 border-dashed border-zinc-800 rounded-3xl">
+            <h3 class="text-2xl font-bold text-zinc-400 mb-4">Find your perfect match</h3>
+            <button class="px-8 py-3 rounded-full bg-zinc-800 text-white font-bold hover:bg-zinc-700 transition-colors">
+                Browse All
+            </button>
+        </div>
+    </div>
+</section>

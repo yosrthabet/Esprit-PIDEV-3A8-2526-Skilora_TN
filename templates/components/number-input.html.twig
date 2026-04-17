@@ -1,0 +1,67 @@
+{# components/number-input.html.twig — ShadCN-style Number Input with +/- buttons
+
+   Usage: {{ include('components/number-input.html.twig', {
+       name: 'quantity',
+       value: 1,
+       min: 0,
+       max: 100,
+       step: 1,
+       label: 'Quantity',
+   }) }}
+#}
+{% set value = value|default(0) %}
+{% set min = min|default('') %}
+{% set max = max|default('') %}
+{% set step = step|default(1) %}
+
+<div class="space-y-2 {{ class|default('') }}" x-data="{
+    value: {{ value }},
+    min: {{ min is not same as('') ? min : '-Infinity' }},
+    max: {{ max is not same as('') ? max : 'Infinity' }},
+    step: {{ step }},
+    decrement() {
+        let v = this.value - this.step;
+        if (v >= this.min) this.value = v;
+    },
+    increment() {
+        let v = this.value + this.step;
+        if (v <= this.max) this.value = v;
+    }
+}">
+    {% if label is defined and label %}
+        <label for="{{ name }}" class="text-sm font-medium leading-none">{{ label }}</label>
+    {% endif %}
+
+    <div class="flex items-center">
+        <button
+            type="button"
+            @click="decrement()"
+            :disabled="value <= min"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-l-md border border-input bg-background text-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+        >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
+        </button>
+        <input
+            type="number"
+            name="{{ name }}"
+            id="{{ name }}"
+            x-model.number="value"
+            {{ min is not same as('') ? 'min="' ~ min ~ '"' : '' }}
+            {{ max is not same as('') ? 'max="' ~ max ~ '"' : '' }}
+            step="{{ step }}"
+            class="h-9 w-16 border-y border-input bg-transparent text-center text-sm outline-none focus:ring-1 focus:ring-ring [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        />
+        <button
+            type="button"
+            @click="increment()"
+            :disabled="value >= max"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-r-md border border-input bg-background text-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+        >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        </button>
+    </div>
+
+    {% if error is defined and error %}
+        <p class="text-[0.8rem] font-medium text-destructive">{{ error }}</p>
+    {% endif %}
+</div>

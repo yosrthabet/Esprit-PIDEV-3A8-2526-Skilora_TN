@@ -1,0 +1,100 @@
+{% extends 'admin/finance/layout.html.twig' %}
+{% form_theme form 'form/finance_form_layout.html.twig' %}
+
+{% block finance_body %}
+<div class="mx-auto max-w-3xl space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <h2 class="text-2xl font-bold tracking-tight">{{ page_title }}</h2>
+        <a href="{{ path('admin_finance_contract_index') }}" class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
+            <i data-lucide="arrow-left" class="h-4 w-4"></i>
+            Retour à la liste
+        </a>
+    </div>
+
+    <div class="rounded-2xl border border-border/80 bg-gradient-to-br from-card via-card to-muted/15 p-6 shadow-md sm:p-8">
+        {{ form_start(form, {'attr': {'class': 'space-y-5', 'novalidate': 'novalidate'}}) }}
+            {{ form_row(form.user) }}
+            {{ form_row(form.company) }}
+            {{ form_row(form.type) }}
+            {{ form_row(form.position) }}
+            {{ form_row(form.salary) }}
+            {{ form_row(form.startDate) }}
+            {{ form_row(form.endDate) }}
+            <div class="rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-3 text-sm" aria-live="polite">
+                <span class="font-medium text-foreground">Ancienneté (aperçu)</span>
+                <span class="text-muted-foreground"> — </span>
+                <span id="contract-tenure-preview" class="font-semibold text-foreground">—</span>
+                <p class="mt-1 text-xs text-muted-foreground">Calcul automatique entre date de début et date de fin (ou jusqu’à aujourd’hui si la fin est vide).</p>
+            </div>
+            {{ form_row(form.status) }}
+            <div class="flex flex-wrap gap-3 pt-4">
+                <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition hover:opacity-95">
+                    <i data-lucide="check" class="h-4 w-4"></i>
+                    {{ is_edit ? 'Enregistrer' : 'Créer le contrat' }}
+                </button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+<script>
+(function () {
+  function parseISODate(s) {
+    if (!s || String(s).trim() === '') return null;
+    var p = String(s).trim().split('-');
+    if (p.length !== 3) return null;
+    var y = parseInt(p[0], 10), m = parseInt(p[1], 10) - 1, d = parseInt(p[2], 10);
+    if (!y || m < 0 || d < 1) return null;
+    return new Date(Date.UTC(y, m, d));
+  }
+
+  function calendarDiff(start, end) {
+    var sy = start.getUTCFullYear(), sm = start.getUTCMonth(), sd = start.getUTCDate();
+    var ey = end.getUTCFullYear(), em = end.getUTCMonth(), ed = end.getUTCDate();
+    var y = ey - sy, m = em - sm, d = ed - sd;
+    if (d < 0) {
+      m--;
+      d += new Date(Date.UTC(ey, em, 0)).getUTCDate();
+    }
+    if (m < 0) {
+      y--;
+      m += 12;
+    }
+    return { y: y, m: m, d: d };
+  }
+
+  function formatTenureFr(parts) {
+    if (parts.y > 0) return parts.y === 1 ? '1 an' : parts.y + ' ans';
+    if (parts.m > 0) return parts.m === 1 ? '1 mois' : parts.m + ' mois';
+    if (parts.d > 0) return parts.d === 1 ? '1 jour' : parts.d + ' jours';
+    return 'Moins d’un jour';
+  }
+
+  function updateTenure() {
+    var startEl = document.getElementById('{{ form.startDate.vars.id }}');
+    var endEl = document.getElementById('{{ form.endDate.vars.id }}');
+    var out = document.getElementById('contract-tenure-preview');
+    if (!out) return;
+    var start = startEl && startEl.value ? parseISODate(startEl.value) : null;
+    var end = endEl && endEl.value ? parseISODate(endEl.value) : new Date();
+    if (!start) {
+      out.textContent = '—';
+      return;
+    }
+    end = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    if (end < start) {
+      out.textContent = '—';
+      return;
+    }
+    out.textContent = formatTenureFr(calendarDiff(start, end));
+  }
+
+  var startEl = document.getElementById('{{ form.startDate.vars.id }}');
+  var endEl = document.getElementById('{{ form.endDate.vars.id }}');
+  if (startEl) startEl.addEventListener('change', updateTenure);
+  if (startEl) startEl.addEventListener('input', updateTenure);
+  if (endEl) endEl.addEventListener('change', updateTenure);
+  if (endEl) endEl.addEventListener('input', updateTenure);
+  updateTenure();
+})();
+</script>
+{% endblock finance_body %}
