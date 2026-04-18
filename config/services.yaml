@@ -88,6 +88,26 @@ services:
         arguments:
             $employerSeesAllCandidatures: true
 
+    # ── Formation / certificates (signature storage + branding) ─────
+    App\Certificate\Branding\FormationSignatureStorage:
+        arguments:
+            $signaturesRoot: '%kernel.project_dir%/var/private/formations/signatures'
+
+    App\Certificate\Branding\FormationSignatureStorageInterface: '@App\Certificate\Branding\FormationSignatureStorage'
+
+    App\Certificate\Branding\CertificateBrandingAssetResolverInterface: '@App\Certificate\Branding\CertificateBrandingAssetResolver'
+
+    # ── Formations catalogue chatbot (rule-based + optional OpenAI-compatible LLM e.g. Groq) ──
+    App\Service\ChatbotServiceInterface: '@App\Service\ChatbotService'
+
+    App\Contract\Chatbot\ExternalAiClientInterface: '@App\Service\Chatbot\OpenAiCompatibleChatbotClient'
+
+    App\Service\Chatbot\OpenAiCompatibleChatbotClient:
+        arguments:
+            $apiUrl: '%env(CHATBOT_API_URL)%'
+            $apiKey: '%env(CHATBOT_API_KEY)%'
+            $model: '%env(CHATBOT_MODEL)%'
+
     # ── Finance module ──────────────────────────────────────────────
     App\Service\Finance\FinanceStripeClient:
         arguments:

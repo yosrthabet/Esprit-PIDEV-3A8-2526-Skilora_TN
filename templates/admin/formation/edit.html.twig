@@ -28,19 +28,25 @@
         <div class="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{{ message }}</div>
     {% endfor %}
 
-    {{ form_start(form, { attr: { class: 'space-y-6' } }) }}
-        {{ form_errors(form) }}
-
-        {% if form.vars.submitted and not form.vars.valid %}
-            <div class="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200" role="alert">
-                Please fix the errors below. Your input is kept.
-            </div>
-        {% endif %}
-
+    {{ form_start(form, { attr: { class: 'space-y-6', novalidate: 'novalidate', enctype: 'multipart/form-data', 'x-data': 'skiloraFormationWorkflow()' } }) }}
         {% include 'admin/formation/_form.html.twig' %}
 
         <div class="flex flex-wrap gap-3 pt-2 border-t border-border">
-            <button type="submit" class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+            <button type="button"
+                    @click="goNext()"
+                    x-show="step === 1"
+                    class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+                Suivant
+            </button>
+            <button type="button"
+                    @click="goBack()"
+                    x-show="step === 2"
+                    class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-6 text-sm font-medium shadow-sm hover:bg-accent">
+                Retour
+            </button>
+            <button type="submit"
+                    x-show="step === 2"
+                    class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
                 Enregistrer les modifications
             </button>
             <a href="{{ path('app_admin_formation_index') }}"
@@ -62,4 +68,5 @@
         </form>
     </div>
 </div>
+{% include 'admin/formation/_signature_zone_script.html.twig' %}
 {% endblock %}

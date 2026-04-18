@@ -11,6 +11,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.6",
         "dompdf/dompdf": "^3.1",
+        "endroid/qr-code": "5.0",
         "smalot/pdfparser": "^2.12",
         "stripe/stripe-php": "*",
         "symfony/asset": "6.4.*",
@@ -76,6 +77,9 @@
     },
     "conflict": {
         "symfony/symfony": "*"
+    },
+    "suggest": {
+        "ext-gd": "Recommended: embed PNG images (e.g. director signature) in certificate PDFs via Dompdf."
     },
     "extra": {
         "symfony": {

@@ -3,6 +3,7 @@
 {% block page_title %}Mes formations{% endblock %}
 
 {% block content %}
+{% set chatbot_formations = enrollments|map(e => e.formation) %}
 <div class="space-y-6 animate-fade-in">
     {# Header #}
     <div class="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-accent/10 p-6 shadow-sm sm:p-8">
@@ -26,7 +27,7 @@
             </a>
         </div>
     {% else %}
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-formation-grid>
             {% for e in enrollments %}
                 <div class="group rounded-xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30">
                     <div class="p-5">
@@ -61,4 +62,10 @@
         </div>
     {% endif %}
 </div>
+{% include 'components/_chatbot.html.twig' with {
+    formations: chatbot_formations,
+    activeCategory: '',
+    searchQuery: '',
+    filterLevel: '',
+} %}
 {% endblock %}

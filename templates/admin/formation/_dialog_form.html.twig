@@ -8,29 +8,78 @@
 {{ form_start(form, {
     attr: {
         class: 'space-y-5',
-        'x-data': '{ submitting: false }',
+        novalidate: 'novalidate',
+        enctype: 'multipart/form-data',
+        'x-data': 'Object.assign(skiloraFormationWorkflow(), { submitting: false })',
         '@submit.prevent': "
             submitting = true;
-            const fd = new FormData($el);
-            const res = await fetch('" ~ action_url ~ "', {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                body: fd
-            });
-            const data = await res.json();
-            submitting = false;
-            if (data.success) {
-                Alpine.store('toast').success(data.message);
-                $dispatch('close-edit-dialog');
-                window.location.reload();
-            } else {
-                Alpine.store('toast').error(data.message || 'Une erreur est survenue.');
+            try {
+                const sigHost = $el.querySelector('[x-data*=\"skiloraFormationSignatureZone\"]');
+                if (sigHost && window.Alpine && typeof Alpine.$data === 'function') {
+                    try {
+                        const z = Alpine.$data(sigHost);
+                        if (z && typeof z.captureSignatureData === 'function') {
+                            z.captureSignatureData();
+                        }
+                    } catch (e) { /* ignore */ }
+                }
+                const fd = new FormData($el);
+                const dialogBody = $el.closest('[data-edit-dialog-body]') || $el.closest('.p-6');
+                const res = await fetch('" ~ action_url ~ "', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: fd
+                });
+                const ct = (res.headers.get('Content-Type') || '');
+                const looksJson = /json/i.test(ct);
+                if (res.ok && looksJson) {
+                    const raw = await res.text();
+                    let data = {};
+                    try {
+                        data = raw ? JSON.parse(raw) : {};
+                    } catch (e) {
+                        submitting = false;
+                        console.error(e);
+                        return;
+                    }
+                    submitting = false;
+                    if (window.Alpine && Alpine.store && Alpine.store('toast')) {
+                        Alpine.store('toast').success(data.message || 'Enregistré.');
+                    }
+                    $dispatch('close-edit-dialog');
+                    window.location.reload();
+                    return;
+                }
+                if ((res.status === 422 || res.status === 400) && dialogBody) {
+                    const html = await res.text();
+                    submitting = false;
+                    dialogBody.innerHTML = html;
+                    if (window.Alpine && typeof Alpine.initTree === 'function') {
+                        Alpine.initTree(dialogBody);
+                    }
+                    if (window.lucide) {
+                        lucide.createIcons({ nodes: dialogBody.querySelectorAll('[data-lucide]') });
+                    }
+                    return;
+                }
+                submitting = false;
+                if (res.status === 403 && window.Alpine && Alpine.store && Alpine.store('toast')) {
+                    Alpine.store('toast').error('Session ou jeton CSRF invalide. Rechargez la page.');
+                } else if (res.ok && !looksJson && window.Alpine && Alpine.store && Alpine.store('toast')) {
+                    Alpine.store('toast').error('Réponse serveur inattendue (pas de JSON).');
+                } else if (!res.ok && window.Alpine && Alpine.store && Alpine.store('toast')) {
+                    Alpine.store('toast').error('Erreur réseau ou serveur (' + res.status + ').');
+                }
+            } catch (e) {
+                submitting = false;
+                console.error(e);
+                if (window.Alpine && Alpine.store && Alpine.store('toast')) {
+                    Alpine.store('toast').error('Échec de l\\'envoi. Réessayez.');
+                }
             }
         "
     }
 }) }}
-    {{ form_errors(form) }}
-
     {% include 'admin/formation/_form.html.twig' %}
 
     <div class="flex items-center justify-end gap-3 border-t border-border pt-4">
@@ -39,7 +88,20 @@
                 class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent">
             Annuler
         </button>
+        <button type="button"
+                @click="goBack()"
+                x-show="step === 2"
+                class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent">
+            Retour
+        </button>
+        <button type="button"
+                @click="goNext()"
+                x-show="step === 1"
+                class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+            Suivant
+        </button>
         <button type="submit"
+                x-show="step === 2"
                 :disabled="submitting"
                 class="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50">
             <template x-if="submitting">

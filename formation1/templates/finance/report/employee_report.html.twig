@@ -1,0 +1,229 @@
+{# Aligné sur com/skilora/finance/rapport_financier_template.html (module Java) — polices DejaVu pour Dompdf #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rapport Financier Skilora</title>
+  <style>
+    body { background-color: #0d1117; color: #e8edf2; font-family: DejaVu Sans, Arial, Helvetica, sans-serif; padding: 40px 36px 72px; margin: 0; font-size: 11px; }
+    .page { max-width: 880px; margin: 0 auto; }
+    .header { padding-bottom: 28px; border-bottom: 1px solid #1e2d3d; margin-bottom: 28px; }
+    .header table, .meta-bar table, .payslip-row table { width: 100%; border-collapse: collapse; }
+    .header td, .meta-bar td, .payslip-row td { vertical-align: middle; }
+    h1 { font-family: DejaVu Serif, Georgia, serif; font-size: 32px; color: #00c4a7; margin: 0 0 6px 0; line-height: 1.05; }
+    .subtitle { font-size: 10px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; color: #00c4a7; }
+    .logo-fallback { font-family: DejaVu Serif, Georgia, serif; font-size: 22px; font-weight: bold; color: #e8edf2; text-align: right; }
+    .logo-dot { color: #00c4a7; }
+    .logo-tagline { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #00c4a7; text-align: right; margin-top: 4px; }
+    .meta-bar { margin-bottom: 28px; margin-top: 22px; }
+    .mlabel { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #6a7f96; display: block; margin-bottom: 4px; }
+    .mvalue { font-size: 14px; font-weight: 600; color: #e8edf2; }
+    .section { background: #111820; border: 1px solid #1e2d3d; border-left: 3px solid #00c4a7; border-radius: 14px; padding: 20px 24px; margin-bottom: 14px; page-break-inside: avoid; }
+    .section-header { margin-bottom: 14px; }
+    .sec-icon { width: 32px; height: 32px; background: rgba(0,196,167,0.12); border: 1px solid rgba(0,196,167,0.3); border-radius: 8px; text-align: center; line-height: 32px; font-size: 14px; display: inline-block; vertical-align: middle; color: #00c4a7; font-weight: bold; }
+    .sec-title { font-family: DejaVu Serif, Georgia, serif; font-size: 17px; color: #00c4a7; margin: 0; padding-left: 10px; vertical-align: middle; }
+    .salary-card { background: #0f161d; border: 1px solid #1e2d3d; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+    .report-field { margin-bottom: 10px; line-height: 1.45; }
+    .report-field:last-child { margin-bottom: 0; }
+    .report-field-label { display: block; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; color: #00c4a7; margin-bottom: 3px; }
+    .report-field-value { font-size: 13px; font-weight: 600; color: #e8edf2; }
+    .role { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #6a7f96; margin-bottom: 8px; }
+    .amount { font-family: DejaVu Serif, Georgia, serif; font-size: 22px; font-weight: bold; color: #00c4a7; }
+    .currency { font-size: 12px; color: #6a7f96; margin-left: 4px; }
+    .bank-grid { width: 100%; }
+    .bank-card { background: #0f161d; border: 1px solid #1e2d3d; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+    .bank-name { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; color: #6a7f96; margin-bottom: 6px; }
+    .iban { font-size: 12px; font-weight: 600; color: #e8edf2; letter-spacing: 0.5px; word-break: break-all; }
+    .bonus-badge { background: rgba(240,192,64,0.1); border: 1px solid rgba(240,192,64,0.3); border-radius: 10px; padding: 14px 20px; display: inline-block; margin-bottom: 8px; }
+    .b-amount { font-family: DejaVu Serif, Georgia, serif; font-size: 28px; font-weight: bold; color: #f0c040; }
+    .b-currency { font-size: 12px; color: rgba(240,192,64,0.6); margin-left: 4px; }
+    .b-label { font-size: 10px; font-weight: 600; color: rgba(240,192,64,0.6); text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; }
+    .payslip-row { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .payslip-col-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #6a7f96; margin-bottom: 4px; }
+    .payslip-col-value { font-size: 13px; font-weight: 600; color: #e8edf2; }
+    .payslip-net { font-family: DejaVu Serif, Georgia, serif; font-size: 18px; font-weight: bold; color: #e8edf2; }
+    .payslip-net-currency { font-size: 12px; color: #6a7f96; margin-left: 4px; }
+    .tag { background: rgba(0,196,167,0.08); border: 1px solid rgba(0,196,167,0.3); color: #00c4a7; font-size: 10px; font-weight: bold; padding: 4px 10px; border-radius: 16px; letter-spacing: 1px; text-transform: uppercase; display: inline-block; }
+    .summary-text { color: #e8edf2; font-size: 13px; line-height: 1.65; }
+    .footer { margin-top: 36px; padding-top: 20px; border-top: 1px solid #1e2d3d; font-size: 10px; color: #6a7f96; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+    .empty-note { color: #6a7f96; font-style: italic; font-size: 11px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <table>
+      <tr>
+        <td style="width:55%;">
+          <h1>Rapport Financier</h1>
+          <p class="subtitle">Document confidentiel</p>
+        </td>
+        <td style="width:45%; text-align:right;">
+          <div class="logo-fallback">SKIL<span class="logo-dot">O</span>RA</div>
+          <div class="logo-tagline">Prove your skills</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="meta-bar">
+    <table>
+      <tr>
+        <td style="width:50%;">
+          <span class="mlabel">Employé :</span>
+          <span class="mvalue">{{ report.employee.full_name }} <span style="color:#6a7f96;">(#{{ report.employee.id }})</span></span>
+        </td>
+        <td style="width:50%;">
+          <span class="mlabel">Émis le :</span>
+          <span class="mvalue">{{ report.generated_at|date('d/m/Y H:i') }}</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  {# Résumé #}
+  <div class="section">
+    <div class="section-header">
+      <table><tr>
+        <td style="width:40px;"><span class="sec-icon">◇</span></td>
+        <td><h2 class="sec-title">Résumé professionnel</h2></td>
+      </tr></table>
+    </div>
+    <p class="summary-text">{{ report.summary }}</p>
+  </div>
+
+  {# Synthèse chiffrée (équivalent blocs Java) #}
+  <div class="section">
+    <div class="section-header">
+      <table><tr>
+        <td style="width:40px;"><span class="sec-icon">#</span></td>
+        <td><h2 class="sec-title">Indicateurs</h2></td>
+      </tr></table>
+    </div>
+    <table style="width:100%; border-collapse:collapse;">
+      <tr>
+        <td style="width:50%; vertical-align:top; padding-right:8px;">
+          <div class="salary-card">
+            <span class="role">Activité</span>
+            <div class="report-field"><span class="report-field-label">Contrats enregistrés</span><span class="report-field-value">{{ report.metrics.contracts_count }}</span></div>
+            <div class="report-field"><span class="report-field-label">Bulletins de paie</span><span class="report-field-value">{{ report.metrics.payslips_count }}</span></div>
+            <div class="report-field"><span class="report-field-label">Primes (total)</span><span class="report-field-value">{{ report.metrics.bonus_total|number_format(2, '.', ' ') }} <span class="currency">TND</span></span></div>
+          </div>
+        </td>
+        <td style="width:50%; vertical-align:top; padding-left:8px;">
+          <div class="salary-card">
+            <span class="role">Dernier net estimé</span>
+            <div>
+              <span class="amount">{{ report.metrics.latest_estimated_net|number_format(2, '.', ' ') }}</span><span class="currency">TND</span>
+            </div>
+            <div class="report-field" style="margin-top:10px;"><span class="report-field-label">Comptes bancaires</span><span class="report-field-value">{{ report.metrics.bank_accounts_count }}</span></div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  {# Contrats #}
+  <div class="section">
+    <div class="section-header">
+      <table><tr>
+        <td style="width:40px;"><span class="sec-icon">C</span></td>
+        <td><h2 class="sec-title">Contrats</h2></td>
+      </tr></table>
+    </div>
+    {% for c in report.contracts %}
+      <div class="salary-card">
+        <span class="role">{{ c.type ?? 'Contrat' }} {% if c.status %}<span class="tag">{{ c.status }}</span>{% endif %}</span>
+        <div class="report-field"><span class="report-field-label">Poste dans notre société</span><span class="report-field-value">{{ c.position ?? '—' }}</span></div>
+        <div class="report-field"><span class="report-field-label">Type de contrat</span><span class="report-field-value">{{ c.type ?? '—' }}</span></div>
+        <div class="report-field"><span class="report-field-label">Salaire mensuel (salaire de base)</span><span class="report-field-value"><span class="amount">{{ c.salary|number_format(2, '.', ' ') }}</span><span class="currency">TND</span></span></div>
+        <div class="report-field"><span class="report-field-label">Date de début du travail</span><span class="report-field-value">{{ c.start_date ?? '—' }}</span></div>
+        <div class="report-field"><span class="report-field-label">Date de fin du contrat</span><span class="report-field-value">{{ c.end_date ?? '—' }}</span></div>
+        <div class="report-field"><span class="report-field-label">Ancienneté</span><span class="report-field-value">{{ c.tenure_label ?? '—' }}</span></div>
+        {% if c.company %}<div class="report-field"><span class="report-field-label">Entreprise</span><span class="report-field-value">{{ c.company }}</span></div>{% endif %}
+      </div>
+    {% else %}
+      <p class="empty-note">Aucun contrat enregistré.</p>
+    {% endfor %}
+  </div>
+
+  {# Comptes bancaires #}
+  <div class="section">
+    <div class="section-header">
+      <table><tr>
+        <td style="width:40px;"><span class="sec-icon">B</span></td>
+        <td><h2 class="sec-title">Comptes bancaires</h2></td>
+      </tr></table>
+    </div>
+    {% for a in report.bank_accounts %}
+      <div class="bank-card">
+        <div class="bank-name">{{ a.bank_name ?? 'Banque' }} — {{ a.currency ?? 'TND' }}{% if a.is_primary %} — Principal{% endif %}{% if a.is_verified %} — Vérifié{% endif %}</div>
+        <div class="iban">IBAN : {{ a.iban ?? '—' }}{% if a.swift %} — SWIFT : {{ a.swift }}{% endif %}</div>
+      </div>
+    {% else %}
+      <p class="empty-note">Aucun compte bancaire.</p>
+    {% endfor %}
+  </div>
+
+  {# Primes #}
+  <div class="section">
+    <div class="section-header">
+      <table><tr>
+        <td style="width:40px;"><span class="sec-icon">P</span></td>
+        <td><h2 class="sec-title">Primes</h2></td>
+      </tr></table>
+    </div>
+    {% for b in report.bonuses %}
+      <div class="bonus-badge">
+        <div><span class="b-amount">{{ b.amount|number_format(2, '.', ' ') }}</span><span class="b-currency">TND</span></div>
+        <div class="b-label">{{ b.reason ?? 'Prime' }}{% if b.date_awarded %} — {{ b.date_awarded }}{% endif %}</div>
+      </div>
+      <br />
+    {% else %}
+      <p class="empty-note">Aucune prime.</p>
+    {% endfor %}
+  </div>
+
+  {# Bulletins #}
+  <div class="section">
+    <div class="section-header">
+      <table><tr>
+        <td style="width:40px;"><span class="sec-icon">S</span></td>
+        <td><h2 class="sec-title">Bulletins de paie</h2></td>
+      </tr></table>
+    </div>
+    {% for p in report.payslips %}
+      <div class="payslip-row">
+        <table><tr>
+          <td style="width:22%;">
+            <div class="payslip-col-label">Période</div>
+            <div class="payslip-col-value">{{ p.period }}</div>
+          </td>
+          <td style="width:26%;">
+            <div class="payslip-col-label">Brut estimé</div>
+            <div class="payslip-col-value">{{ p.gross_estimated|number_format(2, '.', ' ') }} TND</div>
+          </td>
+          <td style="width:26%;">
+            <div class="payslip-col-label">Base</div>
+            <div class="payslip-col-value">{{ p.base_salary|number_format(2, '.', ' ') }} TND</div>
+          </td>
+          <td style="width:26%; text-align:right;">
+            <div class="payslip-col-label">Net estimé</div>
+            <div class="payslip-net">{{ p.net_estimated|number_format(2, '.', ' ') }}<span class="payslip-net-currency">TND</span></div>
+            {% if p.status %}<div style="margin-top:4px;"><span class="tag">{{ p.status }}</span></div>{% endif %}
+          </td>
+        </tr></table>
+      </div>
+    {% else %}
+      <p class="empty-note">Aucun bulletin de paie.</p>
+    {% endfor %}
+  </div>
+
+  <div class="footer">
+    Document confidentiel — Skilora Gestion Finance — {{ report.generated_at|date('Y') }}
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { margin: 0; }
+        body {
+            font-family: DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 24px;
+            background: #020617;
+            color: #e5e7eb;
+        }
+        .verify-footer{
+            margin-top: 8px;
+            font-size: 10px;
+            color: #9ca3af;
+            text-align: center;
+        }
+        .verify-link{
+            margin-top: 2px;
+            font-size: 9px;
+            color: #818cf8;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    {% include 'certificate/_certificate_core.html.twig' with {
+        certificate: certificate,
+        qrCodeDataUri: qrCodeDataUri,
+        formationDirectorSignatureDataUri: formationDirectorSignatureDataUri|default(null),
+    } %}
+    <div class="verify-footer">
+        Scan to verify
+        <div class="verify-link">{{ verificationUrl }}</div>
+    </div>
+</body>
+</html>

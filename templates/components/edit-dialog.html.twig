@@ -1,13 +1,16 @@
-{# components/edit-dialog.html.twig — Reusable edit/update dialog for all modules #}
+{# components/edit-dialog.html.twig — Reusable edit/update dialog (aligned with formation1: scroll = outer overlay). #}
 {#
   A universal dialog that fetches its form content dynamically via AJAX.
   Works across all modules (users, recruitment, formations, etc.).
   Respects the current theme (dark/light) automatically via CSS variables.
 
+  Scroll behaviour: same as formation1 — `fixed inset-0 … overflow-y-auto` on the overlay
+  so tall forms scroll with the page; modal card has no max-height trap.
+
   Usage (trigger):
     <button @click="$dispatch('open-edit-dialog', {
         title: 'Edit User',
-        description: 'Update user details.',
+        description: 'Update your details.',
         url: '/admin/users/5/edit-form',
         size: 'lg'
     })">Edit</button>
@@ -44,7 +47,14 @@
             } finally {
                 this.loading = false;
                 this.$nextTick(() => {
-                    if (window.lucide) lucide.createIcons({ nodes: this.$refs.dialogBody.querySelectorAll('[data-lucide]') });
+                    this.$nextTick(() => {
+                        if (window.Alpine && typeof Alpine.initTree === 'function' && this.$refs.dialogBody) {
+                            Alpine.initTree(this.$refs.dialogBody);
+                        }
+                        if (window.lucide) {
+                            lucide.createIcons({ nodes: this.$refs.dialogBody.querySelectorAll('[data-lucide]') });
+                        }
+                    });
                 });
             }
         }
@@ -59,6 +69,16 @@
         } else if ($event.detail.content) {
             formContent = $event.detail.content;
             loading = false;
+            $nextTick(() => {
+                $nextTick(() => {
+                    if (window.Alpine && typeof Alpine.initTree === 'function' && $refs.dialogBody) {
+                        Alpine.initTree($refs.dialogBody);
+                    }
+                    if (window.lucide) {
+                        lucide.createIcons({ nodes: $refs.dialogBody.querySelectorAll('[data-lucide]') });
+                    }
+                });
+            });
         }
     "
     @close-edit-dialog.window="open = false"
@@ -80,8 +100,9 @@
         class="fixed inset-0 bg-black/80"
     ></div>
 
-    {# Dialog panel #}
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    {# Dialog: outer scroll + inner flex min-h-full = tall forms scroll (Tailwind UI pattern; formation1 single-div can clip on some viewports). #}
+    <div class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex min-h-full items-center justify-center p-4 sm:p-6">
         <div
             x-show="open"
             x-transition:enter="ease-out duration-200"
@@ -107,13 +128,13 @@
             </button>
 
             {# Header #}
-            <div class="flex flex-col space-y-1.5 p-6 pb-0">
+            <div class="flex flex-col space-y-1.5 p-6 pb-0 pr-14">
                 <h2 class="text-lg font-semibold leading-none tracking-tight" x-text="title"></h2>
                 <p class="text-sm text-muted-foreground" x-show="description" x-text="description"></p>
             </div>
 
-            {# Content #}
-            <div class="p-6" x-ref="dialogBody">
+            {# Content — data-edit-dialog-body for AJAX validation swap (replaces innerHTML of this node) #}
+            <div class="p-6" x-ref="dialogBody" data-edit-dialog-body>
                 {# Loading spinner #}
                 <template x-if="loading">
                     <div class="flex items-center justify-center py-12">
@@ -129,5 +150,7 @@
                 </template>
             </div>
         </div>
+        </div>
     </div>
 </div>
+{{ include('admin/formation/_signature_zone_script.html.twig') }}

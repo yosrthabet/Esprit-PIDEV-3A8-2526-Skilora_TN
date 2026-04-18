@@ -1,0 +1,144 @@
+﻿{% extends 'recrutement/employer/base.html.twig' %}
+
+{% block employer_title %}Planifier un entretien · Skilora{% endblock %}
+{% block page_title %}Planifier un entretien{% endblock %}
+
+{% block employer_content %}
+<div class="max-w-xl space-y-6">
+    <div>
+        <p class="text-sm text-muted-foreground">
+            <a href="{{ path('app_employer_interviews') }}" class="hover:text-foreground hover:underline">Entretiens</a>
+            <span class="mx-1">/</span>
+            <span>Planification</span>
+        </p>
+        <h2 class="mt-2 text-2xl font-bold tracking-tight text-foreground">Planifier l’entretien</h2>
+        <p class="mt-1 text-sm text-muted-foreground">
+            <span class="font-medium text-foreground">{{ candidature.candidateName }}</span>
+            {% if candidature.candidateEmail %} · {{ candidature.candidateEmail }}{% endif %}
+        </p>
+        <p class="mt-1 text-sm text-muted-foreground">{{ job_offer.title }}</p>
+    </div>
+
+    {{ form_start(form, { attr: { class: 'space-y-5' } }) }}
+
+    <div class="space-y-2">
+        {{ form_label(form.scheduledAt, null, { label_attr: { class: 'text-sm font-medium leading-none' } }) }}
+        {{ form_widget(form.scheduledAt) }}
+        {{ form_errors(form.scheduledAt) }}
+        <p class="text-xs text-muted-foreground">Un seul champ : date et heure (navigateur). Le compte à rebours se met à jour quand vous changez le créneau.</p>
+    </div>
+
+    <div class="rounded-xl border border-border bg-muted/30 p-4 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Aperçu pour le candidat</p>
+        <p id="js-interview-recap-datetime" class="mt-2 text-sm font-medium text-foreground">—</p>
+        <p id="js-interview-recap-location" class="mt-1 text-sm text-muted-foreground">—</p>
+        <p class="mt-3 text-xs font-medium text-muted-foreground">Remaining time</p>
+        <p id="js-interview-preview-countdown"
+           class="mt-1 text-sm font-medium tabular-nums text-sky-800 dark:text-sky-200"
+           data-interview-countdown
+           data-locale="fr"
+           data-empty-label="Choisissez une date et une heure"
+           data-at=""></p>
+    </div>
+
+    <div class="space-y-2">
+        {{ form_label(form.format, null, { label_attr: { class: 'text-sm font-medium leading-none' } }) }}
+        {{ form_widget(form.format) }}
+        {{ form_errors(form.format) }}
+    </div>
+
+    <div class="space-y-2">
+        {{ form_label(form.location, null, { label_attr: { class: 'text-sm font-medium leading-none' } }) }}
+        {{ form_widget(form.location) }}
+        {{ form_errors(form.location) }}
+        {{ form_help(form.location) }}
+    </div>
+
+    <div class="space-y-2">
+        {{ form_label(form.lifecycle, null, { label_attr: { class: 'text-sm font-medium leading-none' } }) }}
+        {{ form_widget(form.lifecycle) }}
+        {{ form_errors(form.lifecycle) }}
+    </div>
+
+    <div class="flex flex-wrap gap-3 pt-2">
+        <button type="submit"
+                class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-ring">
+            Enregistrer
+        </button>
+        <a href="{{ path('app_employer_interviews') }}"
+           class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition hover:bg-accent hover:text-accent-foreground">
+            Annuler
+        </a>
+    </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% include 'recrutement/components/_interview_countdown_script.html.twig' %}
+    <script>
+        (function () {
+            {# IDs réels générés par Symfony (ex. interview_schedule_scheduledAt) — évite les doublons id="" dans le HTML #}
+            var sched = document.getElementById({{ form.scheduledAt.vars.id|json_encode|raw }});
+            var loc = document.getElementById({{ form.location.vars.id|json_encode|raw }});
+            var recapDt = document.getElementById('js-interview-recap-datetime');
+            var recapLoc = document.getElementById('js-interview-recap-location');
+            var cd = document.getElementById('js-interview-preview-countdown');
+            if (!sched || !recapDt || !recapLoc || !cd) {
+                return;
+            }
+            function fmtLocal(v) {
+                if (!v) {
+                    return '';
+                }
+                var d = new Date(v);
+                if (isNaN(d.getTime())) {
+                    return v;
+                }
+                try {
+                    return d.toLocaleString('fr-FR', {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    });
+                } catch (e) {
+                    return d.toISOString();
+                }
+            }
+            function sync() {
+                var v = sched.value;
+                if (v) {
+                    var d = new Date(v);
+                    recapDt.textContent = fmtLocal(v);
+                    if (!isNaN(d.getTime())) {
+                        cd.setAttribute('data-at', d.toISOString());
+                        cd.setAttribute('data-at-ms', String(d.getTime()));
+                    } else {
+                        cd.removeAttribute('data-at');
+                        cd.removeAttribute('data-at-ms');
+                    }
+                } else {
+                    recapDt.textContent = '—';
+                    cd.removeAttribute('data-at');
+                    cd.removeAttribute('data-at-ms');
+                }
+                var l = loc && loc.value ? loc.value.trim() : '';
+                recapLoc.textContent = l ? '📍 ' + l : 'Lieu non renseigné (optionnel)';
+                if (typeof window.initInterviewCountdowns === 'function') {
+                    window.initInterviewCountdowns();
+                }
+            }
+            sched.addEventListener('input', sync);
+            sched.addEventListener('change', sync);
+            if (loc) {
+                loc.addEventListener('input', sync);
+                loc.addEventListener('change', sync);
+            }
+            sync();
+        })();
+    </script>
+{% endblock %}

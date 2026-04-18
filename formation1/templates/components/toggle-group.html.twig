@@ -1,0 +1,63 @@
+{# components/toggle-group.html.twig — ShadCN Toggle Group
+
+   Usage: {{ include('components/toggle-group.html.twig', {
+       name: 'alignment',
+       type: 'single',
+       value: 'center',
+       items: [
+           { value: 'left', label: 'Left' },
+           { value: 'center', label: 'Center' },
+           { value: 'right', label: 'Right' },
+       ],
+   }) }}
+#}
+{% set type = type|default('single') %}
+{% set value = value|default('') %}
+{% set variant = variant|default('default') %}
+{% set size = size|default('default') %}
+
+{% set size_classes = {
+    'default': 'h-9 px-3 min-w-9',
+    'sm': 'h-8 px-2 min-w-8',
+    'lg': 'h-10 px-4 min-w-10',
+} %}
+
+<div
+    x-data="{
+        selected: {% if type == 'single' %}'{{ value }}'{% else %}{{ value|default('[]') }}{% endif %},
+        isSelected(val) {
+            {% if type == 'single' %}
+                return this.selected === val;
+            {% else %}
+                return this.selected.includes(val);
+            {% endif %}
+        },
+        toggle(val) {
+            {% if type == 'single' %}
+                this.selected = this.selected === val ? '' : val;
+            {% else %}
+                if (this.selected.includes(val)) {
+                    this.selected = this.selected.filter(v => v !== val);
+                } else {
+                    this.selected.push(val);
+                }
+            {% endif %}
+        }
+    }"
+    class="inline-flex items-center gap-1 rounded-md {{ class|default('') }}"
+    role="group"
+>
+    <input type="hidden" name="{{ name }}" :value="{% if type == 'single' %}selected{% else %}JSON.stringify(selected){% endif %}">
+
+    {% for item in items|default([]) %}
+        <button
+            type="button"
+            @click="toggle('{{ item.value }}')"
+            :class="isSelected('{{ item.value }}') ? 'bg-accent text-accent-foreground' : 'hover:bg-muted hover:text-muted-foreground'"
+            class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring {{ size_classes[size] }}"
+        >
+            {% if item.icon is defined %}{{ item.icon|raw }}{% endif %}
+            {{ item.label|default('') }}
+        </button>
+    {% endfor %}
+</div>

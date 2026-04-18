@@ -3,6 +3,7 @@
 {% block page_title %}Mes certificats{% endblock %}
 
 {% block content %}
+{% set chatbot_formations = certificates|map(c => c.formation) %}
 <div class="space-y-6 animate-fade-in">
     {# Header #}
     <div class="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-accent/10 p-6 shadow-sm sm:p-8">
@@ -26,9 +27,15 @@
             </a>
         </div>
     {% else %}
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-formation-grid>
             {% for c in certificates %}
-                <div class="rounded-xl border border-border bg-card shadow-sm hover:shadow-md hover:border-primary/30 transition">
+                <div class="rounded-xl border border-border bg-card shadow-sm hover:shadow-md hover:border-primary/30 transition"
+                     data-formation-card
+                     data-formation-id="{{ c.formation.id }}"
+                     data-formation-title="{{ c.formation.title|e('html_attr') }}"
+                     data-formation-category="{{ c.formation.category|e('html_attr') }}"
+                     data-formation-category-label="{{ c.formation.categoryLabelFr|e('html_attr') }}"
+                     data-formation-level="{{ c.formation.levelLabelFr|e('html_attr') }}">
                     <div class="p-5">
                         <div class="flex items-center gap-3 mb-3">
                             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
@@ -41,15 +48,35 @@
                                 <p class="text-xs text-muted-foreground">{{ c.user.fullName }}</p>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between border-t border-border pt-3">
-                            <span class="text-xs text-muted-foreground">
+                        <div class="border-t border-border pt-3 space-y-3">
+                            <span class="text-xs text-muted-foreground block">
                                 {{ c.issuedAt|date('d/m/Y') }}
                             </span>
-                            <a href="{{ path('app_certificate_pdf', { id: c.id }) }}"
-                               class="inline-flex h-7 items-center gap-1.5 rounded-md bg-primary/10 px-2.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
-                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                PDF
-                            </a>
+                            <div class="flex flex-wrap gap-2">
+                                <a href="{{ path('app_certificate_preview', { id: c.id }) }}"
+                                   class="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent transition-colors">
+                                    👁️ View
+                                </a>
+                                <a href="{{ path('app_certificate_pdf', { id: c.id }) }}"
+                                   class="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary/10 px-3 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
+                                    📄 PDF
+                                </a>
+                                <a href="{{ path('app_certificate_qr', { id: c.id }) }}"
+                                   class="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent transition-colors">
+                                    🔲 QR
+                                </a>
+                                {% set verify_public_url = absolute_url(path('certificate_verify', { verificationId: c.verificationId })) %}
+                                <button type="button"
+                                        class="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent transition-colors"
+                                        onclick="navigator.clipboard.writeText('{{ verify_public_url|e('js') }}')">
+                                    🔗 Copy Link
+                                </button>
+                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ verify_public_url|url_encode }}"
+                                   target="_blank" rel="noopener noreferrer"
+                                   class="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent transition-colors">
+                                    in Share
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -57,4 +84,10 @@
         </div>
     {% endif %}
 </div>
+{% include 'components/_chatbot.html.twig' with {
+    formations: chatbot_formations,
+    activeCategory: '',
+    searchQuery: '',
+    filterLevel: '',
+} %}
 {% endblock %}

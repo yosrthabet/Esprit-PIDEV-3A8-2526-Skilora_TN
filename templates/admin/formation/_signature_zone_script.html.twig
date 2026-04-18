@@ -1,0 +1,218 @@
+<script>
+    window.skiloraFormationWorkflow = function skiloraFormationWorkflow() {
+        return {
+            step: 1,
+            stepError: '',
+            goNext() {
+                if (!this.validateStepOne()) {
+                    return;
+                }
+                this.step = 2;
+                this.$nextTick(() => {
+                    window.dispatchEvent(new CustomEvent('skilora:formation-step-changed', { detail: { step: 2 } }));
+                });
+            },
+            goBack() {
+                this.step = 1;
+                this.stepError = '';
+                window.dispatchEvent(new CustomEvent('skilora:formation-step-changed', { detail: { step: 1 } }));
+            },
+            validateStepOne() {
+                const requiredFieldNames = [
+                    'title',
+                    'description',
+                    'duration',
+                    'lessonsCount',
+                    'level',
+                    'category',
+                ];
+                this.stepError = '';
+                let firstInvalid = null;
+
+                requiredFieldNames.forEach((suffix) => {
+                    const field = this.$root.querySelector(`[name$="[${suffix}]"]`);
+                    if (!field) {
+                        return;
+                    }
+                    const value = (field.value || '').trim();
+                    let valid = value !== '';
+                    if (suffix === 'description') {
+                        valid = valid && value.length >= 20;
+                    }
+                    if (!valid) {
+                        field.classList.add('is-invalid');
+                        if (!firstInvalid) {
+                            firstInvalid = field;
+                        }
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+
+                if (firstInvalid) {
+                    this.stepError = 'Veuillez compléter les informations de l’étape 1 avant de continuer.';
+                    firstInvalid.focus();
+                    return false;
+                }
+
+                return true;
+            },
+        };
+    };
+
+    window.skiloraFormationSignatureZone = function skiloraFormationSignatureZone(config) {
+        return {
+            pad: null,
+            previewUrl: config.existingUrl || null,
+            existingUrl: config.existingUrl || null,
+            hasError: false,
+            resizeHandler: null,
+            async init() {
+                await this.ensureLibrary();
+                this.$nextTick(() => {
+                    this.setupCanvas();
+                    if (this.$refs.signatureData && this.$refs.signatureData.value) {
+                        this.previewUrl = this.$refs.signatureData.value;
+                    }
+                    const removeToggle = this.$root.querySelector('input[name$="[removeCertificateSignature]"]');
+                    if (removeToggle) {
+                        removeToggle.addEventListener('change', () => {
+                            if (removeToggle.checked) {
+                                this.clearPad(true);
+                            }
+                        });
+                    }
+                    const form = this.$root.closest('form');
+                    if (form) {
+                        // capture: true runs before Alpine's @submit handler so FormData includes signatureData
+                        form.addEventListener('submit', (event) => {
+                            const ok = this.captureSignatureData();
+                            if (!ok) {
+                                event.preventDefault();
+                                event.stopImmediatePropagation();
+                                this.hasError = true;
+                            }
+                        }, true);
+                    }
+                });
+                window.addEventListener('skilora:formation-step-changed', (event) => {
+                    if (event.detail && event.detail.step === 2) {
+                        this.$nextTick(() => this.resizeCanvas());
+                    }
+                });
+            },
+            async ensureLibrary() {
+                if (window.SignaturePad) {
+                    return;
+                }
+                if (!window.__skiloraSignaturePadPromise) {
+                    window.__skiloraSignaturePadPromise = new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+                await window.__skiloraSignaturePadPromise;
+            },
+            setupCanvas() {
+                const canvas = this.$refs.signaturePadCanvas;
+                if (!canvas) {
+                    return;
+                }
+                this.resizeCanvasElement();
+                this.pad = new window.SignaturePad(canvas, {
+                    minWidth: 0.8,
+                    maxWidth: 2.4,
+                    penColor: 'rgba(241,245,249,0.96)',
+                    backgroundColor: 'rgba(0,0,0,0)',
+                    velocityFilterWeight: 0.7,
+                });
+                this.pad.addEventListener('endStroke', () => {
+                    this.hasError = false;
+                    this.captureSignatureData();
+                    const removeToggle = this.$root.querySelector('input[name$="[removeCertificateSignature]"]');
+                    if (removeToggle) {
+                        removeToggle.checked = false;
+                    }
+                });
+                this.resizeHandler = () => this.resizeCanvas();
+                window.addEventListener('resize', this.resizeHandler);
+            },
+            resizeCanvasElement() {
+                const canvas = this.$refs.signaturePadCanvas;
+                if (!canvas) {
+                    return;
+                }
+                const parent = canvas.parentElement;
+                if (parent) {
+                    const maxCssHeight = 250;
+                    const minCssHeight = 200;
+                    const responsiveHeight = Math.round(window.innerHeight * 0.28);
+                    const cssHeight = Math.max(minCssHeight, Math.min(maxCssHeight, responsiveHeight));
+                    canvas.style.height = `${cssHeight}px`;
+                }
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+                canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+                const ctx = canvas.getContext('2d');
+                ctx.scale(ratio, ratio);
+                ctx.clearRect(0, 0, rect.width, rect.height);
+            },
+            resizeCanvas() {
+                if (!this.pad) {
+                    return;
+                }
+                const data = this.pad.isEmpty() ? null : this.pad.toData();
+                this.resizeCanvasElement();
+                this.pad.clear();
+                if (data) {
+                    this.pad.fromData(data);
+                    this.captureSignatureData();
+                }
+            },
+            clearPad(clearExisting = false) {
+                if (this.pad) {
+                    this.pad.clear();
+                }
+                if (clearExisting) {
+                    this.existingUrl = null;
+                }
+                this.hasError = false;
+                this.revokePreview();
+                if (this.$refs.signatureData) {
+                    this.$refs.signatureData.value = '';
+                }
+            },
+            captureSignatureData() {
+                if (!this.$refs.signatureData) {
+                    return false;
+                }
+                // Pad not ready yet (race / CDN): do not block submit — Alpine fetch + server validation
+                if (!this.pad) {
+                    return true;
+                }
+                if (this.pad.isEmpty()) {
+                    this.$refs.signatureData.value = '';
+                    this.revokePreview();
+                    return !!this.existingUrl;
+                }
+                const dataUrl = this.pad.toDataURL('image/png');
+                this.$refs.signatureData.value = dataUrl;
+                this.revokePreview();
+                this.previewUrl = dataUrl;
+                return true;
+            },
+            revokePreview() {
+                if (this.previewUrl) {
+                    if (this.previewUrl.startsWith('blob:')) {
+                        URL.revokeObjectURL(this.previewUrl);
+                    }
+                    this.previewUrl = this.existingUrl;
+                }
+            },
+        };
+    };
+</script>

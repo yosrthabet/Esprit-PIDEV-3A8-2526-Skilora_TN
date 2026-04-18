@@ -107,6 +107,10 @@ class Formation
     #[ORM\Column(name: 'director_signature', type: Types::TEXT, nullable: true)]
     private ?string $directorSignature = null;
 
+    /** Stored filename for the certificate director signature image (PNG), e.g. "signature.png". */
+    #[ORM\Column(name: 'certificate_signature_filename', length: 255, nullable: true)]
+    private ?string $certificateSignatureFilename = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -300,6 +304,18 @@ class Formation
     public function setDirectorSignature(?string $directorSignature): static
     {
         $this->directorSignature = $directorSignature;
+
+        return $this;
+    }
+
+    public function getCertificateSignatureFilename(): ?string
+    {
+        return $this->certificateSignatureFilename;
+    }
+
+    public function setCertificateSignatureFilename(?string $certificateSignatureFilename): static
+    {
+        $this->certificateSignatureFilename = $certificateSignatureFilename;
 
         return $this;
     }

@@ -30,6 +30,9 @@ class Certificate
     #[ORM\Column(name: 'issued_date', type: Types::DATETIME_IMMUTABLE)]
     private ?\DateTimeImmutable $issuedAt = null;
 
+    #[ORM\Column(name: 'verification_id', length: 36, unique: true)]
+    private ?string $verificationId = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -59,6 +62,16 @@ class Certificate
         return $this;
     }
 
+    public function getCourse(): ?Formation
+    {
+        return $this->getFormation();
+    }
+
+    public function setCourse(?Formation $course): static
+    {
+        return $this->setFormation($course);
+    }
+
     public function getIssuedAt(): ?\DateTimeImmutable
     {
         return $this->issuedAt;
@@ -71,11 +84,35 @@ class Certificate
         return $this;
     }
 
+    public function getVerificationId(): ?string
+    {
+        return $this->verificationId;
+    }
+
+    public function setVerificationId(?string $verificationId): static
+    {
+        $this->verificationId = $verificationId;
+
+        return $this;
+    }
+
     #[ORM\PrePersist]
     public function onPrePersist(): void
     {
         if (null === $this->issuedAt) {
             $this->issuedAt = new \DateTimeImmutable();
         }
+        if (null === $this->verificationId) {
+            $this->verificationId = self::generateUuidV4();
+        }
+    }
+
+    private static function generateUuidV4(): string
+    {
+        $bytes = random_bytes(16);
+        $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
+        $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
     }
 }

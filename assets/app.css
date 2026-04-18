@@ -398,3 +398,11 @@ body {
 .marquee-banner { background-color: var(--lime); color: var(--black); width: 100%; height: 28px; border-radius: 8px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; position: relative; z-index: 1; margin-top: 12px; transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1), margin-top 0.5s cubic-bezier(0.4, 0, 0.2, 1), padding 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 .marquee-track { display: inline-block; animation: marquee 12s linear infinite; font-weight: 700; font-size: 0.65rem; }
 @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+/* Alpine / client-side formation step validation — red frame only (matches server-side border-destructive) */
+input.is-invalid,
+textarea.is-invalid,
+select.is-invalid {
+  border-color: hsl(var(--destructive)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--destructive) / 0.25);
+}

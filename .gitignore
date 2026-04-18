@@ -3,6 +3,7 @@
 /.env.local
 /.env.local.php
 /.env.*.local
+# Never commit local overrides (API keys, DB passwords)
 /config/secrets/prod/prod.decrypt.private.php
 /public/bundles/
 /var/

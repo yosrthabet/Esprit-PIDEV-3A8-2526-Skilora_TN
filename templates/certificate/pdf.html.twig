@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { margin: 0; }
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #020617;
+        }
+    </style>
+</head>
+<body>
+    {% include 'certificate/_certificate_pdf_dompdf.html.twig' with {
+        certificate: certificate,
+        verificationUrl: verificationUrl,
+        verificationHost: verificationHost,
+        qrCodeDataUri: qrCodeDataUri,
+        formationDirectorSignatureDataUri: formationDirectorSignatureDataUri|default(null),
+    } %}
+</body>
+</html>

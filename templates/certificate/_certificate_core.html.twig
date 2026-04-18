@@ -1,0 +1,363 @@
+{# High‑fidelity SVG certificate using golden ratio layout and guilloché border #}
+{% set userName = certificate.user.fullName ?: certificate.user.username %}
+{% set courseTitle = certificate.course.title %}
+{% set issuedDate = certificate.issuedAt|date('d/m/Y H:i') %}
+{% set userId = certificate.user.id %}
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1123"
+     height="794"
+     viewBox="0 0 1123 794"
+     role="img"
+     aria-labelledby="certTitle certDesc">
+    {# Dompdf renders <metadata> and <desc> text as visible output — omit for PDF generation. #}
+    {% if not forPdf|default(false) %}
+    <metadata>
+        {
+            "schema": "skilora.certificate.v1",
+            "userId": "{{ userId }}",
+            "userDisplayName": "{{ userName|e('js') }}",
+            "formationId": "{{ certificate.course.id }}",
+            "verificationId": "{{ certificate.verificationId }}",
+            "issuedAt": "{{ certificate.issuedAt|date('c') }}",
+            "gradeMetrics": {{ gradeMetrics|default({'score': null, 'maxScore': null, 'label': 'N/A'})|json_encode|raw }}
+        }
+    </metadata>
+    {% endif %}
+
+    <defs>
+        {# Base palette #}
+        <linearGradient id="cert-bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#0b1120"/>
+            <stop offset="35%" stop-color="#020617"/>
+            <stop offset="100%" stop-color="#020617"/>
+        </linearGradient>
+
+        <linearGradient id="cert-accent" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#4f46e5"/>
+            <stop offset="40%" stop-color="#6366f1"/>
+            <stop offset="100%" stop-color="#a855f7"/>
+        </linearGradient>
+
+        <linearGradient id="badge-ring" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f8d77a"/>
+            <stop offset="45%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#d4d4d8"/>
+        </linearGradient>
+
+        <radialGradient id="badge-core" cx="45%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="#1e1b4b"/>
+            <stop offset="65%" stop-color="#0b1120"/>
+            <stop offset="100%" stop-color="#020617"/>
+        </radialGradient>
+
+        <radialGradient id="cert-glow" cx="50%" cy="0%" r="80%">
+            <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.45"/>
+            <stop offset="40%" stop-color="#0f172a" stop-opacity="0.0"/>
+            <stop offset="100%" stop-color="#020617" stop-opacity="0.0"/>
+        </radialGradient>
+
+        <filter id="badge-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="2.8" flood-color="#a78bfa" flood-opacity="0.45"/>
+            <feDropShadow dx="0" dy="1.4" stdDeviation="1.4" flood-color="#f8d77a" flood-opacity="0.22"/>
+        </filter>
+
+        {# Guilloché‑style border using parametric wave curves #}
+        <pattern id="guilloche-border" x="0" y="0" width="1" height="1" patternUnits="objectBoundingBox">
+            <path d="
+                M 40 20
+                C 120 0,   220 40,  300 20
+                C 380 0,   480 40,  560 20
+                C 640 0,   740 40,  820 20
+                C 900 0,  1000 40, 1080 20
+            "
+                  fill="none"
+                  stroke="#4f46e5"
+                  stroke-width="1.2"
+                  stroke-opacity="0.7"/>
+            <path d="
+                M 40 24
+                C 120 44,  220 4,   300 24
+                C 380 44,  480 4,   560 24
+                C 640 44,  740 4,   820 24
+                C 900 44, 1000 4,  1080 24
+            "
+                  fill="none"
+                  stroke="#a855f7"
+                  stroke-width="0.9"
+                  stroke-opacity="0.65"/>
+        </pattern>
+
+        {# Inner guilloché medallion behind the title #}
+        <radialGradient id="guilloche-medal" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#0b1120" stop-opacity="0.0"/>
+            <stop offset="60%" stop-color="#4f46e5" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#020617" stop-opacity="0.0"/>
+        </radialGradient>
+
+        <clipPath id="content-clip">
+            <rect x="80" y="70" width="963" height="654" rx="28" ry="28"/>
+        </clipPath>
+    </defs>
+
+    {% if not forPdf|default(false) %}
+    <title id="certTitle">Certificate of Completion</title>
+    <desc id="certDesc">
+        Certificate for {{ userName }} for completing {{ courseTitle }} on {{ issuedDate }}.
+    </desc>
+    {% else %}
+    <title id="certTitle">Certificate of Completion</title>
+    <desc id="certDesc"></desc>
+    {% endif %}
+
+    {# Outer background and subtle glow #}
+    <rect x="0" y="0" width="1123" height="794" fill="url(#cert-bg)"/>
+    <rect x="0" y="0" width="1123" height="420" fill="url(#cert-glow)" opacity="0.9"/>
+
+    {# Golden‑ratio content frame (approx. 1:1.618 proportion) #}
+    <g clip-path="url(#content-clip)">
+        <rect x="80" y="70" width="963" height="654"
+              fill="#020617"
+              stroke="#1e293b"
+              stroke-width="1.5"/>
+
+        {# Inner glow band #}
+        <rect x="98" y="88" width="927" height="618"
+              fill="none"
+              stroke="url(#cert-accent)"
+              stroke-width="1.2"
+              stroke-opacity="0.55"/>
+
+        {# Guilloché border band #}
+        <rect x="92" y="82" width="939" height="630"
+              fill="none"
+              stroke="#0f172a"
+              stroke-width="10"/>
+        <rect x="92" y="82" width="939" height="630"
+              fill="none"
+              stroke="#0b1120"
+              stroke-width="3"
+              stroke-opacity="0.8"/>
+        <rect x="96" y="86" width="931" height="622"
+              fill="none"
+              stroke="#1e293b"
+              stroke-width="1.4"/>
+
+        {# Guilloché pattern along the inner edge #}
+        <g opacity="0.7">
+            <rect x="104" y="96" width="915" height="32"
+                  fill="url(#guilloche-border)"
+                  opacity="0.9"/>
+            <rect x="104" y="686" width="915" height="32"
+                  transform="scale(1,-1) translate(0,-1418)"
+                  fill="url(#guilloche-border)"
+                  opacity="0.9"/>
+        </g>
+    </g>
+
+    {# Main content zones, using a golden‑ratio inspired vertical split #}
+    <g>
+        {# Medallion behind top title #}
+        <ellipse cx="561.5" cy="194" rx="260" ry="90" fill="url(#guilloche-medal)" opacity="0.8"/>
+
+        {# Title hierarchy #}
+        <text x="561.5" y="168"
+              text-anchor="middle"
+              fill="#e5e7eb"
+              font-size="20"
+              font-weight="700"
+              letter-spacing="9"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            CERTIFICATE OF COMPLETION
+        </text>
+
+        <text x="561.5" y="206"
+              text-anchor="middle"
+              fill="#9ca3af"
+              font-size="13"
+              font-weight="500"
+              letter-spacing="4"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            THIS DOCUMENT ATTESTS THAT
+        </text>
+
+        {# Recipient #}
+        <text x="561.5" y="266"
+              text-anchor="middle"
+              fill="#f9fafb"
+              font-size="40"
+              font-weight="800"
+              letter-spacing="1"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            {{ userName }}
+        </text>
+
+        <text x="561.5" y="300"
+              text-anchor="middle"
+              fill="#9ca3af"
+              font-size="14"
+              font-weight="500"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            has successfully completed the professional formation
+        </text>
+
+        {# Course title block #}
+        <rect x="226" y="328" width="671" height="84" rx="14" ry="14"
+              fill="#020617"
+              stroke="#1f2937"
+              stroke-width="1.2"/>
+        <rect x="229" y="331" width="665" height="78" rx="12" ry="12"
+              fill="#020617"
+              stroke="url(#cert-accent)"
+              stroke-width="1"
+              stroke-opacity="0.6"/>
+
+        <text x="561.5" y="379"
+              text-anchor="middle"
+              fill="#e5e7eb"
+              font-size="22"
+              font-weight="700"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            {{ courseTitle }}
+        </text>
+
+        {# Meta / descriptor row #}
+        <text x="230" y="436"
+              fill="#6b7280"
+              font-size="11"
+              font-weight="500"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            Learner:
+        </text>
+        <text x="290" y="436"
+              fill="#e5e7eb"
+              font-size="11"
+              font-weight="600"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            {{ userName }}
+        </text>
+
+        <text x="230" y="456"
+              fill="#6b7280"
+              font-size="11"
+              font-weight="500"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            Formation:
+        </text>
+        <text x="305" y="456"
+              fill="#e5e7eb"
+              font-size="11"
+              font-weight="600"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            {{ courseTitle }}
+        </text>
+
+        <text x="230" y="476"
+              fill="#6b7280"
+              font-size="11"
+              font-weight="500"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            Issued on:
+        </text>
+        <text x="305" y="476"
+              fill="#e5e7eb"
+              font-size="11"
+              font-weight="600"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            {{ issuedDate }}
+        </text>
+
+        {# Verification id (short) #}
+        <text x="230" y="496"
+              fill="#6b7280"
+              font-size="11"
+              font-weight="500"
+              font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+            Verification ID:
+        </text>
+        <text x="335" y="496"
+              fill="#a5b4fc"
+              font-size="11"
+              font-weight="600"
+              font-family="DejaVu Sans Mono, ui-monospace, SFMono-Regular">
+            {{ certificate.verificationId }}
+        </text>
+
+        {# Footer: director signature image (optional) + lines #}
+        <g transform="translate(220,538)">
+            <g transform="translate(0,0)">
+                {% set sigBoxX = 32 %}
+                {% set sigBoxY = -36 %}
+                {% set sigBoxW = 228 %}
+                {% set sigBoxH = 80 %}
+                {% set sigOverlapY = 16 %}
+
+                {# Signature container: image anchored relative to the verification baseline for precise overlap. #}
+                {% if formationDirectorSignatureDataUri is defined and formationDirectorSignatureDataUri %}
+                    <g transform="translate({{ sigBoxX }},{{ sigBoxY }})">
+                        <image href="{{ formationDirectorSignatureDataUri }}"
+                               x="0" y="{{ sigOverlapY }}"
+                               width="{{ sigBoxW }}"
+                               height="{{ sigBoxH }}"
+                               preserveAspectRatio="xMidYMid meet"/>
+                    </g>
+                {% endif %}
+                <line x1="32" y1="40" x2="260" y2="40" stroke="#1f2937" stroke-width="1"/>
+                <text x="146" y="56"
+                      text-anchor="middle"
+                      fill="#9ca3af"
+                      font-size="10"
+                      font-weight="500"
+                      font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+                    Director of Learning · Skilora
+                </text>
+            </g>
+
+            <g transform="translate(432,0)">
+                {# Skilora Verified badge (vector, high-fidelity for PDF zoom/print) #}
+                <g transform="translate(146,-22)" filter="url(#badge-glow)">
+                    <circle cx="0" cy="0" r="40" fill="url(#badge-core)" stroke="url(#badge-ring)" stroke-width="2.6"/>
+                    <circle cx="0" cy="0" r="31.5" fill="none" stroke="#818cf8" stroke-opacity="0.55" stroke-width="1"/>
+                    <circle cx="0" cy="0" r="24.5" fill="none" stroke="#f8d77a" stroke-opacity="0.45" stroke-width="0.9" stroke-dasharray="2.6 2.6"/>
+                    <text x="0" y="-7.5"
+                          text-anchor="middle"
+                          fill="#f5f3ff"
+                          font-size="7.2"
+                          font-weight="700"
+                          letter-spacing="0.8"
+                          font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+                        SKILORA
+                    </text>
+                    <text x="0" y="4.8"
+                          text-anchor="middle"
+                          fill="#f8d77a"
+                          font-size="6.4"
+                          font-weight="700"
+                          letter-spacing="0.6"
+                          font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+                        VERIFIED
+                    </text>
+                    <text x="0" y="16.2"
+                          text-anchor="middle"
+                          fill="#c4b5fd"
+                          font-size="5.4"
+                          font-weight="600"
+                          letter-spacing="0.5"
+                          font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+                        OFFICIAL GRADUATE
+                    </text>
+                </g>
+
+                <line x1="32" y1="40" x2="260" y2="40" stroke="#1f2937" stroke-width="1"/>
+                <text x="146" y="56"
+                      text-anchor="middle"
+                      fill="#9ca3af"
+                      font-size="10"
+                      font-weight="500"
+                      font-family="DejaVu Sans, system-ui, -apple-system, BlinkMacSystemFont">
+                    Official Verification · skilora.local
+                </text>
+            </g>
+        </g>
+    </g>
+</svg>

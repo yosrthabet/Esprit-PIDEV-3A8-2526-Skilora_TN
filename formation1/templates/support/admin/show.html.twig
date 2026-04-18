@@ -1,0 +1,186 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}Ticket #{{ ticket.id }} · {{ ticket.subject }}{% endblock %}
+
+{% block content %}
+{% set statusColors = {
+    'OPEN':        'bg-blue-500/10 text-blue-700 ring-blue-600/20',
+    'IN_PROGRESS': 'bg-amber-500/10 text-amber-700 ring-amber-600/20',
+    'CLOSED':      'bg-zinc-500/10 text-zinc-700 ring-zinc-600/20',
+    'RESOLVED':    'bg-emerald-500/10 text-emerald-700 ring-emerald-600/20',
+} %}
+
+<div class="space-y-6 animate-fade-in">
+
+    {# ── Ticket Header ── #}
+    <div class="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary/5 via-card to-accent/10 p-6 shadow-sm">
+        <div class="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary/5 blur-3xl" aria-hidden="true"></div>
+        <div class="relative">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-foreground sm:text-2xl">{{ ticket.subject }}</h1>
+                    <div class="mt-3 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">{{ ticket.description }}</div>
+                </div>
+                <a href="{{ path('admin_support_index') }}"
+                   class="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                    <i data-lucide="arrow-left" class="mr-2 h-4 w-4"></i> All Tickets
+                </a>
+            </div>
+            <div class="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-4 text-xs text-muted-foreground">
+                <span class="inline-flex items-center gap-1.5">
+                    <i data-lucide="user" class="h-3.5 w-3.5"></i> Client #{{ ticket.userId }}
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                    <i data-lucide="clock" class="h-3.5 w-3.5"></i> {{ ticket.createdDate ? ticket.createdDate|date('M d, Y H:i') : '-' }}
+                </span>
+                {% if ticket.resolvedDate %}
+                    <span class="inline-flex items-center gap-1.5 text-emerald-600">
+                        <i data-lucide="check-circle" class="h-3.5 w-3.5"></i> Resolved {{ ticket.resolvedDate|date('M d, Y H:i') }}
+                    </span>
+                {% endif %}
+                {% if ticket.status is defined %}
+                    <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset {{ statusColors[ticket.status]|default('bg-secondary/50 text-secondary-foreground ring-border') }}">
+                        {{ ticket.status|replace({'_': ' '}) }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+        {# ── LEFT: Conversation + Reply (2/3) ── #}
+        <div class="lg:col-span-2 space-y-4">
+
+            {# Conversation card #}
+            <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                <div class="flex items-center justify-between border-b border-border px-5 py-3 bg-muted/30">
+                    <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Conversation</span>
+                    <div class="relative">
+                        <i data-lucide="search" class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"></i>
+                        <input type="text" id="msgSearch" oninput="searchMessages()" placeholder="Search messages..."
+                               class="h-8 rounded-md border border-input bg-background pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="max-h-[520px] min-h-[320px] overflow-y-auto p-5 space-y-4 bg-muted/10" id="adminMsgScroll">
+                    <div id="messages-list-wrapper">
+                        {% include 'support/admin/_message_list.html.twig' %}
+                    </div>
+                </div>
+            </div>
+
+            {# Reply form #}
+            <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden" x-data="{ isInternal: false }">
+                <div class="flex gap-2 border-b border-border px-5 py-3 bg-muted/30">
+                    <button type="button" @click="isInternal = false; document.getElementById('isInternalCheckbox').checked = false;"
+                            class="rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+                            :class="!isInternal ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'">
+                        Public Reply
+                    </button>
+                    <button type="button" @click="isInternal = true; document.getElementById('isInternalCheckbox').checked = true;"
+                            class="rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+                            :class="isInternal ? 'bg-amber-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'">
+                        Internal Note
+                    </button>
+                </div>
+                <div class="p-5" :class="isInternal ? 'bg-amber-500/5' : ''">
+                    {{ form_start(message_form, {attr: {novalidate: 'novalidate'}}) }}
+
+                        <div class="hidden">
+                            {{ form_widget(message_form.isInternal, { id: 'isInternalCheckbox' }) }}
+                        </div>
+
+                        <div x-show="isInternal" x-transition class="mb-4 flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2.5 text-xs font-medium text-amber-700">
+                            <i data-lucide="lock" class="h-4 w-4"></i>
+                            This note will only be visible to other administrators.
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form_widget(message_form.message, {attr: {
+                                class: 'w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20',
+                                rows: 4,
+                                placeholder: 'Type your message here...'
+                            }}) }}
+                            {{ form_errors(message_form.message) }}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="mb-1.5 block text-xs font-medium text-muted-foreground">Attachments JSON (Optional)</label>
+                            {{ form_widget(message_form.attachmentsJson, {attr: {
+                                class: 'w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20',
+                                rows: 1,
+                                placeholder: '["url1", "url2"]'
+                            }}) }}
+                            {{ form_errors(message_form.attachmentsJson) }}
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit"
+                                    class="inline-flex h-9 items-center justify-center rounded-md px-5 text-sm font-medium shadow-sm transition-colors"
+                                    :class="isInternal ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-primary text-primary-foreground hover:bg-primary/90'">
+                                <span x-text="isInternal ? 'Add Internal Note' : 'Send Public Reply'"></span>
+                            </button>
+                        </div>
+                    {{ form_end(message_form) }}
+                </div>
+            </div>
+        </div>
+
+        {# ── RIGHT: Ticket Properties (1/3) ── #}
+        <div class="lg:sticky lg:top-6">
+            <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                <div class="border-b border-border bg-muted/30 px-5 py-3">
+                    <h3 class="text-sm font-semibold text-foreground">Ticket Properties</h3>
+                </div>
+                <div class="p-5">
+                    {{ form_start(admin_form, {attr: {novalidate: 'novalidate', class: 'space-y-4'}}) }}
+
+                        <div>
+                            <label class="mb-1.5 block text-xs font-medium text-muted-foreground">Status</label>
+                            {{ form_widget(admin_form.status, {attr: {
+                                class: 'h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20'
+                            }}) }}
+                            {{ form_errors(admin_form.status) }}
+                        </div>
+                        <div class="hidden">
+                            {{ form_widget(admin_form.priority) }}
+                            {{ form_widget(admin_form.assignedTo) }}
+                        </div>
+
+                        <div class="border-t border-border pt-4">
+                            <button type="submit"
+                                    class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+                                Update Status
+                            </button>
+                        </div>
+
+                    {{ form_end(admin_form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        const scroll = document.getElementById('adminMsgScroll');
+        if (scroll) scroll.scrollTop = scroll.scrollHeight;
+
+        let msgSearchTimeout;
+        function searchMessages() {
+            clearTimeout(msgSearchTimeout);
+            msgSearchTimeout = setTimeout(() => {
+                const query = document.getElementById('msgSearch').value;
+                fetch(`{{ path('admin_support_show', {id: ticket.id}) }}?mq=${encodeURIComponent(query)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById('messages-list-wrapper').innerHTML = html;
+                });
+            }, 300);
+        }
+    </script>
+{% endblock %}

@@ -8,7 +8,13 @@
     'advanced':     'bg-rose-500/10 text-rose-700 ring-rose-600/20',
 } %}
 
-<article class="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+<article class="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
+         data-formation-card
+         data-formation-id="{{ f.id }}"
+         data-formation-title="{{ f.title|e('html_attr') }}"
+         data-formation-category="{{ f.category|e('html_attr') }}"
+         data-formation-category-label="{{ f.categoryLabelFr|e('html_attr') }}"
+         data-formation-level="{{ f.levelLabelFr|e('html_attr') }}">
     {# Card banner #}
     <a href="{{ path('app_formation_show', { id: f.id }) }}" class="relative block h-36 bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>

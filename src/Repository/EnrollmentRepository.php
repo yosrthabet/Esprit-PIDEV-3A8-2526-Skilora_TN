@@ -61,4 +61,32 @@ final class EnrollmentRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @param list<int> $formationIds
+     *
+     * @return array<int, int> formationId => enrollment count
+     */
+    public function countEnrollmentsByFormationIds(array $formationIds): array
+    {
+        if ([] === $formationIds) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('e')
+            ->select('f.id AS fid, COUNT(e.id) AS c')
+            ->join('e.formation', 'f')
+            ->where('f.id IN (:ids)')
+            ->setParameter('ids', $formationIds)
+            ->groupBy('f.id')
+            ->getQuery()
+            ->getArrayResult();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(int) $row['fid']] = (int) $row['c'];
+        }
+
+        return $out;
+    }
 }

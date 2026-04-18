@@ -1,0 +1,62 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block title %}New formation · Trainer{% endblock %}
+{% block page_title %}New formation{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{{ path('app_trainer_formations') }}"
+       class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent">
+        Back to list
+    </a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl space-y-8">
+    <div>
+        <h2 class="text-2xl font-bold tracking-tight">Create a formation</h2>
+        <p class="text-sm text-muted-foreground mt-1">Validation is enforced on the server; messages appear under each field.</p>
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="rounded-md border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-800 dark:text-green-300">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{{ message }}</div>
+    {% endfor %}
+
+    {{ form_start(form, { attr: { class: 'space-y-6', novalidate: 'novalidate', enctype: 'multipart/form-data', 'x-data': 'skiloraFormationWorkflow()' } }) }}
+        {% if form.vars.submitted and not form.vars.valid %}
+            <div class="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200" role="alert">
+                Please fix the errors below. Your input is kept.
+            </div>
+        {% endif %}
+
+        {% include 'admin/formation/_form.html.twig' %}
+
+        <div class="flex flex-wrap gap-3 pt-2 border-t border-border">
+            <button type="button"
+                    @click="goNext()"
+                    x-show="step === 1"
+                    class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+                Next
+            </button>
+            <button type="button"
+                    @click="goBack()"
+                    x-show="step === 2"
+                    class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-6 text-sm font-medium shadow-sm hover:bg-accent">
+                Back
+            </button>
+            <button type="submit"
+                    x-show="step === 2"
+                    class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+                Create
+            </button>
+            <a href="{{ path('app_trainer_formations') }}"
+               class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-6 text-sm font-medium shadow-sm hover:bg-accent">
+                Cancel
+            </a>
+        </div>
+    {{ form_end(form) }}
+</div>
+{% include 'admin/formation/_signature_zone_script.html.twig' %}
+{% endblock %}

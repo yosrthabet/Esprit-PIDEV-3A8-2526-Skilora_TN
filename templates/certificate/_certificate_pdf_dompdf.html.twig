@@ -1,0 +1,227 @@
+{# Dompdf-friendly layout matching certificate/_certificate_core.html.twig (no SVG — Dompdf renders SVG poorly). #}
+{% set userName = certificate.user.fullName ?: certificate.user.username %}
+{% set courseTitle = certificate.formation.title %}
+{% set issuedDate = certificate.issuedAt|date('d/m/Y H:i') %}
+<style type="text/css">
+    .pdf-cert {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 14pt 16pt 18pt;
+        background: #020617;
+        color: #e5e7eb;
+        font-family: DejaVu Sans, sans-serif;
+    }
+    .pdf-cert-frame {
+        border: 1.2pt solid #1e293b;
+        border-radius: 10pt;
+        padding: 18pt 22pt 16pt;
+        background: #020617;
+    }
+    .pdf-cert-glow {
+        height: 4pt;
+        margin: 0 0 14pt 0;
+        background: #6366f1;
+        border-radius: 2pt;
+    }
+    .pdf-title {
+        text-align: center;
+        font-size: 11pt;
+        font-weight: 700;
+        letter-spacing: 0.42em;
+        color: #e5e7eb;
+        margin: 0 0 4pt 0;
+    }
+    .pdf-sub {
+        text-align: center;
+        font-size: 7.5pt;
+        letter-spacing: 0.2em;
+        color: #9ca3af;
+        margin: 0 0 12pt 0;
+        font-weight: 500;
+    }
+    .pdf-name {
+        text-align: center;
+        font-size: 26pt;
+        font-weight: 800;
+        color: #f9fafb;
+        margin: 0 0 6pt 0;
+        line-height: 1.1;
+    }
+    .pdf-line {
+        text-align: center;
+        font-size: 8.5pt;
+        color: #9ca3af;
+        margin: 0 0 14pt 0;
+    }
+    .pdf-course-wrap {
+        text-align: center;
+        margin: 0 auto 14pt;
+        max-width: 92%;
+    }
+    .pdf-course {
+        display: inline-block;
+        border: 1pt solid #1f2937;
+        border-radius: 8pt;
+        padding: 10pt 18pt;
+        font-size: 13.5pt;
+        font-weight: 700;
+        color: #e5e7eb;
+        background: #020617;
+    }
+    .pdf-course-accent {
+        border-color: #4f46e5;
+        border-width: 1.2pt;
+    }
+    .pdf-meta {
+        font-size: 7.5pt;
+        color: #6b7280;
+        margin: 0 0 3pt 0;
+        line-height: 1.45;
+    }
+    .pdf-meta strong {
+        color: #e5e7eb;
+        font-weight: 600;
+    }
+    .pdf-meta .vid {
+        color: #a5b4fc;
+        font-family: DejaVu Sans Mono, DejaVu Sans, monospace;
+        font-size: 7pt;
+    }
+    .pdf-bottom {
+        width: 100%;
+        margin-top: 12pt;
+        border-collapse: collapse;
+    }
+    .pdf-bottom td {
+        vertical-align: bottom;
+        width: 50%;
+        padding: 4pt 8pt 0 0;
+    }
+    .pdf-bottom td:last-child {
+        padding-right: 0;
+        padding-left: 8pt;
+        text-align: center;
+    }
+    .pdf-sig-img {
+        display: block;
+        max-height: 64pt;
+        max-width: 200pt;
+        margin: 0 auto 2pt;
+    }
+    .pdf-sig-line {
+        border: none;
+        border-top: 1pt solid #1f2937;
+        margin: 0 8pt 4pt;
+    }
+    .pdf-sig-cap {
+        text-align: center;
+        font-size: 7pt;
+        color: #9ca3af;
+    }
+    .pdf-badge {
+        margin: 0 auto;
+        width: 76pt;
+        height: 76pt;
+        border-radius: 50%;
+        border: 2.2pt solid #a78bfa;
+        background: #1e1b4b;
+        text-align: center;
+        padding-top: 10pt;
+        box-sizing: border-box;
+    }
+    .pdf-badge .b1 {
+        font-size: 6.5pt;
+        font-weight: 700;
+        color: #f5f3ff;
+        letter-spacing: 0.06em;
+    }
+    .pdf-badge .b2 {
+        font-size: 6pt;
+        font-weight: 700;
+        color: #f8d77a;
+        margin-top: 2pt;
+    }
+    .pdf-badge .b3 {
+        font-size: 5pt;
+        font-weight: 600;
+        color: #c4b5fd;
+        margin-top: 3pt;
+    }
+    .pdf-badge-line {
+        border: none;
+        border-top: 1pt solid #1f2937;
+        margin: 10pt 4pt 4pt;
+    }
+    .pdf-badge-foot {
+        font-size: 7pt;
+        color: #9ca3af;
+        text-align: center;
+    }
+    .pdf-qr-block {
+        text-align: center;
+        margin-top: 14pt;
+        padding-top: 10pt;
+        border-top: 1pt solid #1e293b;
+    }
+    .pdf-qr-block img {
+        width: 96pt;
+        height: 96pt;
+        display: inline-block;
+    }
+    .pdf-scan {
+        font-size: 8pt;
+        color: #9ca3af;
+        margin: 6pt 0 2pt;
+    }
+    .pdf-url {
+        font-size: 7pt;
+        color: #818cf8;
+        word-wrap: break-word;
+    }
+</style>
+
+<div class="pdf-cert">
+    <div class="pdf-cert-frame">
+        <div class="pdf-cert-glow"></div>
+        <div class="pdf-title">CERTIFICATE OF COMPLETION</div>
+        <div class="pdf-sub">THIS DOCUMENT ATTESTS THAT</div>
+        <div class="pdf-name">{{ userName }}</div>
+        <div class="pdf-line">has successfully completed the professional formation</div>
+        <div class="pdf-course-wrap">
+            <div class="pdf-course pdf-course-accent">{{ courseTitle }}</div>
+        </div>
+        <div class="pdf-meta"><strong>Learner:</strong> {{ userName }}</div>
+        <div class="pdf-meta"><strong>Formation:</strong> {{ courseTitle }}</div>
+        <div class="pdf-meta"><strong>Issued on:</strong> {{ issuedDate }}</div>
+        <div class="pdf-meta"><strong>Verification ID:</strong> <span class="vid">{{ certificate.verificationId }}</span></div>
+
+        <table class="pdf-bottom">
+            <tr>
+                <td>
+                    {% if formationDirectorSignatureDataUri is defined and formationDirectorSignatureDataUri %}
+                        <img class="pdf-sig-img" src="{{ formationDirectorSignatureDataUri }}" alt="" />
+                    {% else %}
+                        <div style="height: 48pt;"></div>
+                    {% endif %}
+                    <hr class="pdf-sig-line" />
+                    <div class="pdf-sig-cap">Director of Learning · Skilora</div>
+                </td>
+                <td>
+                    <div class="pdf-badge">
+                        <div class="b1">SKILORA</div>
+                        <div class="b2">VERIFIED</div>
+                        <div class="b3">OFFICIAL GRADUATE</div>
+                    </div>
+                    <hr class="pdf-badge-line" />
+                    <div class="pdf-badge-foot">Official Verification · {{ verificationHost|default('skilora.local') }}</div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="pdf-qr-block">
+            <img src="{{ qrCodeDataUri }}" alt="" />
+            <div class="pdf-scan">Scan to verify</div>
+            <div class="pdf-url">{{ verificationUrl }}</div>
+        </div>
+    </div>
+</div>

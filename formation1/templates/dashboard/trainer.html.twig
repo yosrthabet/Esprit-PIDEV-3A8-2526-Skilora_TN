@@ -1,0 +1,251 @@
+{# dashboard/trainer.html.twig — Trainer Dashboard (Course Management) #}
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}Trainer Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-fade-in pb-6">
+
+    {# ── Welcome Banner ── #}
+    <div class="rounded-xl border border-border bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div>
+                <h2 class="text-xl font-semibold tracking-tight text-foreground">
+                    Welcome back, {{ app.user.displayName }}
+                </h2>
+                <p class="text-sm text-muted-foreground mt-1">Manage your courses and track learner progress.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ path('app_trainer_formations') }}"
+                   @click.prevent="$dispatch('open-edit-dialog', {
+                       title: 'New Formation',
+                       description: 'Fill in the fields to create a new formation.',
+                       url: '{{ path('app_trainer_formation_new') }}',
+                       size: 'lg'
+                   })"
+                   class="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors">
+                    <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+                    Create Formation
+                </a>
+                <span class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    {{ "now"|date("M d, Y") }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {# ── Stat Cards ── #}
+    <div class="hidden bg-emerald-500 bg-sky-500 bg-amber-500 bg-violet-500"></div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {% set trainerIcons = {
+            'book-open': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>',
+            'users': '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>',
+            'award': '<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.003 6.003 0 01-5.54 0"/>',
+            'trending-up': '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/>'
+        } %}
+        {% for stat in stats %}
+        <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ stat.label }}</span>
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-{{ stat.color }}-500 text-white shadow-sm">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">{{ trainerIcons[stat.icon]|default('')|raw }}</svg>
+                </div>
+            </div>
+            <p class="text-2xl font-bold tracking-tight text-foreground">{{ stat.value }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {# ── Main Content ── #}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {# Left: My Formations #}
+        <div class="lg:col-span-2 space-y-4">
+
+            <div class="rounded-xl border border-border bg-card shadow-sm">
+                <div class="flex items-center justify-between border-b border-border px-5 py-4">
+                    <div>
+                        <h3 class="text-sm font-semibold text-foreground">My Formations</h3>
+                        <p class="text-xs text-muted-foreground mt-0.5">Courses you've created</p>
+                    </div>
+                    <a href="{{ path('app_trainer_formations') }}"
+                       @click.prevent="$dispatch('open-edit-dialog', {
+                           title: 'New Formation',
+                           description: 'Fill in the fields to create a new formation.',
+                           url: '{{ path('app_trainer_formation_new') }}',
+                           size: 'lg'
+                       })"
+                       class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                        <i data-lucide="plus" class="h-3 w-3"></i>
+                        New formation
+                    </a>
+                </div>
+                <div class="divide-y divide-border">
+                    {% if my_formations is defined and my_formations is not empty %}
+                        {% for f in my_formations|slice(0, 6) %}
+                        <a href="{{ path('app_formation_show', { id: f.id }) }}"
+                           class="flex items-center gap-4 px-5 py-4 hover:bg-muted/40 transition-colors group">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-colors">
+                                <i data-lucide="book-open" class="h-5 w-5"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{{ f.title }}</p>
+                                <p class="text-xs text-muted-foreground mt-0.5">
+                                    {{ f.categoryLabelFr }} · {{ f.duration }} h · {{ f.levelLabelFr }}
+                                </p>
+                            </div>
+                            <div class="shrink-0 flex items-center gap-2">
+                                {% if f.isFree %}
+                                <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Free</span>
+                                {% else %}
+                                <span class="text-sm font-semibold text-foreground">{{ f.cost }} {{ f.currency }}</span>
+                                {% endif %}
+                                <span class="inline-flex items-center gap-1 rounded-full border border-{{ f.status == 'published' ? 'emerald' : 'amber' }}-500/30 bg-{{ f.status == 'published' ? 'emerald' : 'amber' }}-500/10 px-2 py-0.5 text-[11px] font-medium text-{{ f.status == 'published' ? 'emerald' : 'amber' }}-600 dark:text-{{ f.status == 'published' ? 'emerald' : 'amber' }}-400">
+                                    {{ f.status|default('draft')|capitalize }}
+                                </span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="px-5 py-10 text-center">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mx-auto mb-3">
+                                <i data-lucide="book-open" class="h-5 w-5 text-muted-foreground"></i>
+                            </div>
+                            <p class="text-sm font-medium text-foreground">No formations yet</p>
+                            <p class="text-xs text-muted-foreground mt-1">Create your first formation to start teaching</p>
+                            <a href="{{ path('app_trainer_formations') }}"
+                               @click.prevent="$dispatch('open-edit-dialog', {
+                                   title: 'New Formation',
+                                   description: 'Fill in the fields to create a new formation.',
+                                   url: '{{ path('app_trainer_formation_new') }}',
+                                   size: 'lg'
+                               })"
+                               class="inline-flex items-center gap-1 mt-3 text-xs font-medium text-primary hover:underline">
+                                Create formation
+                                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Learner Activity #}
+            <div class="rounded-xl border border-border bg-card shadow-sm">
+                <div class="flex items-center justify-between border-b border-border px-5 py-4">
+                    <div>
+                        <h3 class="text-sm font-semibold text-foreground">Learner Activity</h3>
+                        <p class="text-xs text-muted-foreground mt-0.5">Recent enrollment activity on your courses</p>
+                    </div>
+                </div>
+                <div class="px-5 py-10 text-center">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mx-auto mb-3">
+                        <i data-lucide="activity" class="h-5 w-5 text-muted-foreground"></i>
+                    </div>
+                    <p class="text-sm font-medium text-foreground">No recent enrollments</p>
+                    <p class="text-xs text-muted-foreground mt-1">Learners will appear here as they enroll in your courses</p>
+                </div>
+            </div>
+        </div>
+
+        {# Right Column #}
+        <div class="space-y-4">
+
+            {# Quick Actions #}
+            <div class="rounded-xl border border-border bg-card shadow-sm">
+                <div class="border-b border-border px-5 py-4">
+                    <h3 class="text-sm font-semibold text-foreground">Quick Actions</h3>
+                </div>
+                <div class="p-3 space-y-1">
+                    <a href="{{ path('app_trainer_formations') }}"
+                       @click.prevent="$dispatch('open-edit-dialog', {
+                           title: 'New Formation',
+                           description: 'Fill in the fields to create a new formation.',
+                           url: '{{ path('app_trainer_formation_new') }}',
+                           size: 'lg'
+                       })"
+                       class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <i data-lucide="plus-circle" class="h-4 w-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-foreground">Create Formation</p>
+                            <p class="text-[11px] text-muted-foreground">Add a new course</p>
+                        </div>
+                    </a>
+                    <a href="{{ path('app_trainer_formations') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                            <i data-lucide="layout-grid" class="h-4 w-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-foreground">Manage Formations</p>
+                            <p class="text-[11px] text-muted-foreground">Edit & organize courses</p>
+                        </div>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors opacity-60 pointer-events-none">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                            <i data-lucide="award" class="h-4 w-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-foreground">Certificates</p>
+                            <p class="text-[11px] text-muted-foreground">View issued certificates</p>
+                        </div>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
+                            <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-foreground">Analytics</p>
+                            <p class="text-[11px] text-muted-foreground">Performance insights</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            {# Teaching Tips #}
+            <div class="rounded-xl border border-border bg-gradient-to-b from-emerald-500/5 to-transparent p-5 shadow-sm">
+                <div class="flex items-start gap-3">
+                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                        <i data-lucide="lightbulb" class="h-4 w-4"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-foreground">Teaching Tip</p>
+                        <p class="text-xs text-muted-foreground mt-1 leading-relaxed">
+                            Break your formations into short, focused modules. Learners retain more when content is presented in digestible chunks.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {# Profile Card #}
+            <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-bold">
+                        {{ app.user.displayName|first|upper }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-foreground">{{ app.user.displayName }}</p>
+                        <p class="text-xs text-muted-foreground">{{ app.user.roleDisplayName }}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                        <p class="text-lg font-bold text-foreground">{{ stats[0].value|default(0) }}</p>
+                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider">Courses</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-bold text-foreground">{{ stats[1].value|default(0) }}</p>
+                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider">Students</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-bold text-foreground">{{ stats[2].value|default(0) }}</p>
+                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider">Certs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

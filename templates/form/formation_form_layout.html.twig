@@ -1,0 +1,53 @@
+{# Formation: red * on required labels; invalid state = red border only (no inline error text). #}
+{% use 'tailwind_2_layout.html.twig' %}
+
+{%- block form_label_content -%}
+    {{- parent() -}}
+    {%- if required -%}
+        <span class="ms-0.5 font-semibold text-destructive" aria-hidden="true">*</span>
+    {%- endif -%}
+{%- endblock form_label_content -%}
+
+{%- block form_row -%}
+    {%- set row_attr = row_attr|merge({ class: (row_attr.class|default('')) ~ ' ' ~ row_class|default('') }) -%}
+    {%- set widget_attr = {attr: {'aria-invalid': errors|length ? 'true' : 'false'}} -%}
+    <div{% with {attr: row_attr} %}{{ block('attributes') }}{% endwith %}>
+        {{- form_label(form) -}}
+        {{- form_widget(form, widget_attr) -}}
+        {{- form_help(form) -}}
+    </div>
+{%- endblock form_row -%}
+
+{%- block form_errors -%}
+{# Messages intentionally not rendered — errors surface via border-destructive on the widget + aria-invalid. #}
+{%- endblock form_errors -%}
+
+{%- block form_label -%}
+    {%- set label_attr = label_attr|merge({ class: (label_attr.class|default('')) ~ ' ' ~ label_class|default('block text-sm font-medium text-foreground') }) -%}
+    {{- parent() -}}
+{%- endblock form_label -%}
+
+{%- block widget_attributes -%}
+    {%- set defaultInput = 'mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-[box-shadow,border-color] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50' -%}
+    {%- set errClass = errors|length ? ' border-destructive ring-2 ring-destructive/25' : ' border-input' -%}
+    {%- set attr = attr|merge({ class: (attr.class|default(defaultInput)) ~ errClass ~ (disabled ? ' cursor-not-allowed opacity-60' : '') }) -%}
+    id="{{ id }}" name="{{ full_name }}"
+    {%- if disabled %} disabled="disabled"{% endif -%}
+    {%- if required %} required="required"{% endif -%}
+    {{ block('attributes') }}
+{%- endblock widget_attributes -%}
+
+{%- block checkbox_row -%}
+    {%- set row_attr = row_attr|merge({ class: (row_attr.class|default('')) ~ ' ' ~ row_class|default('') }) -%}
+    <div{% with {attr: row_attr} %}{{ block('attributes') }}{% endwith %}>
+        <div class="flex items-start gap-3">
+            <div class="pt-0.5">
+                {{- form_widget(form) -}}
+            </div>
+            <div class="min-w-0 flex-1">
+                {{- form_label(form) -}}
+            </div>
+        </div>
+        {{- form_help(form) -}}
+    </div>
+{%- endblock checkbox_row -%}

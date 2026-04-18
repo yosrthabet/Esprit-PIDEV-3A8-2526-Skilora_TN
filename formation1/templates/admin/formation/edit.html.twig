@@ -1,0 +1,78 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block title %}Modifier · {{ formation.title }} · Admin{% endblock %}
+{% block page_title %}Modifier la formation{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{{ path('app_admin_formation_index') }}"
+       class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent">
+        Retour à la liste
+    </a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl space-y-8">
+    <div>
+        <p class="text-sm text-muted-foreground">
+            <span class="font-medium text-foreground">{{ formation.title }}</span>
+            {% if formation.createdAt %}
+                <span> · créée le {{ formation.createdAt|date('d/m/Y H:i') }}</span>
+            {% endif %}
+        </p>
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="rounded-md border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-800 dark:text-green-300">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{{ message }}</div>
+    {% endfor %}
+
+    {{ form_start(form, { attr: { class: 'space-y-6', novalidate: 'novalidate', enctype: 'multipart/form-data', 'x-data': 'skiloraFormationWorkflow()' } }) }}
+        {% if form.vars.submitted and not form.vars.valid %}
+            <div class="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200" role="alert">
+                Please fix the errors below. Your input is kept.
+            </div>
+        {% endif %}
+
+        {% include 'admin/formation/_form.html.twig' %}
+
+        <div class="flex flex-wrap gap-3 pt-2 border-t border-border">
+            <button type="button"
+                    @click="goNext()"
+                    x-show="step === 1"
+                    class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+                Next
+            </button>
+            <button type="button"
+                    @click="goBack()"
+                    x-show="step === 2"
+                    class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-6 text-sm font-medium shadow-sm hover:bg-accent">
+                Back
+            </button>
+            <button type="submit"
+                    x-show="step === 2"
+                    class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+                Enregistrer les modifications
+            </button>
+            <a href="{{ path('app_admin_formation_index') }}"
+               class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-6 text-sm font-medium shadow-sm hover:bg-accent">
+                Annuler
+            </a>
+        </div>
+    {{ form_end(form) }}
+
+    <div class="border-t border-border pt-8">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Suppression</h2>
+        <form method="post"
+              action="{{ path('app_admin_formation_delete', { id: formation.id }) }}"
+              onsubmit="return confirm('Supprimer définitivement cette formation ?');">
+            <input type="hidden" name="_token" value="{{ csrf_token('formation_delete_' ~ formation.id) }}">
+            <button type="submit" class="inline-flex h-9 items-center rounded-md border border-destructive/50 bg-transparent px-4 text-sm font-medium text-destructive hover:bg-destructive/10">
+                Supprimer cette formation
+            </button>
+        </form>
+    </div>
+</div>
+{% include 'admin/formation/_signature_zone_script.html.twig' %}
+{% endblock %}

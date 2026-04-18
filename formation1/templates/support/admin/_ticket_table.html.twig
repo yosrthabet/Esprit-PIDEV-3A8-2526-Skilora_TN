@@ -1,0 +1,95 @@
+<div id="ticket-table-container">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-border/50 text-sm">
+            <thead class="bg-muted/20 text-xs font-semibold uppercase tracking-wider text-muted-foreground shadow-sm">
+            <tr>
+                <th scope="col" class="px-6 py-4 text-left">Subject</th>
+                <th scope="col" class="px-6 py-4 text-left">Client</th>
+                <th scope="col" class="px-6 py-4 text-left">Priority</th>
+                <th scope="col" class="px-6 py-4 text-left">Status</th>
+                <th scope="col" class="px-6 py-4 text-left">Created</th>
+                <th scope="col" class="px-6 py-4 text-right">Action</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-border/50 bg-card">
+            {% for ticket in tickets %}
+                <tr class="transition hover:bg-muted/10 group">
+                    <td class="px-6 py-4 align-middle">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary group-hover:scale-105 transition-transform">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </div>
+                            <div>
+                                <a href="{{ path('admin_support_show', {id: ticket.id}) }}" class="font-medium text-foreground hover:text-primary transition-colors line-clamp-1">
+                                    {{ ticket.subject }}
+                                </a>
+                                <p class="mt-0.5 text-xs text-muted-foreground font-medium">{{ ticket.category|title }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 align-middle text-muted-foreground font-medium">
+                        {% if ticket.userId %}
+                            <div class="flex items-center gap-2">
+                                <div class="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{{ ticket.userId }}</div>
+                                <span>Client #{{ ticket.userId }}</span>
+                            </div>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold border
+                            {{ ticket.priority == 'URGENT' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
+                               (ticket.priority == 'HIGH' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
+                               (ticket.priority == 'MEDIUM' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20')) }}">
+                            {% if ticket.priority == 'URGENT' %}<div class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></div>{% endif %}
+                            {{ ticket.priority|title }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold border shadow-sm
+                            {{ ticket.status in ['RESOLVED', 'CLOSED'] ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                               (ticket.status == 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' : 'bg-zinc-500/10 text-zinc-600 border-zinc-500/20') }}">
+                            {{ ticket.status|replace({'_': ' '}) }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 align-middle text-xs font-medium text-muted-foreground">
+                        {{ ticket.createdDate ? ticket.createdDate|date('M d, Y H:i') : '-' }}
+                    </td>
+                    <td class="px-6 py-4 align-middle text-right">
+                        <a href="{{ path('admin_support_show', {id: ticket.id}) }}"
+                           class="inline-flex items-center gap-1 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold shadow-sm hover:bg-muted transition-colors focus:ring-2 focus:ring-primary/20">
+                            Details
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6" class="px-6 py-16 text-center text-sm">
+                        <div class="flex flex-col items-center justify-center text-muted-foreground">
+                            <svg class="w-12 h-12 mb-3 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                            <span class="font-medium">No tickets found matching your criteria.</span>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Pagination #}
+    {% if total_pages > 1 %}
+        <div class="flex items-center justify-between border-t border-border/70 px-6 py-4 bg-muted/5">
+            <p class="text-xs font-medium text-muted-foreground">Page <span class="font-bold text-foreground">{{ current_page }}</span> of <span class="font-bold border px-1 rounded-sm">{{ total_pages }}</span></p>
+            <div class="flex gap-2">
+                {% if current_page > 1 %}
+                    <button onclick="changeTicketPage({{ current_page - 1 }})" class="rounded-xl flex items-center justify-center border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted shadow-sm transition-colors text-foreground gap-1"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg> Prev</button>
+                {% endif %}
+                {% if current_page < total_pages %}
+                    <button onclick="changeTicketPage({{ current_page + 1 }})" class="rounded-xl flex items-center justify-center border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted shadow-sm transition-colors text-foreground gap-1">Next <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>

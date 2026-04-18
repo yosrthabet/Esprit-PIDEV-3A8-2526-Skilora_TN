@@ -1,0 +1,48 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block title %}Certificate Preview · Skilora{% endblock %}
+{% block page_title %}Certificate Preview{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-5xl space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-xl font-bold">Certificate Preview</h2>
+        <div class="flex gap-2">
+            <a href="{{ path('app_certificate_pdf', { id: certificate.id }) }}"
+               class="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+                Download PDF
+            </a>
+            <button type="button"
+                    class="inline-flex h-9 items-center rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent"
+                    onclick="navigator.clipboard.writeText('{{ verificationUrl }}')">
+                Copy Verification Link
+            </button>
+        </div>
+    </div>
+
+    <style>
+        .cert-sheet{position:relative;border:4px solid #4f46e5;border-radius:16px;padding:56px 42px;min-height:420px;text-align:center;background:#fff;color:#0f172a}
+        .cert-title{font-size:18px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#312e81;margin:0 0 24px}
+        .cert-subtitle{font-size:14px;color:#64748b;margin:0}
+        .cert-name{font-size:44px;line-height:1.1;font-weight:900;margin:20px 0 14px}
+        .cert-course{font-size:24px;font-weight:700;color:#4338ca;margin:14px 0}
+        .cert-date{font-size:13px;color:#64748b;margin-top:24px}
+        .cert-qr-corner{position:absolute;right:18px;bottom:18px;width:80px;height:80px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;padding:4px}
+        .cert-qr-corner img{width:100%;height:100%}
+    </style>
+
+    <div class="rounded-2xl border border-indigo-500/30 bg-card p-8 shadow-xl">
+        <div class="rounded-2xl border border-indigo-500/40 bg-background p-8">
+            {% include 'certificate/_certificate_core.html.twig' with {
+                certificate: certificate,
+                qrCodeDataUri: qrCodeDataUri,
+                formationDirectorSignatureDataUri: formationDirectorSignatureDataUri|default(null),
+            } %}
+            <div class="mt-6 rounded-lg border border-border/70 bg-card/70 px-4 py-3 text-xs text-muted-foreground">
+                Verification URL:
+                <span class="font-mono break-all text-indigo-300">{{ verificationUrl }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{# delete_path: string, token: string #}
+<div class="inline-flex align-middle" x-data="{ open: false }">
+    <button type="button"
+            @click="open = true"
+            class="inline-flex items-center gap-1.5 rounded-lg border-2 border-destructive bg-destructive px-3 py-2 text-sm font-bold text-destructive-foreground shadow-md transition hover:opacity-95">
+        <i data-lucide="trash-2" class="h-4 w-4 shrink-0"></i>
+        Supprimer
+    </button>
+    <div x-show="open"
+         x-cloak
+         x-transition.opacity
+         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+         style="display: none;"
+         @click.self="open = false">
+        <div class="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg"
+             @click.stop
+             @keydown.escape.window="open = false">
+            <p class="text-base font-semibold text-foreground">Confirmer la suppression</p>
+            <p class="mt-2 text-sm text-muted-foreground">Cette action est définitive. Supprimer cet enregistrement&nbsp;?</p>
+            <div class="mt-6 flex flex-wrap justify-end gap-2">
+                <button type="button" @click="open = false"
+                        class="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent">
+                    Annuler
+                </button>
+                <form method="post" action="{{ delete_path }}" class="inline">
+                    <input type="hidden" name="_token" value="{{ token }}">
+                    <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground shadow-sm hover:opacity-90">
+                        <i data-lucide="trash-2" class="h-4 w-4"></i>
+                        Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

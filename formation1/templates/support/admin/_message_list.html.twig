@@ -1,0 +1,68 @@
+<div id="message-list-content">
+{% for message in messages %}
+    {% set is_admin = (message.senderId != ticket.userId) %}
+    <div class="flex items-end gap-2.5 {{ is_admin ? 'flex-row-reverse' : '' }}">
+
+        {# Avatar #}
+        <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold
+            {{ message.isInternal
+                ? 'bg-amber-500/15 text-amber-600 ring-1 ring-inset ring-amber-500/30'
+                : (is_admin
+                    ? 'bg-muted text-muted-foreground ring-1 ring-inset ring-border'
+                    : 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/20') }}">
+            {{ message.isInternal ? '!' : (is_admin ? 'A' : 'U') }}
+        </div>
+
+        {# Bubble #}
+        <div class="max-w-[72%] space-y-1 {{ is_admin ? 'items-end text-right' : '' }}">
+            <div class="rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap break-words
+                {{ message.isInternal
+                    ? 'bg-amber-500/10 text-amber-800 ring-1 ring-inset ring-amber-500/20 rounded-br-sm'
+                    : (is_admin
+                        ? 'bg-primary text-primary-foreground rounded-br-sm'
+                        : 'bg-muted text-foreground rounded-bl-sm') }}">
+                {{ message.message }}
+            </div>
+
+            {% if message.attachmentsJson %}
+                <span class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium ring-1 ring-inset
+                    {{ message.isInternal
+                        ? 'bg-amber-500/10 text-amber-700 ring-amber-500/20'
+                        : (is_admin
+                            ? 'bg-muted text-muted-foreground ring-border'
+                            : 'bg-secondary/50 text-secondary-foreground ring-border') }}">
+                    <i data-lucide="paperclip" class="h-3 w-3"></i> {{ message.attachmentsJson }}
+                </span>
+            {% endif %}
+
+            <div class="flex items-center gap-1.5 text-[10px] text-muted-foreground {{ is_admin ? 'justify-end' : '' }}">
+                <span>{{ is_admin ? 'Admin #' ~ message.senderId : 'Client #' ~ message.senderId }}</span>
+                {% if message.isInternal %}
+                    <span class="text-amber-600 font-medium">(Internal)</span>
+                {% endif %}
+                <span>·</span>
+                <span>{{ message.createdDate ? message.createdDate|date('d M, H:i') : '-' }}</span>
+            </div>
+
+            <div class="flex items-center gap-1.5 {{ is_admin ? 'justify-end' : '' }}">
+                <a href="{{ path('admin_support_message_edit', {ticketId: ticket.id, messageId: message.id}) }}"
+                   class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                    <i data-lucide="pencil" class="h-3 w-3"></i> Edit
+                </a>
+                <form method="post" action="{{ path('admin_support_message_delete', {ticketId: ticket.id, messageId: message.id}) }}" onsubmit="return confirm('Delete this message?');" class="inline">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_message_' ~ message.id) }}">
+                    <button type="submit"
+                            class="inline-flex items-center gap-1 rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-[10px] font-medium text-destructive shadow-sm transition-colors hover:bg-destructive/20">
+                        <i data-lucide="trash-2" class="h-3 w-3"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="py-10 text-center">
+        <i data-lucide="message-square" class="mx-auto mb-2 h-8 w-8 text-muted-foreground/30"></i>
+        <p class="text-sm text-muted-foreground">No messages matching your search.</p>
+    </div>
+{% endfor %}
+</div>
