@@ -39,14 +39,15 @@
                             class: 'flex w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                             placeholder: 'Brief summary of your issue…'
                         }}) }}
-                        <button type="button" onclick="aiSuggestSubject()"
+                        <button type="button" id="btn-suggest" onclick="aiSuggestSubject()"
                                 class="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-500/20 transition-colors"
                                 title="AI will suggest a subject based on your description">
                             <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                            AI Suggest
+                            <span>AI Suggest</span>
                         </button>
                     </div>
                     {{ form_errors(form.subject) }}
+                    <div id="error-subject" class="text-xs text-destructive mt-1"></div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -74,12 +75,21 @@
                         placeholder: 'Describe your issue in detail…'
                     }}) }}
                     {{ form_errors(form.description) }}
-                    <button type="button" onclick="aiCorrectText()"
-                            class="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-500/20 transition-colors"
-                            title="AI will correct grammar and spelling">
-                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        AI Correct Text
-                    </button>
+                    <div id="error-description" class="text-xs text-destructive mt-1"></div>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <button type="button" id="btn-correct" onclick="aiCorrectText()"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-500/20 transition-colors"
+                                title="AI will correct grammar and spelling">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            <span>AI Correct Text</span>
+                        </button>
+                        <button type="button" id="btn-mic"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-500/20 transition-colors"
+                                title="Dictate your description using your microphone">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                            <span>Dictate Message</span>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit"
@@ -96,48 +106,185 @@
 {% block javascripts %}
 {{ parent() }}
 <script>
+    const subjectInput = document.getElementById('ticket_subject');
+    const descriptionInput = document.getElementById('ticket_description');
+    const suggestBtn = document.getElementById('btn-suggest');
+    const correctBtn = document.getElementById('btn-correct');
+    const micBtn = document.getElementById('btn-mic');
+
+    // ── Bad-word client-side validation ──
+    const badWords = ['badword1', 'badword2', 'offensive', 'spam', 'scam', 'hate', 'stupid', 'idiot'];
+
+    function validateField(input, errorId, minLen, label) {
+        const errorDiv = document.getElementById(errorId);
+        if (!errorDiv) return true;
+        const value = input.value.trim();
+        let errors = [];
+
+        if (value.length === 0) {
+            errors.push(label + ' cannot be empty.');
+        } else if (value.length < minLen) {
+            errors.push(label + ' must be at least ' + minLen + ' characters.');
+        }
+
+        const foundBad = badWords.filter(function(word) {
+            return new RegExp('\\b' + word + '\\b', 'i').test(value);
+        });
+        if (foundBad.length > 0) {
+            errors.push('Please avoid offensive language: ' + foundBad.join(', '));
+        }
+
+        if (label === 'Subject' && value.length > 0 && !/[a-zA-Z]/.test(value)) {
+            errors.push('Subject must contain at least one letter.');
+        }
+
+        if (errors.length > 0) {
+            errorDiv.innerHTML = errors.map(function(e) { return '<p>' + e + '</p>'; }).join('');
+            input.classList.add('border-destructive');
+            return false;
+        }
+        errorDiv.innerHTML = '';
+        input.classList.remove('border-destructive');
+        return true;
+    }
+
+    if (subjectInput) subjectInput.addEventListener('input', function() { validateField(subjectInput, 'error-subject', 4, 'Subject'); });
+    if (descriptionInput) descriptionInput.addEventListener('input', function() { validateField(descriptionInput, 'error-description', 10, 'Description'); });
+
+    // ── Form submit validation ──
+    const form = subjectInput ? subjectInput.closest('form') : null;
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const s = validateField(subjectInput, 'error-subject', 4, 'Subject');
+            const d = validateField(descriptionInput, 'error-description', 10, 'Description');
+            if (!s || !d) {
+                e.preventDefault();
+                var firstErr = document.querySelector('.text-destructive:not(:empty)');
+                if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }
+
+    // ── AI Suggest Subject ──
     function aiSuggestSubject() {
-        const desc = document.getElementById('ticket_description')?.value;
+        const desc = descriptionInput?.value;
         if (!desc || desc.trim().length < 10) {
             alert('Please write a description first (at least 10 characters).');
             return;
         }
+        suggestBtn.querySelector('span').textContent = 'Analyzing…';
+        suggestBtn.disabled = true;
+        suggestBtn.classList.add('opacity-50', 'pointer-events-none');
+
         fetch('{{ path("support_ai_suggest_subject") }}', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({ description: desc })
         })
-        .then(r => r.json())
-        .then(data => {
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
             if (data.suggestion) {
-                document.getElementById('ticket_subject').value = data.suggestion;
+                subjectInput.value = data.suggestion.replace(/^"|"$/g, '');
+                validateField(subjectInput, 'error-subject', 4, 'Subject');
             } else {
                 alert(data.error || 'Could not generate suggestion');
             }
         })
-        .catch(() => alert('AI suggestion failed'));
+        .catch(function() { alert('AI suggestion failed'); })
+        .finally(function() {
+            suggestBtn.querySelector('span').textContent = 'AI Suggest';
+            suggestBtn.disabled = false;
+            suggestBtn.classList.remove('opacity-50', 'pointer-events-none');
+        });
     }
 
+    // ── AI Correct Text ──
     function aiCorrectText() {
-        const textarea = document.getElementById('ticket_description');
+        const textarea = descriptionInput;
         if (!textarea?.value || textarea.value.trim().length < 5) {
             alert('Please write some text first.');
             return;
         }
+        correctBtn.querySelector('span').textContent = 'Polishing…';
+        correctBtn.disabled = true;
+        correctBtn.classList.add('opacity-50', 'pointer-events-none');
+
         fetch('{{ path("support_ai_correct_text") }}', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({ text: textarea.value })
         })
-        .then(r => r.json())
-        .then(data => {
-            if (data.corrected) {
-                textarea.value = data.corrected;
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.correction) {
+                textarea.value = data.correction;
+                validateField(textarea, 'error-description', 10, 'Description');
             } else {
                 alert(data.error || 'Could not correct text');
             }
         })
-        .catch(() => alert('AI correction failed'));
+        .catch(function() { alert('AI correction failed'); })
+        .finally(function() {
+            correctBtn.querySelector('span').textContent = 'AI Correct Text';
+            correctBtn.disabled = false;
+            correctBtn.classList.remove('opacity-50', 'pointer-events-none');
+        });
     }
+
+    // ── Speech-to-Text ──
+    (function() {
+        if (!micBtn) return;
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            micBtn.style.display = 'none';
+            return;
+        }
+
+        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        var recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        var isRecording = false;
+
+        micBtn.addEventListener('click', function() {
+            if (isRecording) { recognition.stop(); return; }
+            recognition.start();
+        });
+
+        recognition.onstart = function() {
+            isRecording = true;
+            micBtn.classList.remove('border-red-500/30', 'bg-red-500/10');
+            micBtn.classList.add('border-red-500', 'bg-red-500/30', 'animate-pulse');
+            micBtn.querySelector('span').textContent = 'Listening… (click to stop)';
+        };
+
+        recognition.onresult = function(event) {
+            var finalTranscript = '';
+            for (var i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                }
+            }
+            if (finalTranscript && descriptionInput) {
+                var cur = descriptionInput.value;
+                descriptionInput.value = cur + (cur.endsWith(' ') || cur === '' ? '' : ' ') + finalTranscript;
+                validateField(descriptionInput, 'error-description', 10, 'Description');
+            }
+        };
+
+        recognition.onerror = function(event) {
+            resetMic();
+            if (event.error !== 'no-speech') alert('Microphone error: ' + event.error);
+        };
+
+        recognition.onend = function() { resetMic(); };
+
+        function resetMic() {
+            isRecording = false;
+            micBtn.classList.add('border-red-500/30', 'bg-red-500/10');
+            micBtn.classList.remove('border-red-500', 'bg-red-500/30', 'animate-pulse');
+            micBtn.querySelector('span').textContent = 'Dictate Message';
+        }
+    })();
 </script>
 {% endblock %}

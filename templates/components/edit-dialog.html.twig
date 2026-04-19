@@ -33,15 +33,23 @@
         description: '',
         formContent: '',
         size: 'lg',
+        _pendingScripts: [],
         async loadContent(url) {
             this.loading = true;
             this.formContent = '';
+            this._pendingScripts = [];
             try {
                 const res = await fetch(url, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
                 if (!res.ok) throw new Error('Failed to load');
-                this.formContent = await res.text();
+                const html = await res.text();
+                const tmp = document.createElement('div');
+                tmp.innerHTML = html;
+                const scripts = [...tmp.querySelectorAll('script')];
+                scripts.forEach(s => s.remove());
+                this.formContent = tmp.innerHTML;
+                this._pendingScripts = scripts.map(s => s.textContent);
             } catch (e) {
                 this.formContent = '<div class=\'p-4 text-center text-destructive\'>Failed to load content. Please try again.</div>';
             } finally {
@@ -53,6 +61,14 @@
                         }
                         if (window.lucide) {
                             lucide.createIcons({ nodes: this.$refs.dialogBody.querySelectorAll('[data-lucide]') });
+                        }
+                        if (this._pendingScripts && this._pendingScripts.length) {
+                            this._pendingScripts.forEach(code => {
+                                const s = document.createElement('script');
+                                s.textContent = code;
+                                document.body.appendChild(s);
+                            });
+                            this._pendingScripts = [];
                         }
                     });
                 });

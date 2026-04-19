@@ -100,7 +100,15 @@ class SupportClientController extends AbstractController
         }
 
         if ($isAjax && $form->isSubmitted()) {
-            return new JsonResponse(['success' => false, 'message' => 'Please fix the errors.'], 422);
+            $errors = [];
+            foreach ($form->getErrors(true) as $error) {
+                $errors[] = $error->getMessage();
+            }
+            return new JsonResponse([
+                'success' => false,
+                'message' => implode(' ', $errors) ?: 'Please fix the errors.',
+                'errors' => $errors,
+            ], 422);
         }
 
         return $this->render('support/client/new.html.twig', [
@@ -196,7 +204,8 @@ class SupportClientController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         FeedbackRepository $feedbackRepository,
-        MessageTicketRepository $messageRepository
+        MessageTicketRepository $messageRepository,
+        \Symfony\Component\Validator\Validator\ValidatorInterface $validator
     ): Response {
         $this->assertTicketOwnership($ticket);
 
@@ -206,7 +215,8 @@ class SupportClientController extends AbstractController
             return $this->renderShowPage($ticket, $messageRepository, $feedbackRepository);
         }
 
-        $feedback = $feedbackRepository->findOneByTicket($ticket) ?? (new Feedback())->setTicket($ticket);
+        $feedback = $feedbackRepository->findOneByTicket($ticket)
+            ?? (new Feedback())->setTicket($ticket)->setUserId($this->resolveUserId());
         $form = $this->createForm(FeedbackType::class, $feedback);
         $form->handleRequest($request);
 
@@ -233,9 +243,18 @@ class SupportClientController extends AbstractController
                 if ($comment !== null) {
                     $feedback->setComment(trim($comment));
                 }
-                $entityManager->persist($feedback);
-                $entityManager->flush();
-                $this->addFlash('success', 'Thanks for your feedback.');
+                $violations = $validator->validate($feedback);
+                if (\count($violations) > 0) {
+                    $errors = [];
+                    foreach ($violations as $violation) {
+                        $errors[] = $violation->getMessage();
+                    }
+                    $this->addFlash('error', implode(' ', $errors));
+                } else {
+                    $entityManager->persist($feedback);
+                    $entityManager->flush();
+                    $this->addFlash('success', 'Thanks for your feedback.');
+                }
             } else {
                 $errors = [];
                 foreach ($form->getErrors(true) as $error) {
@@ -306,7 +325,15 @@ class SupportClientController extends AbstractController
         }
 
         if ($isAjax && $form->isSubmitted()) {
-            return new JsonResponse(['success' => false, 'message' => 'Please fix the errors.'], 422);
+            $errors = [];
+            foreach ($form->getErrors(true) as $error) {
+                $errors[] = $error->getMessage();
+            }
+            return new JsonResponse([
+                'success' => false,
+                'message' => implode(' ', $errors) ?: 'Please fix the errors.',
+                'errors' => $errors,
+            ], 422);
         }
 
         return $this->render('support/client/edit.html.twig', [
@@ -534,7 +561,8 @@ class SupportClientController extends AbstractController
             'method' => 'POST',
         ]);
 
-        $feedback = $feedbackRepository->findOneByTicket($ticket) ?? (new Feedback())->setTicket($ticket);
+        $feedback = $feedbackRepository->findOneByTicket($ticket)
+            ?? (new Feedback())->setTicket($ticket)->setUserId($this->resolveUserId());
         $feedbackForm = $this->createForm(FeedbackType::class, $feedback, [
             'action' => $this->generateUrl('support_feedback_save', ['id' => $ticket->getId()]),
             'method' => 'POST',

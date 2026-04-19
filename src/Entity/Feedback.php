@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\FeedbackRepository;
+use App\Validator\NoBadWords;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -32,11 +33,12 @@ class Feedback
     private ?int $rating = null;
 
     #[Assert\Length(max: 1500, maxMessage: 'Your comment is too long. Please keep it under 1500 characters.')]
+    #[NoBadWords]
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $comment = null;
 
     #[ORM\Column(name: 'feedback_type', length: 255, nullable: true)]
-    private ?string $feedbackType = null;
+    private ?string $feedbackType = 'TICKET';
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $category = null;
@@ -50,6 +52,7 @@ class Feedback
     public function __construct()
     {
         $this->createdDate = new \DateTime();
+        $this->feedbackType = 'TICKET';
     }
 
     public function getId(): ?int

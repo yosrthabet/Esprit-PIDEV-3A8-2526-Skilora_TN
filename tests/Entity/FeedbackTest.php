@@ -51,7 +51,7 @@ class FeedbackTest extends TestCase
     {
         $fb = new Feedback();
         $this->assertNull($fb->getComment());
-        $this->assertNull($fb->getFeedbackType());
+        $this->assertSame('TICKET', $fb->getFeedbackType());
         $this->assertNull($fb->getCategory());
     }
 }
