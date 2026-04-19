@@ -12,10 +12,8 @@ use Doctrine\ORM\Mapping as ORM;
     uniqueConstraints: [
         new ORM\UniqueConstraint(name: 'uq_rate', columns: ['from_currency', 'to_currency', 'rate_date']),
     ],
-    indexes: [
-        new ORM\Index(name: 'idx_exchange_rates_currencies', columns: ['from_currency', 'to_currency']),
-    ]
 )]
+#[ORM\Index(name: 'idx_exchange_rates_currencies', columns: ['from_currency', 'to_currency'])]
 class ExchangeRate
 {
     #[ORM\Id]

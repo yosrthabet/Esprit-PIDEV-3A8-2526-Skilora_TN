@@ -11,12 +11,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: BankAccountRepository::class)]
-#[ORM\Table(
-    name: 'bank_accounts',
-    indexes: [
-        new ORM\Index(name: 'idx_bank_accounts_user_id', columns: ['user_id']),
-    ]
-)]
+#[ORM\Table(name: 'bank_accounts')]
+#[ORM\Index(name: 'idx_bank_accounts_user_id', columns: ['user_id'])]
 class BankAccount
 {
     #[ORM\Id]
