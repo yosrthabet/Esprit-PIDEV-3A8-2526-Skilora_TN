@@ -1,4 +1,4 @@
-{# Community section sub-navigation #}
+﻿{# Community section sub-navigation #}
 {% set current_route = app.request.attributes.get('_route') %}
 {% set net_routes = [
     'app_community_network', 'app_community_dm_edit',
@@ -9,16 +9,21 @@
 {% set event_routes = ['app_community_events', 'app_community_event_new', 'app_community_event_show', 'app_community_event_edit'] %}
 {% set group_routes = ['app_community_groups', 'app_community_group_new', 'app_community_group_show', 'app_community_group_edit'] %}
 
-{% macro nav_link(href, label, icon, is_active) %}
+{% macro nav_link(href, label, icon, is_active, badge) %}
     <a href="{{ href }}"
-       class="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
-              {{ is_active ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50' : 'text-muted-foreground hover:bg-background/60 hover:text-foreground' }}">
-        {{ icon|raw }}
-        {{ label }}
+       class="relative inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200
+              {{ is_active
+                  ? 'bg-background text-foreground shadow-md ring-1 ring-border/60 scale-[1.02]'
+                  : 'text-muted-foreground hover:bg-background/60 hover:text-foreground hover:shadow-sm' }}">
+        <span class="transition-transform duration-200 {{ is_active ? 'scale-110' : 'group-hover:scale-105' }}">{{ icon|raw }}</span>
+        <span>{{ label }}</span>
+        {% if is_active %}
+            <span class="absolute -bottom-[5px] left-1/2 h-1 w-6 -translate-x-1/2 rounded-full bg-primary"></span>
+        {% endif %}
     </a>
 {% endmacro %}
 
-<nav class="mb-6 flex items-center gap-1 overflow-x-auto rounded-xl border border-border bg-muted/40 p-1 backdrop-blur-sm">
+<nav class="mb-6 flex items-center gap-1.5 overflow-x-auto rounded-2xl border border-border bg-muted/30 p-1.5 shadow-sm backdrop-blur-md scrollbar-none">
     {{ _self.nav_link(
         path('app_community'),
         'Accueil',
@@ -33,7 +38,7 @@
     ) }}
     {{ _self.nav_link(
         path('app_community_network'),
-        'Réseau',
+        'R&eacute;seau',
         '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
         current_route in net_routes
     ) }}
@@ -45,7 +50,7 @@
     ) }}
     {{ _self.nav_link(
         path('app_community_events'),
-        'Événements',
+        '&Eacute;v&eacute;nements',
         '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>',
         current_route in event_routes
     ) }}

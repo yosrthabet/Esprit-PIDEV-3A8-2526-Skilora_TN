@@ -1,18 +1,18 @@
-{% extends 'layouts/app.html.twig' %}
+﻿{% extends 'layouts/app.html.twig' %}
 
 {% block page_title %}Groupes{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-4xl space-y-6 animate-fade-in pb-8">
+<div class="mx-auto max-w-5xl space-y-6 pb-8">
     {% include 'community/_subnav.html.twig' %}
 
-    <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-            <h2 class="text-2xl font-semibold tracking-tight">Groupes</h2>
-            <p class="mt-1 text-sm text-muted-foreground">Rejoignez des groupes thématiques pour collaborer.</p>
+            <h2 class="text-2xl font-bold tracking-tight">Groupes</h2>
+            <p class="mt-1.5 text-sm text-muted-foreground">Rejoignez des groupes th&eacute;matiques pour collaborer.</p>
         </div>
         <a href="{{ path('app_community_group_new') }}"
-           class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+           class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
             Nouveau groupe
         </a>
@@ -22,42 +22,60 @@
         <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {% for group in groups %}
                 <a href="{{ path('app_community_group_show', { id: group.id }) }}"
-                   class="group overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-md">
+                   class="group relative overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:border-purple-500/30 hover:shadow-xl hover:-translate-y-1 animate-fade-in"
+                   style="animation-delay:{{ loop.index0 * 0.05 }}s">
                     {% if group.coverImageUrl %}
                         <div class="aspect-video overflow-hidden bg-muted">
-                            <img src="{{ group.coverImageUrl }}" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" referrerpolicy="no-referrer">
+                            <img src="{{ group.coverImageUrl }}" alt="" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" referrerpolicy="no-referrer">
                         </div>
                     {% else %}
-                        <div class="flex aspect-video items-center justify-center bg-gradient-to-br from-purple-500/5 to-primary/10">
-                            <svg class="h-12 w-12 text-muted-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                        <div class="relative flex aspect-video items-center justify-center bg-gradient-to-br from-purple-500/5 via-card to-primary/5 overflow-hidden">
+                            <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-purple-500/5 blur-2xl"></div>
+                            <svg class="h-14 w-14 text-muted-foreground/20 transition-transform duration-500 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
                         </div>
                     {% endif %}
                     <div class="p-5">
                         <div class="flex items-center gap-2">
                             {% if group.category %}
-                                <span class="inline-block rounded-full bg-purple-500/10 px-2.5 py-0.5 text-xs font-medium text-purple-600">{{ group.category }}</span>
+                                <span class="inline-block rounded-lg bg-purple-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-purple-600 dark:text-purple-400">{{ group.category }}</span>
                             {% endif %}
                             {% if not group.isPublic %}
-                                <span class="inline-block rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-600">Privé</span>
+                                <span class="inline-flex items-center gap-1 rounded-lg bg-yellow-500/10 px-2 py-0.5 text-[11px] font-semibold text-yellow-600 dark:text-yellow-400">
+                                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                                    Priv&eacute;
+                                </span>
                             {% endif %}
                         </div>
-                        <h3 class="mt-2 text-lg font-semibold tracking-tight transition-colors group-hover:text-primary">{{ group.name }}</h3>
+                        <h3 class="mt-3 text-lg font-bold tracking-tight transition-colors duration-200 group-hover:text-purple-600 dark:group-hover:text-purple-400">{{ group.name }}</h3>
                         {% if group.description %}
-                            <p class="mt-1 line-clamp-2 text-sm text-muted-foreground">{{ group.description }}</p>
+                            <p class="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{{ group.description }}</p>
                         {% endif %}
-                        <div class="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-                            <span>{{ group.memberCount }} membre{{ group.memberCount != 1 ? 's' : '' }}</span>
-                            <span>·</span>
-                            <span>Par {{ group.creator.fullName|default(group.creator.username) }}</span>
+                        <div class="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                            <div class="flex items-center gap-1.5">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                                <span>{{ group.memberCount }} membre{{ group.memberCount != 1 ? 's' : '' }}</span>
+                            </div>
+                            <span class="opacity-0 font-semibold text-purple-600 dark:text-purple-400 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5 flex items-center gap-1">
+                                Voir
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                            </span>
                         </div>
                     </div>
                 </a>
             {% endfor %}
         </div>
     {% else %}
-        <p class="rounded-xl border border-dashed border-border bg-muted/10 py-12 text-center text-sm text-muted-foreground">
-            Aucun groupe pour le moment. Créez le premier !
-        </p>
+        <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-muted/5 py-16 text-center">
+            <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-500/10">
+                <svg class="h-8 w-8 text-purple-500/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+            </div>
+            <p class="mt-4 text-sm font-semibold text-foreground">Aucun groupe</p>
+            <p class="mt-1.5 max-w-xs text-xs text-muted-foreground">Cr&eacute;ez le premier groupe th&eacute;matique de la communaut&eacute; !</p>
+            <a href="{{ path('app_community_group_new') }}" class="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Cr&eacute;er un groupe
+            </a>
+        </div>
     {% endif %}
 </div>
 {% endblock %}

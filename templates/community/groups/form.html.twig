@@ -1,57 +1,78 @@
-{% extends 'layouts/app.html.twig' %}
+﻿{% extends 'layouts/app.html.twig' %}
 
 {% block page_title %}{{ is_new ? 'Nouveau groupe' : 'Modifier le groupe' }}{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-2xl space-y-6 animate-fade-in pb-8">
+<div class="mx-auto max-w-2xl space-y-6 pb-8">
     {% include 'community/_subnav.html.twig' %}
 
-    <div>
-        <h2 class="text-2xl font-semibold tracking-tight">{{ is_new ? 'Nouveau groupe' : 'Modifier le groupe' }}</h2>
-        <p class="mt-1 text-sm text-muted-foreground">{{ is_new ? 'Créez un groupe thématique pour la communauté.' : 'Mettez à jour les informations du groupe.' }}</p>
+    <div class="animate-fade-in">
+        <h2 class="text-2xl font-bold tracking-tight">{{ is_new ? 'Nouveau groupe' : 'Modifier le groupe' }}</h2>
+        <p class="mt-1.5 text-sm text-muted-foreground">{{ is_new ? 'Cr&eacute;ez un groupe th&eacute;matique pour la communaut&eacute;.' : 'Mettez &agrave; jour les informations du groupe.' }}</p>
     </div>
 
-    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-        {{ form_start(form, { attr: { class: 'space-y-5' } }) }}
-            {{ form_errors(form) }}
-
-            <div class="space-y-1">
-                {{ form_label(form.name, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                {{ form_widget(form.name) }}
-                {{ form_errors(form.name) }}
-            </div>
-
-            <div class="space-y-1">
-                {{ form_label(form.description, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                {{ form_widget(form.description, { attr: { rows: 5 } }) }}
-                {{ form_errors(form.description) }}
-            </div>
-
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div class="space-y-1">
-                    {{ form_label(form.category, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.category) }}
-                    {{ form_errors(form.category) }}
+    <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm animate-fade-in" style="animation-delay:.05s">
+        <div class="border-b border-border bg-muted/20 px-6 py-4">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10">
+                    <svg class="h-5 w-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
                 </div>
-                <div class="space-y-1">
-                    {{ form_label(form.isPublic, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.isPublic) }}
+                <div>
+                    <h3 class="text-sm font-bold text-foreground">{{ is_new ? 'Informations du groupe' : 'Modifier les informations' }}</h3>
+                    <p class="text-xs text-muted-foreground">Remplissez les champs ci-dessous</p>
                 </div>
             </div>
+        </div>
 
-            <div class="space-y-1">
-                {{ form_label(form.coverImageUrl, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                {{ form_widget(form.coverImageUrl) }}
-                {{ form_errors(form.coverImageUrl) }}
-            </div>
+        <div class="p-6">
+            {{ form_start(form, { attr: { class: 'space-y-5' } }) }}
+                {{ form_errors(form) }}
 
-            <div class="flex gap-3 pt-2">
-                {{ include('components/button.html.twig', { label: is_new ? 'Créer' : 'Enregistrer', type: 'submit', variant: 'default' }) }}
-                <a href="{{ path('app_community_groups') }}" class="inline-flex items-center rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/50">
-                    Annuler
-                </a>
-            </div>
-        {{ form_end(form) }}
+                <div class="space-y-1.5">
+                    {{ form_label(form.name, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                    {{ form_widget(form.name, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/60' } }) }}
+                    {{ form_errors(form.name) }}
+                </div>
+
+                <div class="space-y-1.5">
+                    {{ form_label(form.description, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                    {{ form_widget(form.description, { attr: { rows: 5, class: 'w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/60' } }) }}
+                    {{ form_errors(form.description) }}
+                </div>
+
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <div class="space-y-1.5">
+                        {{ form_label(form.category, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                        {{ form_widget(form.category, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50' } }) }}
+                        {{ form_errors(form.category) }}
+                    </div>
+                    <div class="space-y-1.5">
+                        {{ form_label(form.isPublic, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                        <div class="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm">
+                            {{ form_widget(form.isPublic, { attr: { class: 'h-4 w-4 rounded border-border text-primary focus:ring-primary/20' } }) }}
+                            <span class="text-sm text-muted-foreground">Groupe public</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    {{ form_label(form.coverImageUrl, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                    {{ form_widget(form.coverImageUrl, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/60', placeholder: 'https://example.com/image.jpg' } }) }}
+                    {{ form_errors(form.coverImageUrl) }}
+                    <p class="text-xs text-muted-foreground">URL de l'image de couverture (optionnel)</p>
+                </div>
+
+                <div class="flex items-center gap-3 border-t border-border pt-5">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        {{ is_new ? 'Cr&eacute;er le groupe' : 'Enregistrer' }}
+                    </button>
+                    <a href="{{ path('app_community_groups') }}" class="inline-flex items-center rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground shadow-sm transition-all hover:bg-muted/50 hover:shadow-md">
+                        Annuler
+                    </a>
+                </div>
+            {{ form_end(form) }}
+        </div>
     </div>
 </div>
 {% endblock %}

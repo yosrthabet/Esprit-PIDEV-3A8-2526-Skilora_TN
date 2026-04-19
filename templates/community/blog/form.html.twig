@@ -1,60 +1,76 @@
-{% extends 'layouts/app.html.twig' %}
+﻿{% extends 'layouts/app.html.twig' %}
 
-{% block page_title %}{{ is_new ? 'Nouvel article' : 'Modifier l\'article' }}{% endblock %}
+{% block page_title %}{{ is_new ? 'Nouvel article' : 'Modifier l''article' }}{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-2xl space-y-6 animate-fade-in pb-8">
+<div class="mx-auto max-w-2xl space-y-6 pb-8 animate-fade-in">
     {% include 'community/_subnav.html.twig' %}
 
-    <div>
-        <h2 class="text-2xl font-semibold tracking-tight">{{ is_new ? 'Nouvel article' : 'Modifier l\'article' }}</h2>
-        <p class="mt-1 text-sm text-muted-foreground">{{ is_new ? 'Rédigez et publiez un article pour la communauté.' : 'Mettez à jour votre article.' }}</p>
+    {# Header #}
+    <div class="flex items-start gap-4">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
+            <svg class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                {% if is_new %}
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
+                {% else %}
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"/>
+                {% endif %}
+            </svg>
+        </div>
+        <div>
+            <h2 class="text-2xl font-bold tracking-tight">{{ is_new ? 'Nouvel article' : 'Modifier l''article' }}</h2>
+            <p class="mt-1 text-sm text-muted-foreground">{{ is_new ? 'R&eacute;digez et publiez un article pour la communaut&eacute;.' : 'Mettez &agrave; jour votre article.' }}</p>
+        </div>
     </div>
 
-    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+    {# Form card #}
+    <div class="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
         {{ form_start(form, { attr: { class: 'space-y-5' } }) }}
             {{ form_errors(form) }}
 
-            <div class="space-y-1">
-                {{ form_label(form.title, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                {{ form_widget(form.title) }}
+            <div class="space-y-1.5">
+                {{ form_label(form.title, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                {{ form_widget(form.title, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm shadow-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none' } }) }}
                 {{ form_errors(form.title) }}
             </div>
 
-            <div class="space-y-1">
-                {{ form_label(form.content, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                {{ form_widget(form.content, { attr: { rows: 12 } }) }}
+            <div class="space-y-1.5">
+                {{ form_label(form.content, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                {{ form_widget(form.content, { attr: { rows: 12, class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none resize-y' } }) }}
                 {{ form_errors(form.content) }}
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
-                <div class="space-y-1">
-                    {{ form_label(form.category, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.category) }}
+                <div class="space-y-1.5">
+                    {{ form_label(form.category, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                    {{ form_widget(form.category, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm shadow-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none' } }) }}
                     {{ form_errors(form.category) }}
                 </div>
-                <div class="space-y-1">
-                    {{ form_label(form.tags, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.tags) }}
+                <div class="space-y-1.5">
+                    {{ form_label(form.tags, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                    {{ form_widget(form.tags, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm shadow-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none' } }) }}
                     {{ form_errors(form.tags) }}
-                    <p class="text-xs text-muted-foreground">Séparez par des virgules.</p>
+                    <p class="text-xs text-muted-foreground">S&eacute;parez par des virgules.</p>
                 </div>
             </div>
 
-            <div class="space-y-1">
-                {{ form_label(form.coverImageUrl, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                {{ form_widget(form.coverImageUrl) }}
+            <div class="space-y-1.5">
+                {{ form_label(form.coverImageUrl, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                {{ form_widget(form.coverImageUrl, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm shadow-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none', placeholder: 'https://...' } }) }}
                 {{ form_errors(form.coverImageUrl) }}
             </div>
 
-            <div class="space-y-1">
-                {{ form_label(form.isPublished, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                {{ form_widget(form.isPublished) }}
+            <div class="flex items-center gap-3 rounded-xl border border-border bg-muted/20 px-4 py-3">
+                {{ form_widget(form.isPublished, { attr: { class: 'h-4 w-4 rounded border-border text-primary focus:ring-primary/20' } }) }}
+                {{ form_label(form.isPublished, null, { label_attr: { class: 'text-sm font-medium cursor-pointer' } }) }}
             </div>
 
             <div class="flex gap-3 pt-2">
-                {{ include('components/button.html.twig', { label: is_new ? 'Publier' : 'Enregistrer', type: 'submit', variant: 'default' }) }}
-                <a href="{{ path('app_community_blog') }}" class="inline-flex items-center rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/50">
+                <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    {{ is_new ? 'Publier' : 'Enregistrer' }}
+                </button>
+                <a href="{{ path('app_community_blog') }}" class="inline-flex items-center rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-sm hover:bg-muted/50 transition-all">
                     Annuler
                 </a>
             </div>

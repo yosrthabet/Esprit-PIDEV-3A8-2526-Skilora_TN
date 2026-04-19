@@ -1,81 +1,107 @@
-{% extends 'layouts/app.html.twig' %}
+﻿{% extends 'layouts/app.html.twig' %}
 
 {% block page_title %}Notifications{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-2xl space-y-6 animate-fade-in pb-8">
+<div class="mx-auto max-w-2xl space-y-6 pb-8">
     {% include 'community/_subnav.html.twig' %}
 
-    <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-            <h2 class="text-2xl font-semibold tracking-tight">Notifications</h2>
-            <p class="mt-1 text-sm text-muted-foreground">{{ unreadCount }} non-lue{{ unreadCount != 1 ? 's' : '' }}</p>
+    <div class="flex flex-wrap items-end justify-between gap-4 animate-fade-in">
+        <div class="flex items-start gap-4">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
+                <svg class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight">Notifications</h2>
+                <p class="mt-1 text-sm text-muted-foreground">
+                    {% if unreadCount > 0 %}
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="relative flex h-2 w-2"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span><span class="relative inline-flex h-2 w-2 rounded-full bg-primary"></span></span>
+                            {{ unreadCount }} non-lue{{ unreadCount != 1 ? 's' : '' }}
+                        </span>
+                    {% else %}
+                        Toutes vos notifications sont lues.
+                    {% endif %}
+                </p>
+            </div>
         </div>
         {% if unreadCount > 0 %}
             <button type="button" id="mark-all-read"
-                    class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted/50"
+                    class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-sm transition-all hover:bg-muted/50 hover:shadow-md active:scale-[0.98]"
                     data-url="{{ path('app_community_notifications_read_all') }}">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
                 Tout marquer comme lu
             </button>
         {% endif %}
     </div>
 
-    <div class="space-y-2">
+    <div class="space-y-2.5">
         {% for notif in notifications %}
-            <div class="flex items-start gap-3 rounded-xl border {{ notif.isRead ? 'border-border bg-card' : 'border-primary/20 bg-primary/[0.02]' }} p-4 shadow-sm transition-colors"
+            <div class="group flex items-start gap-3.5 rounded-2xl border p-4 shadow-sm transition-all duration-300 animate-fade-in
+                        {{ notif.isRead ? 'border-border bg-card hover:bg-muted/20' : 'border-primary/20 bg-primary/[0.03] hover:bg-primary/[0.06]' }}"
+                 style="animation-delay:{{ loop.index0 * 0.03 }}s"
                  data-notif-id="{{ notif.id }}">
-                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full {{ notif.isRead ? 'bg-muted' : 'bg-primary/10' }}">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ notif.isRead ? 'bg-muted' : 'bg-primary/10' }} transition-colors">
                     {% if notif.icon %}
-                        <span class="text-sm">{{ notif.icon }}</span>
+                        <span class="text-base">{{ notif.icon }}</span>
                     {% else %}
-                        <svg class="h-4 w-4 {{ notif.isRead ? 'text-muted-foreground' : 'text-primary' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+                        <svg class="h-5 w-5 {{ notif.isRead ? 'text-muted-foreground' : 'text-primary' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
                     {% endif %}
                 </div>
                 <div class="min-w-0 flex-1">
-                    <p class="text-sm font-medium {{ notif.isRead ? '' : 'text-foreground' }}">{{ notif.title }}</p>
-                    <p class="mt-0.5 text-xs text-muted-foreground">{{ notif.message }}</p>
-                    <p class="mt-1 text-xs text-muted-foreground/70">{{ notif.createdAt|date('d/m/Y H:i') }}</p>
+                    <p class="text-sm font-semibold {{ notif.isRead ? 'text-foreground/80' : 'text-foreground' }}">{{ notif.title }}</p>
+                    <p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">{{ notif.message }}</p>
+                    <p class="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground/60">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {{ notif.createdAt|date('d/m/Y H:i') }}
+                    </p>
                 </div>
                 {% if not notif.isRead %}
-                    <button type="button" class="btn-mark-read shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    <button type="button" class="btn-mark-read shrink-0 rounded-xl p-2 text-muted-foreground opacity-0 shadow-sm transition-all group-hover:opacity-100 hover:bg-primary/10 hover:text-primary"
                             data-url="{{ path('app_community_notification_read', { id: notif.id }) }}" title="Marquer comme lu">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
                     </button>
                 {% endif %}
             </div>
         {% else %}
-            <p class="rounded-xl border border-dashed border-border bg-muted/10 py-12 text-center text-sm text-muted-foreground">
-                Aucune notification pour le moment.
-            </p>
+            <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-muted/5 py-16 text-center">
+                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+                    <svg class="h-8 w-8 text-primary/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+                </div>
+                <p class="mt-4 text-sm font-semibold text-foreground">Aucune notification</p>
+                <p class="mt-1.5 max-w-xs text-xs text-muted-foreground">Les notifications de la communaut&eacute; apparaitront ici.</p>
+            </div>
         {% endfor %}
     </div>
 </div>
+{% endblock %}
 
 {% block javascripts %}
 {{ parent() }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Mark single notification as read
     document.querySelectorAll('.btn-mark-read').forEach(function(btn) {
         btn.addEventListener('click', async function() {
             const url = btn.dataset.url;
             await fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             const card = btn.closest('[data-notif-id]');
-            card.classList.remove('border-primary/20', 'bg-primary/[0.02]');
-            card.classList.add('border-border', 'bg-card');
+            card.classList.remove('border-primary/20', 'bg-primary/[0.03]', 'hover:bg-primary/[0.06]');
+            card.classList.add('border-border', 'bg-card', 'hover:bg-muted/20');
+            const icon = card.querySelector('.bg-primary\\/10');
+            if (icon) { icon.classList.remove('bg-primary/10'); icon.classList.add('bg-muted'); }
             btn.remove();
         });
     });
 
-    // Mark all as read
     const markAll = document.getElementById('mark-all-read');
     if (markAll) {
         markAll.addEventListener('click', async function() {
+            markAll.disabled = true;
+            markAll.innerHTML = '<svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Traitement...';
             await fetch(markAll.dataset.url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             location.reload();
         });
     }
 });
 </script>
-{% endblock %}
 {% endblock %}

@@ -1,96 +1,117 @@
-{% extends 'layouts/app.html.twig' %}
+﻿{% extends 'layouts/app.html.twig' %}
 
-{% block page_title %}{{ is_new ? 'Nouvel événement' : 'Modifier l\'événement' }}{% endblock %}
+{% block page_title %}{{ is_new ? 'Nouvel &eacute;v&eacute;nement' : 'Modifier l\'&eacute;v&eacute;nement' }}{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-2xl space-y-6 animate-fade-in pb-8">
+<div class="mx-auto max-w-2xl space-y-6 pb-8">
     {% include 'community/_subnav.html.twig' %}
 
-    <div>
-        <h2 class="text-2xl font-semibold tracking-tight">{{ is_new ? 'Nouvel événement' : 'Modifier l\'événement' }}</h2>
-        <p class="mt-1 text-sm text-muted-foreground">{{ is_new ? 'Créez un événement pour la communauté.' : 'Mettez à jour les détails de l\'événement.' }}</p>
+    <div class="animate-fade-in">
+        <h2 class="text-2xl font-bold tracking-tight">{{ is_new ? 'Nouvel &eacute;v&eacute;nement' : 'Modifier l\'&eacute;v&eacute;nement' }}</h2>
+        <p class="mt-1.5 text-sm text-muted-foreground">{{ is_new ? 'Cr&eacute;ez un &eacute;v&eacute;nement pour la communaut&eacute;.' : 'Mettez &agrave; jour les d&eacute;tails de l\'&eacute;v&eacute;nement.' }}</p>
     </div>
 
-    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-        {{ form_start(form, { attr: { class: 'space-y-5' } }) }}
-            {{ form_errors(form) }}
-
-            <div class="space-y-1">
-                {{ form_label(form.title, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                {{ form_widget(form.title) }}
-                {{ form_errors(form.title) }}
-            </div>
-
-            <div class="space-y-1">
-                {{ form_label(form.description, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                {{ form_widget(form.description, { attr: { rows: 6 } }) }}
-                {{ form_errors(form.description) }}
-            </div>
-
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div class="space-y-1">
-                    {{ form_label(form.eventType, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.eventType) }}
-                    {{ form_errors(form.eventType) }}
+    <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm animate-fade-in" style="animation-delay:.05s">
+        <div class="border-b border-border bg-muted/20 px-6 py-4">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/10">
+                    <svg class="h-5 w-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
                 </div>
-                <div class="space-y-1">
-                    {{ form_label(form.status, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.status) }}
-                    {{ form_errors(form.status) }}
+                <div>
+                    <h3 class="text-sm font-bold text-foreground">{{ is_new ? 'D&eacute;tails de l\'&eacute;v&eacute;nement' : 'Modifier les d&eacute;tails' }}</h3>
+                    <p class="text-xs text-muted-foreground">Remplissez les informations ci-dessous</p>
                 </div>
             </div>
+        </div>
 
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div class="space-y-1">
-                    {{ form_label(form.startDate, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.startDate) }}
-                    {{ form_errors(form.startDate) }}
-                </div>
-                <div class="space-y-1">
-                    {{ form_label(form.endDate, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.endDate) }}
-                    {{ form_errors(form.endDate) }}
-                </div>
-            </div>
+        <div class="p-6">
+            {{ form_start(form, { attr: { class: 'space-y-5' } }) }}
+                {{ form_errors(form) }}
 
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div class="space-y-1">
-                    {{ form_label(form.location, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.location) }}
-                    {{ form_errors(form.location) }}
+                <div class="space-y-1.5">
+                    {{ form_label(form.title, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                    {{ form_widget(form.title, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/60' } }) }}
+                    {{ form_errors(form.title) }}
                 </div>
-                <div class="space-y-1">
-                    {{ form_label(form.maxAttendees, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.maxAttendees) }}
-                    {{ form_errors(form.maxAttendees) }}
-                </div>
-            </div>
 
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div class="space-y-1">
-                    {{ form_label(form.isOnline, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.isOnline) }}
+                <div class="space-y-1.5">
+                    {{ form_label(form.description, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                    {{ form_widget(form.description, { attr: { rows: 6, class: 'w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/60' } }) }}
+                    {{ form_errors(form.description) }}
                 </div>
-                <div class="space-y-1">
-                    {{ form_label(form.onlineLink, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                    {{ form_widget(form.onlineLink) }}
-                    {{ form_errors(form.onlineLink) }}
+
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <div class="space-y-1.5">
+                        {{ form_label(form.eventType, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                        {{ form_widget(form.eventType, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50' } }) }}
+                        {{ form_errors(form.eventType) }}
+                    </div>
+                    <div class="space-y-1.5">
+                        {{ form_label(form.status, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                        {{ form_widget(form.status, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50' } }) }}
+                        {{ form_errors(form.status) }}
+                    </div>
                 </div>
-            </div>
 
-            <div class="space-y-1">
-                {{ form_label(form.imageUrl, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                {{ form_widget(form.imageUrl) }}
-                {{ form_errors(form.imageUrl) }}
-            </div>
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <div class="space-y-1.5">
+                        {{ form_label(form.startDate, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                        {{ form_widget(form.startDate, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50' } }) }}
+                        {{ form_errors(form.startDate) }}
+                    </div>
+                    <div class="space-y-1.5">
+                        {{ form_label(form.endDate, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                        {{ form_widget(form.endDate, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50' } }) }}
+                        {{ form_errors(form.endDate) }}
+                    </div>
+                </div>
 
-            <div class="flex gap-3 pt-2">
-                {{ include('components/button.html.twig', { label: is_new ? 'Créer' : 'Enregistrer', type: 'submit', variant: 'default' }) }}
-                <a href="{{ path('app_community_events') }}" class="inline-flex items-center rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/50">
-                    Annuler
-                </a>
-            </div>
-        {{ form_end(form) }}
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <div class="space-y-1.5">
+                        {{ form_label(form.location, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                        {{ form_widget(form.location, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/60' } }) }}
+                        {{ form_errors(form.location) }}
+                    </div>
+                    <div class="space-y-1.5">
+                        {{ form_label(form.maxAttendees, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                        {{ form_widget(form.maxAttendees, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50' } }) }}
+                        {{ form_errors(form.maxAttendees) }}
+                    </div>
+                </div>
+
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <div class="space-y-1.5">
+                        {{ form_label(form.isOnline, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                        <div class="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm">
+                            {{ form_widget(form.isOnline, { attr: { class: 'h-4 w-4 rounded border-border text-primary focus:ring-primary/20' } }) }}
+                            <span class="text-sm text-muted-foreground">&Eacute;v&eacute;nement en ligne</span>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        {{ form_label(form.onlineLink, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                        {{ form_widget(form.onlineLink, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/60', placeholder: 'https://meet.google.com/...' } }) }}
+                        {{ form_errors(form.onlineLink) }}
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    {{ form_label(form.imageUrl, null, { label_attr: { class: 'text-sm font-semibold' } }) }}
+                    {{ form_widget(form.imageUrl, { attr: { class: 'w-full rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/60', placeholder: 'https://example.com/image.jpg' } }) }}
+                    {{ form_errors(form.imageUrl) }}
+                    <p class="text-xs text-muted-foreground">URL de l'image de couverture (optionnel)</p>
+                </div>
+
+                <div class="flex items-center gap-3 border-t border-border pt-5">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        {{ is_new ? 'Cr&eacute;er l\'&eacute;v&eacute;nement' : 'Enregistrer' }}
+                    </button>
+                    <a href="{{ path('app_community_events') }}" class="inline-flex items-center rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground shadow-sm transition-all hover:bg-muted/50 hover:shadow-md">
+                        Annuler
+                    </a>
+                </div>
+            {{ form_end(form) }}
+        </div>
     </div>
 </div>
 {% endblock %}

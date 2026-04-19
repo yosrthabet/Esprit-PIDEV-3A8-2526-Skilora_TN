@@ -1,83 +1,123 @@
-{% extends 'layouts/app.html.twig' %}
+﻿{% extends 'layouts/app.html.twig' %}
 
 {% block page_title %}{{ event.title }}{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-3xl space-y-6 animate-fade-in pb-8">
+<div class="mx-auto max-w-3xl space-y-6 pb-8">
     {% include 'community/_subnav.html.twig' %}
 
-    <article class="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+    <article class="overflow-hidden rounded-2xl border border-border bg-card shadow-lg animate-fade-in">
+        {# Cover image / gradient banner #}
         {% if event.imageUrl %}
-            <div class="aspect-[21/9] overflow-hidden bg-muted">
+            <div class="relative aspect-[21/8] overflow-hidden bg-muted">
                 <img src="{{ event.imageUrl }}" alt="" class="h-full w-full object-cover" loading="lazy" referrerpolicy="no-referrer">
+                <div class="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent"></div>
+                {# Date badge overlay #}
+                <div class="absolute left-6 bottom-6 flex flex-col items-center rounded-xl bg-card/90 px-4 py-3 shadow-lg backdrop-blur-sm border border-border/50">
+                    <span class="text-xs font-bold uppercase text-primary leading-none">{{ event.startDate|date('M') }}</span>
+                    <span class="text-3xl font-extrabold leading-tight text-foreground">{{ event.startDate|date('d') }}</span>
+                </div>
+            </div>
+        {% else %}
+            <div class="relative h-32 overflow-hidden bg-gradient-to-br from-green-500/10 via-card to-primary/5">
+                <div class="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-green-500/10 blur-3xl"></div>
+                <div class="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-primary/10 blur-2xl"></div>
+                <div class="absolute left-6 bottom-4 flex flex-col items-center rounded-xl bg-card/90 px-4 py-3 shadow-lg backdrop-blur-sm border border-border/50">
+                    <span class="text-xs font-bold uppercase text-primary leading-none">{{ event.startDate|date('M') }}</span>
+                    <span class="text-3xl font-extrabold leading-tight text-foreground">{{ event.startDate|date('d') }}</span>
+                </div>
             </div>
         {% endif %}
 
         <div class="p-6 sm:p-8">
+            {# Badges #}
             <div class="flex flex-wrap items-center gap-2">
-                <span class="inline-block rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-600">{{ event.eventTypeLabel }}</span>
-                <span class="inline-block rounded-full {{ event.status == 'UPCOMING' ? 'bg-blue-500/10 text-blue-600' : (event.status == 'ONGOING' ? 'bg-green-500/10 text-green-600' : (event.status == 'CANCELLED' ? 'bg-red-500/10 text-red-600' : 'bg-muted text-muted-foreground')) }} px-2.5 py-0.5 text-xs font-medium">{{ event.statusLabel }}</span>
+                <span class="inline-block rounded-lg bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-600 dark:text-green-400">{{ event.eventTypeLabel }}</span>
+                <span class="inline-block rounded-lg {{ event.status == 'UPCOMING' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : (event.status == 'ONGOING' ? 'bg-green-500/10 text-green-600 dark:text-green-400' : (event.status == 'CANCELLED' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-muted text-muted-foreground')) }} px-3 py-1 text-xs font-semibold">{{ event.statusLabel }}</span>
                 {% if event.isOnline %}
-                    <span class="inline-block rounded-full bg-purple-500/10 px-2.5 py-0.5 text-xs font-medium text-purple-600">En ligne</span>
+                    <span class="inline-flex items-center gap-1 rounded-lg bg-purple-500/10 px-2.5 py-1 text-xs font-semibold text-purple-600 dark:text-purple-400">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
+                        En ligne
+                    </span>
                 {% endif %}
             </div>
 
-            <h1 class="mt-4 text-3xl font-bold tracking-tight">{{ event.title }}</h1>
+            <h1 class="mt-4 text-3xl font-extrabold tracking-tight">{{ event.title }}</h1>
 
-            <div class="mt-4 grid gap-4 sm:grid-cols-2">
-                <div class="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
-                    <svg class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            {# Info cards #}
+            <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                <div class="flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-4 transition-colors hover:bg-muted/40">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                        <svg class="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
                     <div>
-                        <p class="text-xs font-medium text-muted-foreground">Date</p>
-                        <p class="text-sm">{{ event.startDate|date('d/m/Y H:i') }}{% if event.endDate %} — {{ event.endDate|date('d/m/Y H:i') }}{% endif %}</p>
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date</p>
+                        <p class="mt-0.5 text-sm font-medium text-foreground">{{ event.startDate|date('d/m/Y H:i') }}{% if event.endDate %} &mdash; {{ event.endDate|date('d/m/Y H:i') }}{% endif %}</p>
                     </div>
                 </div>
                 {% if event.location %}
-                    <div class="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
-                        <svg class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                    <div class="flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-4 transition-colors hover:bg-muted/40">
+                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-500/10">
+                            <svg class="h-5 w-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                        </div>
                         <div>
-                            <p class="text-xs font-medium text-muted-foreground">Lieu</p>
-                            <p class="text-sm">{{ event.location }}</p>
+                            <p class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Lieu</p>
+                            <p class="mt-0.5 text-sm font-medium text-foreground">{{ event.location }}</p>
                         </div>
                     </div>
                 {% endif %}
-                <div class="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
-                    <svg class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                <div class="flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-4 transition-colors hover:bg-muted/40">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
+                        <svg class="h-5 w-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                    </div>
                     <div>
-                        <p class="text-xs font-medium text-muted-foreground">Participants</p>
-                        <p class="text-sm">{{ event.currentAttendees }}{% if event.maxAttendees %} / {{ event.maxAttendees }}{% endif %}</p>
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Participants</p>
+                        <p class="mt-0.5 text-sm font-medium text-foreground">{{ event.currentAttendees }}{% if event.maxAttendees %} / {{ event.maxAttendees }}{% endif %}</p>
                     </div>
                 </div>
-                <div class="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
-                    <svg class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                <div class="flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-4 transition-colors hover:bg-muted/40">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+                        <svg class="h-5 w-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                    </div>
                     <div>
-                        <p class="text-xs font-medium text-muted-foreground">Organisateur</p>
-                        <p class="text-sm">{{ event.organizer.fullName|default(event.organizer.username) }}</p>
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Organisateur</p>
+                        <p class="mt-0.5 text-sm font-medium text-foreground">{{ event.organizer.fullName|default(event.organizer.username) }}</p>
                     </div>
                 </div>
             </div>
 
+            {# Online link #}
             {% if event.isOnline and event.onlineLink %}
-                <div class="mt-4 rounded-lg border border-purple-200 bg-purple-50/50 p-3 dark:border-purple-800 dark:bg-purple-900/20">
-                    <p class="text-xs font-medium text-purple-600">Lien de la réunion en ligne</p>
-                    <a href="{{ event.onlineLink }}" target="_blank" rel="noopener noreferrer"
-                       class="mt-1 text-sm text-primary underline">{{ event.onlineLink }}</a>
+                <div class="mt-4 overflow-hidden rounded-xl border border-purple-200 dark:border-purple-800/50 bg-purple-50/50 dark:bg-purple-950/20 p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
+                            <svg class="h-5 w-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-4.939a4.5 4.5 0 00-6.364-6.364L6.34 5.768a4.5 4.5 0 001.242 7.244"/></svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-semibold text-purple-600 dark:text-purple-400">Lien de la r&eacute;union en ligne</p>
+                            <a href="{{ event.onlineLink }}" target="_blank" rel="noopener noreferrer"
+                               class="mt-0.5 block truncate text-sm font-medium text-primary underline decoration-primary/30 hover:decoration-primary">{{ event.onlineLink }}</a>
+                        </div>
+                    </div>
                 </div>
             {% endif %}
 
-            <div class="mt-6 whitespace-pre-wrap text-sm leading-relaxed">{{ event.description }}</div>
+            {# Description #}
+            <div class="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">{{ event.description }}</div>
 
             {# RSVP / Actions #}
-            <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+            <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-border pt-5">
                 {% if event.organizer.id == app.user.id %}
                     <a href="{{ path('app_community_event_edit', { id: event.id }) }}"
-                       class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted/50">
+                       class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:bg-muted/50 hover:shadow-md">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
                         Modifier
                     </a>
                     <form method="post" action="{{ path('app_community_event_delete', { id: event.id }) }}"
-                          onsubmit="return confirm('Supprimer cet événement ?');">
+                          onsubmit="return confirm('Supprimer cet &eacute;v&eacute;nement ?');">
                         <input type="hidden" name="_token" value="{{ csrf_token('delete_event_' ~ event.id) }}">
-                        <button type="submit" class="inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/5">
+                        <button type="submit" class="inline-flex items-center gap-2 rounded-xl border border-destructive/30 px-4 py-2.5 text-sm font-medium text-destructive shadow-sm transition-all hover:bg-destructive/5 hover:shadow-md">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             Supprimer
                         </button>
                     </form>
@@ -93,16 +133,23 @@
 
                     <div class="ml-auto flex gap-2">
                         {% for status in ['GOING', 'MAYBE', 'NOT_GOING'] %}
-                            {% set labels = { 'GOING': 'Je participe', 'MAYBE': 'Peut-être', 'NOT_GOING': 'Pas dispo' } %}
-                            {% set colors = {
-                                'GOING': current_rsvp and current_rsvp.status == 'GOING' ? 'bg-green-600 text-white' : 'border border-border hover:bg-muted/50',
-                                'MAYBE': current_rsvp and current_rsvp.status == 'MAYBE' ? 'bg-yellow-500 text-white' : 'border border-border hover:bg-muted/50',
-                                'NOT_GOING': current_rsvp and current_rsvp.status == 'NOT_GOING' ? 'bg-red-500 text-white' : 'border border-border hover:bg-muted/50'
+                            {% set labels = { 'GOING': 'Je participe', 'MAYBE': 'Peut-&ecirc;tre', 'NOT_GOING': 'Pas dispo' } %}
+                            {% set icons = {
+                                'GOING': '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>',
+                                'MAYBE': '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg>',
+                                'NOT_GOING': '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>'
+                            } %}
+                            {% set is_active = current_rsvp and current_rsvp.status == status %}
+                            {% set active_classes = {
+                                'GOING': 'bg-green-600 text-white shadow-md shadow-green-500/20',
+                                'MAYBE': 'bg-yellow-500 text-white shadow-md shadow-yellow-500/20',
+                                'NOT_GOING': 'bg-red-500 text-white shadow-md shadow-red-500/20'
                             } %}
                             <form method="post" action="{{ path('app_community_event_rsvp', { id: event.id }) }}">
                                 <input type="hidden" name="_token" value="{{ csrf_token('rsvp_event_' ~ event.id) }}">
                                 <input type="hidden" name="status" value="{{ status }}">
-                                <button type="submit" class="inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium {{ colors[status] }}">
+                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200 {{ is_active ? active_classes[status] : 'border border-border hover:bg-muted/50 shadow-sm hover:shadow-md' }}">
+                                    {{ icons[status]|raw }}
                                     {{ labels[status] }}
                                 </button>
                             </form>
@@ -113,9 +160,9 @@
         </div>
     </article>
 
-    <a href="{{ path('app_community_events') }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+    <a href="{{ path('app_community_events') }}" class="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-        Retour aux événements
+        Retour aux &eacute;v&eacute;nements
     </a>
 </div>
 {% endblock %}

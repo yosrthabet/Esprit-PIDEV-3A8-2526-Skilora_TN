@@ -21,13 +21,13 @@
     {% include 'community/_subnav.html.twig' %}
 
     {# ===== Stats bar ===== #}
-    <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {% set pending_count = 0 %}
         {% for inv in received_invitations %}
             {% if inv.isPending %}{% set pending_count = pending_count + 1 %}{% endif %}
         {% endfor %}
-        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
+        <div class="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 animate-fade-in">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/10">
                 <svg class="h-5 w-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </div>
             <div>
@@ -35,8 +35,8 @@
                 <p class="text-xs text-muted-foreground">Ami{{ friends|length != 1 ? 's' : '' }}</p>
             </div>
         </div>
-        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10">
+        <div class="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 animate-fade-in" style="animation-delay:0.05s">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-500/10">
                 <svg class="h-5 w-5 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
             </div>
             <div>
@@ -44,8 +44,8 @@
                 <p class="text-xs text-muted-foreground">En attente</p>
             </div>
         </div>
-        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+        <div class="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 animate-fade-in" style="animation-delay:0.1s">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
                 <svg class="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
             </div>
             <div>
@@ -53,8 +53,8 @@
                 <p class="text-xs text-muted-foreground">Conversation{{ conversations|length != 1 ? 's' : '' }}</p>
             </div>
         </div>
-        <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
+        <div class="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 animate-fade-in" style="animation-delay:0.15s">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10">
                 <svg class="h-5 w-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
             </div>
             <div>
@@ -65,7 +65,7 @@
     </div>
 
     {# ===== Tab switcher ===== #}
-    <div class="mb-6 inline-flex items-center rounded-xl bg-muted/60 p-1 backdrop-blur-sm">
+    <div class="mb-6 inline-flex items-center rounded-2xl bg-muted/60 p-1.5 backdrop-blur-sm shadow-sm border border-border/30">
         <button type="button" @click="activeTab = 'invitations'"
                 :class="activeTab === 'invitations' ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50' : 'text-muted-foreground hover:text-foreground'"
                 class="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200">
@@ -296,8 +296,8 @@
         {% endif %}
 
         {# Messenger layout #}
-        <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-md">
-            <div class="flex h-[560px] flex-col md:flex-row">
+        <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+            <div class="flex h-[600px] flex-col md:flex-row">
                 {# -- Sidebar: conversation list -- #}
                 <aside class="flex w-full shrink-0 flex-col border-b border-border bg-muted/5 md:w-72 md:border-b-0 md:border-r lg:w-80">
                     <div class="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
