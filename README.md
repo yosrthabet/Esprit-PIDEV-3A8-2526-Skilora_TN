@@ -8,8 +8,8 @@
 
 [![PHP](https://img.shields.io/badge/PHP-8.2-777BB4?style=for-the-badge\&logo=php\&logoColor=white)](https://www.php.net/)
 [![Symfony](https://img.shields.io/badge/Symfony-6.4-000000?style=for-the-badge\&logo=symfony\&logoColor=white)](https://symfony.com/)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge\&logo=mysql\&logoColor=white)](https://www.mysql.com/)
-[![Twig](https://img.shields.io/badge/Twig-Template-009688?style=for-the-badge)](https://twig.symfony.com/)
+[![MariaDB](https://img.shields.io/badge/MariaDB-10.4-003545?style=for-the-badge\&logo=mariadb\&logoColor=white)](https://mariadb.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge\&logo=tailwindcss\&logoColor=white)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-Academic-green?style=for-the-badge)](LICENSE)
 
 ---
@@ -57,9 +57,8 @@ Skilora is a **talent recruitment and career development platform** that covers:
 | PHP                 | 8.2+    |
 | Composer            | Latest  |
 | Symfony CLI         | Latest  |
-| MySQL               | 8.0+    |
-| Node.js (optional)  | 18+     |
-| Python (AI service) | 3.9+    |
+| MariaDB / MySQL     | 10.4+   |
+| Node.js             | 18+     |
 
 ---
 
@@ -67,23 +66,25 @@ Skilora is a **talent recruitment and career development platform** that covers:
 
 ```bash
 # 1. Clone project
-git clone https://github.com/your-repo/skilora.git
-cd skilora
+git clone https://github.com/yosrthabet/Esprit-PIDEV-3A8-2526-Skilora_TN.git
+cd Esprit-PIDEV-3A8-2526-Skilora_TN
 
 # 2. Install dependencies
 composer install
+npm install
 
 # 3. Configure environment
 cp .env .env.local
+# Edit .env.local with your DB credentials
 
-# Edit DB config
-DATABASE_URL="mysql://root:password@127.0.0.1:3306/skilora"
-
-# 4. Create database
+# 4. Create database & run migrations
 php bin/console doctrine:database:create
 php bin/console doctrine:migrations:migrate
 
-# 5. Run server
+# 5. Build frontend assets
+npm run build
+
+# 6. Run server
 symfony server:start
 ```
 
@@ -125,72 +126,64 @@ symfony server:start
 ## 🏗️ Project Architecture
 
 ```
-Skilora (Symfony)
+Skilora (Symfony 6.4)
 ├── src/
-│   ├── Controller/
-│   ├── Entity/
-│   ├── Repository/
-│   ├── Service/
-│   ├── Form/
-│   └── Security/
+│   ├── Controller/       # Route handlers (Auth, Admin, Community, Finance, etc.)
+│   ├── Entity/            # Doctrine ORM entities
+│   ├── Repository/        # Database queries
+│   ├── Service/           # Business logic (Chatbot, Finance, PDF, etc.)
+│   ├── Form/              # Symfony form types
+│   ├── Recruitment/       # Recruitment module (entities, controllers, services)
+│   ├── Security/          # Authentication & authorization
+│   └── Validator/         # Custom validation constraints
 │
-├── templates/
+├── templates/             # Twig templates
 │   ├── base.html.twig
+│   ├── community/
 │   ├── recruitment/
 │   ├── formation/
-│   └── finance/
+│   ├── finance/
+│   ├── support/
+│   └── components/        # Reusable UI components
 │
-├── public/
-│   ├── assets/
-│   └── index.php
-│
-├── config/
-├── migrations/
-└── .env
+├── assets/                # Frontend source (Tailwind CSS, Alpine.js)
+├── public/                # Web root
+├── config/                # Symfony configuration
+├── migrations/            # Doctrine migrations
+└── tests/                 # PHPUnit tests
 ```
 
 ---
 
 ## 🧱 Tech Stack
 
-| Layer    | Technology       |
-| -------- | ---------------- |
-| Backend  | Symfony 6.4      |
-| Language | PHP 8.2          |
-| Database | MySQL 8          |
-| ORM      | Doctrine         |
-| Frontend | Twig + Bootstrap |
-| Auth     | Symfony Security |
-| AI       | Python (FastAPI) |
-| PDF      | Dompdf           |
+| Layer    | Technology              |
+| -------- | ----------------------- |
+| Backend  | Symfony 6.4             |
+| Language | PHP 8.2                 |
+| Database | MariaDB 10.4            |
+| ORM      | Doctrine                |
+| Frontend | Twig + Tailwind CSS 4   |
+| JS       | Alpine.js               |
+| Auth     | Symfony Security        |
+| Realtime | Mercure                 |
+| PDF      | Dompdf                  |
+| Payments | Stripe                  |
 
 ---
 
 ## 🤖 AI Integration
 
-Skilora integrates AI services using Python APIs:
+Skilora integrates an AI-powered chatbot for formation guidance, using an OpenAI-compatible API directly from PHP.
 
-* Face recognition login
-* Smart job matching
-* AI chatbot
-
-Example:
-
-```php
-$response = $client->request('POST', 'http://localhost:8000/api/ai', [
-    'json' => ['data' => $input]
-]);
-```
+* 🤖 AI chatbot for training & course recommendations
+* 📊 Candidate-job matching score engine
 
 ---
 
-## 🌍 Multilingual Support
+## 🌍 Language
 
-| Language | Code |
-| -------- | ---- |
-| Français | fr   |
-| English  | en   |
-| العربية  | ar   |
+The platform interface is currently in **English**, with the framework ready for multilingual support via Symfony's translation component.
 
 ---
 
