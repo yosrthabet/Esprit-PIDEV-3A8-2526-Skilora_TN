@@ -1,8 +1,0 @@
-{# components/separator.html.twig — ShadCN Separator #}
-{% set orientation = orientation|default('horizontal') %}
-
-{% if orientation == 'horizontal' %}
-    <div class="shrink-0 bg-border h-[1px] w-full {{ class|default('') }}" role="separator"></div>
-{% else %}
-    <div class="shrink-0 bg-border h-full w-[1px] {{ class|default('') }}" role="separator"></div>
-{% endif %}

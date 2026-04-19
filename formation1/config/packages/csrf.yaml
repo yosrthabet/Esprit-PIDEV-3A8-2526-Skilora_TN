@@ -1,5 +1,0 @@
-# Enable CSRF protection
-framework:
-    form:
-        csrf_protection:
-            enabled: true

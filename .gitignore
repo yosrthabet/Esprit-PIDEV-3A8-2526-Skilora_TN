@@ -17,6 +17,7 @@
 ###< phpunit/phpunit ###
 
 ###> project ###
+/formation1/
 # Planning docs
 /*.md
 # Python utility scripts (local tooling)
