@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Validator\NoBadWords;
 
 #[ORM\Entity(repositoryClass: TicketRepository::class)]
 #[ORM\Table(name: 'support_tickets')]
@@ -25,6 +26,8 @@ class Ticket
 
     #[Assert\NotBlank(message: 'Please provide a subject for this ticket.')]
     #[Assert\Length(min: 4, max: 255, minMessage: 'Subject must be at least 4 characters long.', maxMessage: 'Subject cannot be longer than 255 characters.')]
+    #[Assert\Regex(pattern: '/[a-zA-Z]/', message: 'Subject must contain at least one letter.')]
+    #[NoBadWords]
     #[ORM\Column(length: 255)]
     private ?string $subject = null;
 
@@ -45,6 +48,7 @@ class Ticket
 
     #[Assert\NotBlank(message: 'Please describe your request in detail.')]
     #[Assert\Length(min: 10, max: 5000, minMessage: 'The description is too short. Please provide more details (at least 10 characters).', maxMessage: 'The description is too long.')]
+    #[NoBadWords]
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
 

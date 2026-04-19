@@ -6,6 +6,7 @@ use App\Repository\MessageTicketRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Validator\NoBadWords;
 
 #[ORM\Entity(repositoryClass: MessageTicketRepository::class)]
 #[ORM\Table(name: 'ticket_messages')]
@@ -28,6 +29,7 @@ class MessageTicket
 
     #[Assert\NotBlank(message: 'Your message cannot be empty.')]
     #[Assert\Length(min: 1, max: 3000, maxMessage: 'Your message is too long (max 3000 chars).')]
+    #[NoBadWords]
     #[ORM\Column(type: Types::TEXT)]
     private ?string $message = null;
 
@@ -46,6 +48,9 @@ class MessageTicket
 
     #[ORM\Column(name: 'is_audio', nullable: true)]
     private ?bool $isAudio = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $sentiment = null;
 
     public function __construct()
     {
@@ -149,6 +154,18 @@ class MessageTicket
     public function setIsAudio(?bool $isAudio): static
     {
         $this->isAudio = $isAudio;
+
+        return $this;
+    }
+
+    public function getSentiment(): ?string
+    {
+        return $this->sentiment;
+    }
+
+    public function setSentiment(?string $sentiment): static
+    {
+        $this->sentiment = $sentiment;
 
         return $this;
     }

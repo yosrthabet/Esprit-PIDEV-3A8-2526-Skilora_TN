@@ -5,11 +5,14 @@ namespace App\Form;
 use App\Entity\MessageTicket;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\All;
+use Symfony\Component\Validator\Constraints\File;
 
 class MessageTicketType extends AbstractType
 {
@@ -28,6 +31,25 @@ class MessageTicketType extends AbstractType
             ->add('isInternal', CheckboxType::class, [
                 'label' => 'Interne (admin only)',
                 'required' => false,
+            ])
+            ->add('attachmentFiles', FileType::class, [
+                'label' => 'Attachments',
+                'multiple' => true,
+                'mapped' => false,
+                'required' => false,
+                'constraints' => [
+                    new All([
+                        new File([
+                            'maxSize' => '5M',
+                            'mimeTypes' => [
+                                'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+                                'application/pdf',
+                                'text/plain',
+                            ],
+                            'mimeTypesMessage' => 'Please upload a valid file (image, PDF, or text).',
+                        ]),
+                    ]),
+                ],
             ]);
 
         if (!$options['is_admin']) {
