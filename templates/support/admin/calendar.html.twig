@@ -1,0 +1,205 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}Support Schedule · Calendar{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+    <style>
+        :root {
+            --fc-page-bg: #ffffff;
+            --fc-border-color: #e2e8f0;
+            --fc-today-bg-color: rgba(99, 102, 241, 0.05);
+            --fc-button-bg-color: #ffffff;
+            --fc-button-border-color: #e2e8f0;
+            --fc-button-text-color: #334155;
+            --fc-button-hover-bg-color: #f1f5f9;
+            --fc-button-active-bg-color: #6366f1;
+            --fc-button-active-text-color: #ffffff;
+            --fc-neutral-text: #64748b;
+            --fc-title-text: #0f172a;
+            --fc-day-number: #334155;
+        }
+
+        .dark, [data-theme='dark'] {
+            --fc-page-bg: #181b1e;
+            --fc-border-color: rgba(255,255,255,0.08);
+            --fc-today-bg-color: rgba(108, 99, 255, 0.1);
+            --fc-button-bg-color: #212529;
+            --fc-button-border-color: rgba(255,255,255,0.1);
+            --fc-button-text-color: #d4d4d8;
+            --fc-button-hover-bg-color: #27272a;
+            --fc-button-active-bg-color: #6c63ff;
+            --fc-button-active-text-color: #ffffff;
+            --fc-neutral-text: #94a3b8;
+            --fc-title-text: #fafafa;
+            --fc-day-number: #a1a1aa;
+        }
+
+        #calendar-container {
+            background: var(--fc-page-bg);
+            border: 1px solid var(--fc-border-color);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+            margin-top: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .dark #calendar-container {
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+        }
+
+        .fc {
+            font-family: inherit;
+            color: var(--fc-title-text);
+        }
+        
+        .fc-theme-standard td, .fc-theme-standard th {
+            border-color: var(--fc-border-color) !important;
+        }
+        
+        .fc-header-toolbar {
+            margin-bottom: 2em !important;
+        }
+        
+        .fc-toolbar-title {
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            color: var(--fc-title-text);
+            letter-spacing: -0.025em;
+        }
+        
+        .fc-button-group {
+            border-radius: 10px !important;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .fc .fc-button-primary {
+            background-color: var(--fc-button-bg-color) !important;
+            border-color: var(--fc-button-border-color) !important;
+            color: var(--fc-button-text-color) !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            text-transform: capitalize !important;
+            padding: 8px 18px !important;
+            transition: all 0.2s ease;
+            box-shadow: none !important;
+        }
+
+        .fc .fc-button-primary:not(:disabled):active,
+        .fc .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: var(--fc-button-active-bg-color) !important;
+            border-color: var(--fc-button-active-bg-color) !important;
+            color: var(--fc-button-active-text-color) !important;
+        }
+        
+        .fc .fc-button-primary:hover:not(:disabled) {
+            background-color: var(--fc-button-hover-bg-color) !important;
+        }
+
+        .fc .fc-today-button {
+            border-radius: 10px !important;
+            margin-left: 12px !important;
+        }
+
+        .fc-col-header-cell-cushion {
+            color: var(--fc-neutral-text);
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 16px 0 !important;
+        }
+
+        .fc-daygrid-day-number {
+            color: var(--fc-day-number);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 10px 12px !important;
+        }
+        
+        .fc-day-today {
+            background-color: var(--fc-today-bg-color) !important;
+        }
+        
+        .fc-daygrid-day {
+            transition: background-color 0.2s;
+        }
+        .fc-daygrid-day:hover {
+            background-color: rgba(128,128,128,0.02);
+        }
+
+        .fc-event {
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 11.5px;
+            font-weight: 700;
+            border: none;
+            box-shadow: 0 4px 10px -2px rgba(0,0,0,0.1);
+            margin: 2px 4px !important;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        
+        .fc-event:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px -2px rgba(0,0,0,0.15);
+            opacity: 0.95;
+        }
+
+        .fc-v-event {
+            background-color: #3b82f6;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: '/fc-load-events', // This is the default route for tattali/calendar-bundle
+                eventClick: function(info) {
+                    if (info.event.url) {
+                        window.location.href = info.event.url;
+                        info.jsEvent.preventDefault();
+                    }
+                },
+                themeSystem: 'standard'
+            });
+            calendar.render();
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto w-full max-w-7xl">
+    <div class="rounded-3xl border border-border/70 bg-gradient-to-r from-primary/10 via-card to-card p-6 shadow-sm mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-primary">Support Schedule</p>
+                <h2 class="mt-1 text-2xl font-bold tracking-tight">Ticket Timeline Calendar</h2>
+                <p class="mt-2 text-sm text-muted-foreground">Visualize ticket load and resolution deadlines.</p>
+            </div>
+            <a href="{{ path('admin_support_index') }}" class="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-muted transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div id="calendar-container">
+        <div id="calendar"></div>
+    </div>
+</div>
+{% endblock %}

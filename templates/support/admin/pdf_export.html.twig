@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { margin: 0; }
+        body { 
+            font-family: 'Helvetica', 'Arial', sans-serif; 
+            color: #1a1a1a; 
+            line-height: 1.6; 
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+        .outer-border {
+            border: 20px solid #1e293b;
+            height: 100%;
+            padding: 40px;
+        }
+        .header { 
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0; 
+            padding-bottom: 30px; 
+            margin-bottom: 40px;
+            position: relative;
+        }
+        .logo { 
+            font-size: 28px; 
+            font-weight: 800; 
+            color: #2563eb; 
+            letter-spacing: -0.5px;
+        }
+        .admin-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #f1f5f9;
+            color: #475569;
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .document-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: #0f172a;
+            margin-top: 10px;
+        }
+        
+        .grid {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .grid td {
+            vertical-align: top;
+            padding: 10px;
+        }
+        
+        .card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .label {
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #2563eb;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2563eb;
+            padding-left: 10px;
+        }
+
+        .description {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #334155;
+            margin-bottom: 30px;
+        }
+
+        .status-pill {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-open { background: #dcfce7; color: #166534; }
+        .status-progress { background: #dbeafe; color: #1e40af; }
+        .status-closed { background: #f1f5f9; color: #475569; }
+
+        .footer {
+            position: fixed;
+            bottom: 40px;
+            left: 60px;
+            right: 60px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .stats-table th {
+            text-align: left;
+            font-size: 10px;
+            color: #64748b;
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .stats-table td {
+            padding: 12px 8px;
+            font-size: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="outer-border">
+        <div class="header">
+            <div class="logo">SKILORA <span style="font-weight: 300; color: #94a3b8;">SUPPORT</span></div>
+            <div class="admin-badge">Internal Administrative Record</div>
+            <div class="document-title">Ticket Case Report #{{ ticket.id }}</div>
+        </div>
+
+        <table class="grid">
+            <tr>
+                <td width="50%">
+                    <div class="card">
+                        <div class="label">Ticket Subject</div>
+                        <div class="value" style="font-size: 16px;">{{ ticket.subject }}</div>
+                    </div>
+                </td>
+                <td width="25%">
+                    <div class="card">
+                        <div class="label">Priority</div>
+                        <div class="value">{{ ticket.priority }}</div>
+                    </div>
+                </td>
+                <td width="25%">
+                    <div class="card">
+                        <div class="label">Status</div>
+                        <div class="value">
+                            <span class="status-pill {% if ticket.status == 'OPEN' %}status-open{% elseif ticket.status == 'IN_PROGRESS' %}status-progress{% else %}status-closed{% endif %}">
+                                {{ ticket.status|replace({'_': ' '}) }}
+                            </span>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="grid">
+            <tr>
+                <td width="33%">
+                    <div class="label">Initiated By</div>
+                    <div class="value">User ID: {{ ticket.userId }}</div>
+                </td>
+                <td width="33%">
+                    <div class="label">Date Created</div>
+                    <div class="value">{{ ticket.createdDate|date('d M Y, H:i') }}</div>
+                </td>
+                <td width="33%">
+                    <div class="label">Last Resolution Date</div>
+                    <div class="value">{{ ticket.resolvedDate ? ticket.resolvedDate|date('d M Y, H:i') : 'N/A' }}</div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="section-title">Case Narrative / Description</div>
+        <div class="description">
+            {{ ticket.description|nl2br }}
+        </div>
+
+        <div class="section-title">Ticket Metadata</div>
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Detail</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Category</td>
+                    <td><strong>{{ ticket.category|title }}</strong></td>
+                </tr>
+                <tr>
+                    <td>Database ID</td>
+                    <td><code>{{ ticket.id }}</code></td>
+                </tr>
+                <tr>
+                    <td>System Trace</td>
+                    <td>Generated by Administrator Export System</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="margin-top: 50px; text-align: right;">
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">Generated on:</div>
+            <div style="font-size: 14px; font-weight: bold; color: #1e293b;">{{ "now"|date('d F Y, H:i') }}</div>
+        </div>
+
+        <div class="footer">
+            CONFIDENTIAL: This document is for internal administrative use only. <br>
+            &copy; {{ "now"|date('Y') }} Skilora Platform Support Management Center.
+        </div>
+    </div>
+</body>
+</html>

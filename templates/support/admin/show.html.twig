@@ -21,10 +21,16 @@
                     <h1 class="text-xl font-bold tracking-tight text-foreground sm:text-2xl">{{ ticket.subject }}</h1>
                     <div class="mt-3 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">{{ ticket.description }}</div>
                 </div>
-                <a href="{{ path('admin_support_index') }}"
-                   class="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
-                    <i data-lucide="arrow-left" class="mr-2 h-4 w-4"></i> All Tickets
-                </a>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ path('admin_support_download_pdf', {id: ticket.id}) }}"
+                       class="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                        <i data-lucide="file-text" class="mr-2 h-4 w-4"></i> PDF
+                    </a>
+                    <a href="{{ path('admin_support_index') }}"
+                       class="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                        <i data-lucide="arrow-left" class="mr-2 h-4 w-4"></i> All Tickets
+                    </a>
+                </div>
             </div>
             <div class="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-4 text-xs text-muted-foreground">
                 <span class="inline-flex items-center gap-1.5">
@@ -181,6 +187,36 @@
                     document.getElementById('messages-list-wrapper').innerHTML = html;
                 });
             }, 300);
+        }
+
+        function translateMessage(messageId) {
+            const resultDiv = document.getElementById('translate-result-' + messageId);
+            resultDiv.classList.remove('hidden');
+            resultDiv.textContent = 'Translating...';
+            fetch(`{{ path('admin_support_index') }}`.replace(/\/+$/, '') + '/messages/' + messageId + '/translate', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                resultDiv.textContent = data.translation || data.error || 'Translation unavailable';
+            })
+            .catch(() => { resultDiv.textContent = 'Translation failed'; });
+        }
+
+        function analyzeMood(messageId) {
+            const resultDiv = document.getElementById('mood-result-' + messageId);
+            resultDiv.classList.remove('hidden');
+            resultDiv.textContent = 'Analyzing...';
+            fetch(`{{ path('admin_support_index') }}`.replace(/\/+$/, '') + '/messages/' + messageId + '/analyze-mood', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                resultDiv.textContent = data.mood || data.error || 'Analysis unavailable';
+            })
+            .catch(() => { resultDiv.textContent = 'Analysis failed'; });
         }
     </script>
 {% endblock %}

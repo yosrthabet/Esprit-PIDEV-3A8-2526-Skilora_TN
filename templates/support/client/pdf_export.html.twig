@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { margin: 0; }
+        body { 
+            font-family: 'Helvetica', 'Arial', sans-serif; 
+            color: #1a1a1a; 
+            line-height: 1.6; 
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+        .outer-border {
+            border: 15px solid #f8f9fa;
+            height: 100%;
+            padding: 40px;
+        }
+        .header { 
+            text-align: center;
+            border-bottom: 3px double #e0e0e0; 
+            padding-bottom: 25px; 
+            margin-bottom: 40px;
+        }
+        .logo { 
+            font-size: 32px; 
+            font-weight: 900; 
+            color: #6c63ff; 
+            letter-spacing: -1px;
+            margin-bottom: 5px;
+        }
+        .tagline {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #888;
+            margin-bottom: 15px;
+        }
+        .document-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #444;
+            background: #f0f0f0;
+            display: inline-block;
+            padding: 5px 20px;
+            border-radius: 20px;
+        }
+
+        .ticket-info {
+            margin-bottom: 40px;
+        }
+        .ticket-id-large {
+            font-size: 48px;
+            font-weight: 900;
+            color: #f1f1f1;
+            position: absolute;
+            top: 20px;
+            right: 40px;
+        }
+
+        h1 { 
+            font-size: 26px; 
+            color: #111; 
+            margin: 0 0 20px 0;
+            border-left: 5px solid #6c63ff;
+            padding-left: 15px;
+        }
+
+        .meta-grid {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .meta-item {
+            padding: 10px;
+            background: #fdfdfd;
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+        }
+        .label {
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        .value {
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .content-section {
+            margin-bottom: 35px;
+        }
+        .section-header {
+            font-size: 11px;
+            font-weight: bold;
+            color: #6c63ff;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        .description-box { 
+            background: #fafafa; 
+            border: 1px solid #eee; 
+            padding: 20px; 
+            border-radius: 12px;
+            font-size: 14px;
+            color: #444;
+        }
+
+        .resolution-summary {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px dashed #ddd;
+        }
+        .signature-area {
+            margin-top: 40px;
+            width: 100%;
+        }
+        .sig-block {
+            width: 200px;
+            border-top: 1px solid #333;
+            text-align: center;
+            padding-top: 8px;
+            font-size: 12px;
+        }
+
+        .footer { 
+            position: fixed; 
+            bottom: 40px; 
+            left: 55px;
+            right: 55px;
+            font-size: 9px; 
+            color: #bbb;
+            text-align: center;
+        }
+        .seal {
+            position: absolute;
+            bottom: 80px;
+            right: 80px;
+            width: 100px;
+            height: 100px;
+            border: 4px double #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-15deg);
+            opacity: 0.3;
+            font-weight: bold;
+            font-size: 12px;
+            color: #6c63ff;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="outer-border">
+        <div class="ticket-id-large">#{{ ticket.id }}</div>
+        
+        <div class="header">
+            <div class="logo">SKILORA</div>
+            <div class="tagline">Empowering Talent · Resolving Challenges</div>
+            <div class="document-title">OFFICIAL CLOSURE REPORT</div>
+        </div>
+
+        <div class="ticket-info">
+            <div style="font-size: 14px; margin-bottom: 5px;">Prepared for:</div>
+            <div style="font-size: 20px; font-weight: bold; color: #333; margin-bottom: 30px;">Hassan (Valued Member)</div>
+            
+            <h1>{{ ticket.subject }}</h1>
+
+            <table class="meta-grid" cellspacing="0">
+                <tr>
+                    <td width="33%">
+                        <div class="meta-item">
+                            <div class="label">Category</div>
+                            <div class="value">{{ ticket.category }}</div>
+                        </div>
+                    </td>
+                    <td width="33%">
+                        <div class="meta-item">
+                            <div class="label">Priority Level</div>
+                            <div class="value">{{ ticket.priority }}</div>
+                        </div>
+                    </td>
+                    <td width="33%">
+                        <div class="meta-item" style="border-color: #6ee7b7; background: #f0fdf4;">
+                            <div class="label" style="color: #059669;">Resolution Status</div>
+                            <div class="value" style="color: #047857;">{{ ticket.status }}</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="content-section">
+            <div class="section-header">Original Request Details</div>
+            <div class="description-box">
+                {{ ticket.description|nl2br }}
+            </div>
+        </div>
+
+        <div class="resolution-summary">
+            <div class="section-header">Timeline & Audit Trail</div>
+            <table width="100%" style="font-size: 12px;">
+                <tr>
+                    <td style="color: #666;">Submission Date:</td>
+                    <td align="right"><strong>{{ ticket.createdDate|date('d F Y, H:i') }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="color: #666;">Final Resolution:</td>
+                    <td align="right"><strong>{{ ticket.resolvedDate ? ticket.resolvedDate|date('d F Y, H:i') : ticket.createdDate|date('d F Y, H:i') }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="color: #666;">Resolution Agent:</td>
+                    <td align="right"><strong>Skilora Core Intelligence</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="signature-area">
+            <table width="100%">
+                <tr>
+                    <td>
+                        <div style="font-family: 'Courier', monospace; font-size: 20px; margin-bottom: -10px; color: #6c63ff;">Support Team</div>
+                        <div class="sig-block">Authorized Support Signature</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="seal">
+            VERIFIED<br>SUCCESS
+        </div>
+
+        <div class="footer">
+            This document serves as an official confirmation of service resolution. <br>
+            &copy; {{ "now"|date('Y') }} Skilora Inc. All rights reserved. Registered Support ID: SK-{{ ticket.id }} 
+        </div>
+    </div>
+</body>
+</html>

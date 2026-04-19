@@ -44,11 +44,24 @@
                 <span>{{ message.createdDate ? message.createdDate|date('d M, H:i') : '-' }}</span>
             </div>
 
-            <div class="flex items-center gap-1.5 {{ is_admin ? 'justify-end' : '' }}">
+            <div class="flex flex-wrap items-center gap-1.5 {{ is_admin ? 'justify-end' : '' }}">
                 <a href="{{ path('admin_support_message_edit', {ticketId: ticket.id, messageId: message.id}) }}"
                    class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
                     <i data-lucide="pencil" class="h-3 w-3"></i> Edit
                 </a>
+                <button type="button" onclick="translateMessage({{ message.id }})"
+                        class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                    <i data-lucide="languages" class="h-3 w-3"></i> Translate
+                </button>
+                <button type="button" onclick="analyzeMood({{ message.id }})"
+                        class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                    <i data-lucide="heart-pulse" class="h-3 w-3"></i> Mood
+                </button>
+                {% if message.sentiment %}
+                    <span class="inline-flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-1 text-[10px] font-medium text-violet-700 ring-1 ring-inset ring-violet-500/20">
+                        {{ message.sentiment }}
+                    </span>
+                {% endif %}
                 <form method="post" action="{{ path('admin_support_message_delete', {ticketId: ticket.id, messageId: message.id}) }}" onsubmit="return confirm('Delete this message?');" class="inline">
                     <input type="hidden" name="_token" value="{{ csrf_token('delete_message_' ~ message.id) }}">
                     <button type="submit"
@@ -57,6 +70,8 @@
                     </button>
                 </form>
             </div>
+            <div id="translate-result-{{ message.id }}" class="hidden mt-1 rounded-lg bg-blue-500/10 px-3 py-2 text-[11px] text-blue-800 ring-1 ring-inset ring-blue-500/20"></div>
+            <div id="mood-result-{{ message.id }}" class="hidden mt-1 rounded-lg bg-violet-500/10 px-3 py-2 text-[11px] text-violet-800 ring-1 ring-inset ring-violet-500/20"></div>
         </div>
     </div>
 {% else %}

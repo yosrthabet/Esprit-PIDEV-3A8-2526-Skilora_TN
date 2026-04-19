@@ -9,15 +9,25 @@ use App\Form\TicketAdminType;
 use App\Repository\FeedbackRepository;
 use App\Repository\MessageTicketRepository;
 use App\Repository\TicketRepository;
+use App\Service\GeminiService;
+use App\Service\PublicTranslationService;
+use App\Service\SupportNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/admin/support', name: 'admin_support_')]
 class SupportTicketAdminController extends AbstractController
 {
+    public function __construct(
+        private SluggerInterface $slugger,
+        private SupportNotificationService $notifier
+    ) {}
+
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(Request $request, TicketRepository $ticketRepository, FeedbackRepository $feedbackRepository): Response
     {
@@ -48,6 +58,8 @@ class SupportTicketAdminController extends AbstractController
             'tickets' => $tickets,
             'status_stats' => $ticketRepository->countByStatus(),
             'priority_stats' => $ticketRepository->countByPriority(),
+            'category_stats' => $ticketRepository->countByCategory(),
+            'daily_stats' => $ticketRepository->countLast7DaysVolume(),
             'avg_rating' => $feedbackRepository->getAverageRating(),
             'current_page' => $page,
             'total_pages' => $totalPages,
@@ -55,6 +67,12 @@ class SupportTicketAdminController extends AbstractController
             'current_status' => $status,
             'current_sort' => $sortBy,
         ]);
+    }
+
+    #[Route('/calendar', name: 'calendar', methods: ['GET'])]
+    public function calendar(): Response
+    {
+        return $this->render('support/admin/calendar.html.twig');
     }
 
     #[Route('/avis', name: 'avis_index', methods: ['GET'])]
@@ -89,7 +107,7 @@ class SupportTicketAdminController extends AbstractController
     {
         $tickets = $ticketRepository->findAll();
         $csv = "ID,Subject,Category,Priority,Status,Created At\n";
-        
+
         foreach ($tickets as $ticket) {
             $csv .= sprintf(
                 "%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
@@ -116,19 +134,25 @@ class SupportTicketAdminController extends AbstractController
         EntityManagerInterface $entityManager,
         MessageTicketRepository $messageRepository
     ): Response {
+        $oldStatus = $ticket->getStatus();
         $adminForm = $this->createForm(TicketAdminType::class, $ticket);
         $adminForm->handleRequest($request);
 
         if ($adminForm->isSubmitted() && $adminForm->isValid()) {
-            if (\in_array($ticket->getStatus(), ['RESOLVED', 'CLOSED'], true) && !$ticket->getResolvedDate()) {
+            $newStatus = $ticket->getStatus();
+            if ($oldStatus !== $newStatus) {
+                $this->notifier->notifyStatusChange($ticket, $oldStatus, $newStatus);
+            }
+
+            if (\in_array($newStatus, ['RESOLVED', 'CLOSED'], true) && !$ticket->getResolvedDate()) {
                 $ticket->setResolvedDate(new \DateTime());
             }
-            if (!\in_array($ticket->getStatus(), ['RESOLVED', 'CLOSED'], true)) {
+            if (!\in_array($newStatus, ['RESOLVED', 'CLOSED'], true)) {
                 $ticket->setResolvedDate(null);
             }
 
             $entityManager->flush();
-            $this->addFlash('success', 'Ticket updated.');
+            $this->addFlash('success', 'Ticket updated and notification sent.');
 
             return $this->redirectToRoute('admin_support_show', ['id' => $ticket->getId()]);
         }
@@ -141,25 +165,60 @@ class SupportTicketAdminController extends AbstractController
         Ticket $ticket,
         Request $request,
         EntityManagerInterface $entityManager,
-        MessageTicketRepository $messageRepository
+        MessageTicketRepository $messageRepository,
+        GeminiService $gemini
     ): Response {
         $message = (new MessageTicket())
             ->setTicket($ticket)
             ->setSenderId($this->resolveAdminId())
-            ->setIsInternal(false);
+            ->setIsInternal(false)
+            ->setCreatedDate(new \DateTime());
 
         $form = $this->createForm(MessageTicketType::class, $message, ['is_admin' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $files = $form->get('attachmentFiles')->getData();
+            if ($files) {
+                $filenames = $this->handleFileUploads($files);
+                $message->setAttachmentsJson(json_encode($filenames));
+            }
+
+            $sentiment = $gemini->detectTone($message->getMessage());
+            $message->setSentiment($sentiment);
+
             $entityManager->persist($message);
             $entityManager->flush();
-            $this->addFlash('success', 'Message posted.');
+            $this->addFlash('success', 'Message posted with emotional analysis.');
         } else {
             $this->addFlash('error', 'Message not sent. Please check fields.');
         }
 
         return $this->renderShowPage($ticket, $request, $entityManager, $messageRepository);
+    }
+
+    private function handleFileUploads(array $files): array
+    {
+        $filenames = [];
+        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/tickets';
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        foreach ($files as $file) {
+            $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $this->slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
+
+            try {
+                $file->move($uploadDir, $newFilename);
+                $filenames[] = $newFilename;
+            } catch (\Exception $e) {
+            }
+        }
+
+        return $filenames;
     }
 
     #[Route('/{ticketId}/messages/{messageId}/edit', name: 'message_edit', methods: ['GET', 'POST'])]
@@ -183,6 +242,36 @@ class SupportTicketAdminController extends AbstractController
             $this->addFlash('success', 'Message updated.');
 
             return $this->redirectToRoute('admin_support_show', ['id' => $ticketId]);
+        } elseif ($request->isMethod('POST')) {
+            $post = $request->request->all();
+            $contenu = null;
+            $attachmentsJson = null;
+            $isInternal = null;
+            foreach ($post as $val) {
+                if (\is_array($val)) {
+                    $contenu = $val['message'] ?? $contenu;
+                    $attachmentsJson = $val['attachmentsJson'] ?? $attachmentsJson;
+                    $isInternal = $val['isInternal'] ?? $isInternal;
+                }
+            }
+            $contenu ??= ($post['message'] ?? null);
+            $attachmentsJson ??= ($post['attachmentsJson'] ?? null);
+            $isInternal ??= ($post['isInternal'] ?? null);
+
+            if ($contenu !== null && trim($contenu) !== '') {
+                $message->setMessage(trim($contenu));
+                if ($attachmentsJson !== null) {
+                    $message->setAttachmentsJson(trim($attachmentsJson));
+                }
+                if ($isInternal !== null) {
+                    $message->setIsInternal((bool) $isInternal);
+                }
+                $entityManager->flush();
+                $this->addFlash('success', 'Message updated.');
+                return $this->redirectToRoute('admin_support_show', ['id' => $ticketId]);
+            }
+
+            $this->addFlash('error', 'Update failed: Message cannot be empty.');
         }
 
         return $this->render('support/admin/edit_message.html.twig', [
@@ -205,7 +294,7 @@ class SupportTicketAdminController extends AbstractController
             throw $this->createNotFoundException('Message not found.');
         }
 
-        if (!$this->isCsrfTokenValid('delete_message_'.$messageId, (string) $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('delete_message_' . $messageId, (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid delete token.');
 
             return $this->redirectToRoute('admin_support_show', ['id' => $ticketId]);
@@ -218,9 +307,110 @@ class SupportTicketAdminController extends AbstractController
         return $this->redirectToRoute('admin_support_show', ['id' => $ticketId]);
     }
 
+    #[Route('/messages/{id}/translate', name: 'message_translate', methods: ['GET'])]
+    public function translateMessage(
+        MessageTicket $message,
+        Request $request,
+        PublicTranslationService $translator
+    ): JsonResponse {
+        $text = $message->getMessage();
+        if (!$text) {
+            return new JsonResponse(['error' => 'Message is empty'], 400);
+        }
+
+        $targetLang = $request->query->get('target', 'en');
+        $translated = $translator->translate($text, $targetLang);
+
+        if (!$translated) {
+            return new JsonResponse([
+                'error' => 'Public translation service failed. Try again later.',
+                'originalText' => $text
+            ], 500);
+        }
+
+        return new JsonResponse(['translatedText' => $translated]);
+    }
+
+    #[Route('/{id}/pdf', name: 'download_pdf', methods: ['GET'])]
+    public function downloadPdf(Ticket $ticket): Response
+    {
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'Helvetica');
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('support/admin/pdf_export.html.twig', [
+            'ticket' => $ticket,
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $output = $dompdf->output();
+
+        $response = new Response($output);
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', 'attachment; filename="Admin_Ticket_' . $ticket->getId() . '.pdf"');
+
+        return $response;
+    }
+
+    #[Route('/messages/{id}/analyze-mood', name: 'message_analyze_mood', methods: ['POST'])]
+    public function analyzeMood(
+        MessageTicket $message,
+        GeminiService $gemini,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $mood = $gemini->detectTone($message->getMessage());
+
+        if ($mood) {
+            $message->setSentiment($mood);
+            $entityManager->flush();
+            return new JsonResponse(['mood' => $mood]);
+        }
+
+        return new JsonResponse(['error' => 'AI Analysis failed'], 500);
+    }
+
+    #[Route('/translate-text', name: 'translate_text', methods: ['GET'])]
+    public function translateText(
+        Request $request,
+        PublicTranslationService $translator
+    ): JsonResponse {
+        $text = $request->query->get('text');
+        $targetLang = $request->query->get('target', 'en');
+
+        if (!$text) {
+            return new JsonResponse(['error' => 'No text provided'], 400);
+        }
+
+        $translated = $translator->translate($text, $targetLang);
+
+        return new JsonResponse(['translated' => $translated]);
+    }
+
+    #[Route('/{id}/translate', name: 'ticket_translate', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function translateTicket(
+        Ticket $ticket,
+        Request $request,
+        PublicTranslationService $translator
+    ): JsonResponse {
+        $targetLang = $request->query->get('target', 'en');
+
+        $translatedSubject = $translator->translate($ticket->getSubject(), $targetLang);
+        $translatedDescription = $translator->translate($ticket->getDescription(), $targetLang);
+
+        return new JsonResponse([
+            'subject' => $translatedSubject,
+            'description' => $translatedDescription
+        ]);
+    }
+
     private function resolveAdminId(): int
     {
-        // Hardcoded demo mapping without auth/security.
         return 1;
     }
 
@@ -231,19 +421,6 @@ class SupportTicketAdminController extends AbstractController
         MessageTicketRepository $messageRepository
     ): Response {
         $adminForm = $this->createForm(TicketAdminType::class, $ticket);
-        $adminForm->handleRequest($request);
-
-        if ($adminForm->isSubmitted() && $adminForm->isValid()) {
-            if (\in_array($ticket->getStatus(), ['RESOLVED', 'CLOSED'], true) && !$ticket->getResolvedDate()) {
-                $ticket->setResolvedDate(new \DateTime());
-            }
-            if (!\in_array($ticket->getStatus(), ['RESOLVED', 'CLOSED'], true)) {
-                $ticket->setResolvedDate(null);
-            }
-
-            $entityManager->flush();
-            $this->addFlash('success', 'Ticket updated.');
-        }
 
         $newMessage = (new MessageTicket())
             ->setTicket($ticket)

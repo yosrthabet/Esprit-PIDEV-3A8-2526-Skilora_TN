@@ -34,10 +34,18 @@
             {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
                 <div class="space-y-1.5">
                     <label class="text-sm font-medium text-foreground">Subject</label>
-                    {{ form_widget(form.subject, {attr: {
-                        class: 'flex w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                        placeholder: 'Brief summary of your issue…'
-                    }}) }}
+                    <div class="flex gap-2">
+                        {{ form_widget(form.subject, {id: 'ticket_subject', attr: {
+                            class: 'flex w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                            placeholder: 'Brief summary of your issue…'
+                        }}) }}
+                        <button type="button" onclick="aiSuggestSubject()"
+                                class="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-500/20 transition-colors"
+                                title="AI will suggest a subject based on your description">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                            AI Suggest
+                        </button>
+                    </div>
                     {{ form_errors(form.subject) }}
                 </div>
 
@@ -60,12 +68,18 @@
 
                 <div class="space-y-1.5">
                     <label class="text-sm font-medium text-foreground">Description</label>
-                    {{ form_widget(form.description, {attr: {
+                    {{ form_widget(form.description, {id: 'ticket_description', attr: {
                         class: 'flex w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                         rows: 5,
                         placeholder: 'Describe your issue in detail…'
                     }}) }}
                     {{ form_errors(form.description) }}
+                    <button type="button" onclick="aiCorrectText()"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-500/20 transition-colors"
+                            title="AI will correct grammar and spelling">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        AI Correct Text
+                    </button>
                 </div>
 
                 <button type="submit"
@@ -77,4 +91,53 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+    function aiSuggestSubject() {
+        const desc = document.getElementById('ticket_description')?.value;
+        if (!desc || desc.trim().length < 10) {
+            alert('Please write a description first (at least 10 characters).');
+            return;
+        }
+        fetch('{{ path("support_ai_suggest_subject") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ description: desc })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.suggestion) {
+                document.getElementById('ticket_subject').value = data.suggestion;
+            } else {
+                alert(data.error || 'Could not generate suggestion');
+            }
+        })
+        .catch(() => alert('AI suggestion failed'));
+    }
+
+    function aiCorrectText() {
+        const textarea = document.getElementById('ticket_description');
+        if (!textarea?.value || textarea.value.trim().length < 5) {
+            alert('Please write some text first.');
+            return;
+        }
+        fetch('{{ path("support_ai_correct_text") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ text: textarea.value })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.corrected) {
+                textarea.value = data.corrected;
+            } else {
+                alert(data.error || 'Could not correct text');
+            }
+        })
+        .catch(() => alert('AI correction failed'));
+    }
+</script>
 {% endblock %}
