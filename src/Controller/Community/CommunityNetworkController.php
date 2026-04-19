@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Community;
 
 use App\Entity\DmConversation;
 use App\Entity\DmMessage;

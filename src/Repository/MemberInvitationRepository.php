@@ -112,4 +112,16 @@ class MemberInvitationRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function countPendingFor(User $user): int
+    {
+        return (int) $this->createQueryBuilder('i')
+            ->select('COUNT(i.id)')
+            ->where('i.invitee = :u')
+            ->andWhere('i.status = :pending')
+            ->setParameter('u', $user)
+            ->setParameter('pending', MemberInvitation::STATUS_PENDING)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

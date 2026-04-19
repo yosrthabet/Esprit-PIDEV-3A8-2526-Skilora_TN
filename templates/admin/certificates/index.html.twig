@@ -1,0 +1,49 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block title %}Certificates · Admin{% endblock %}
+{% block page_title %}Certificates{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl space-y-6">
+    <div>
+        <h2 class="text-xl font-semibold tracking-tight">Issued Certificates</h2>
+        <p class="text-sm text-muted-foreground mt-1">All certificates awarded to learners upon formation completion.</p>
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="rounded-md border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-800 dark:text-green-300">{{ message }}</div>
+    {% endfor %}
+
+    <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-border bg-muted/50">
+                    <th class="px-4 py-3 text-left font-medium text-muted-foreground">Learner</th>
+                    <th class="px-4 py-3 text-left font-medium text-muted-foreground">Formation</th>
+                    <th class="px-4 py-3 text-left font-medium text-muted-foreground">Issued</th>
+                    <th class="px-4 py-3 text-left font-medium text-muted-foreground">Verification ID</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+                {% for cert in certificates %}
+                    <tr class="hover:bg-muted/30 transition-colors">
+                        <td class="px-4 py-3 font-medium">{{ cert.user.fullName ?? cert.user.username }}</td>
+                        <td class="px-4 py-3">{{ cert.formation.title }}</td>
+                        <td class="px-4 py-3 text-muted-foreground">{{ cert.issuedAt|date('M d, Y') }}</td>
+                        <td class="px-4 py-3">
+                            <code class="rounded bg-muted px-1.5 py-0.5 text-xs">{{ cert.verificationId }}</code>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="px-4 py-8 text-center text-muted-foreground">
+                            <i data-lucide="award" class="mx-auto mb-2 h-8 w-8 opacity-40"></i>
+                            <p>No certificates issued yet.</p>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
