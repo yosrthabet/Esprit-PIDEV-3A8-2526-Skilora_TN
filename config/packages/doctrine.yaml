@@ -22,7 +22,8 @@ doctrine:
 when@test:
     doctrine:
         dbal:
-            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+            # use same DB as dev
+            dbname_suffix: ''
 
 when@prod:
     doctrine:
