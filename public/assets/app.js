@@ -1,3 +1,4 @@
+import './bootstrap.js';
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 window.createToastStore = () => ({
@@ -135,7 +136,7 @@ window.initHomepage = () => {
 
   const horizontalSection = document.getElementById("horizontal-section");
   const horizontalTrack = document.getElementById("horizontal-track");
-  if (horizontalSection && horizontalTrack) {
+  if (horizontalSection && horizontalTrack && window.innerWidth >= 768) {
       let getScrollAmount = () => -(horizontalTrack.scrollWidth - window.innerWidth);
       gsap.to(horizontalTrack, { 
           x: getScrollAmount, 

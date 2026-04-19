@@ -5,7 +5,97 @@
         <p class="text-muted-foreground">No users found.</p>
     </div>
 {% else %}
-<div class="overflow-x-auto">
+
+{# ── Mobile card view (< md) ── #}
+<div class="md:hidden divide-y divide-border">
+    {% for user in users %}
+    <div class="p-4 space-y-3"
+         id="user-card-{{ user.id }}"
+         data-name="{{ user.displayName|lower }}"
+         data-email="{{ (user.email|default(''))|lower }}"
+         data-role="{{ user.role }}"
+         data-status="{{ user.isActive ? 'active' : 'inactive' }}">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                    {{ user.displayName|first|upper }}
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-medium text-foreground truncate">{{ user.displayName }}</p>
+                    <p class="text-xs text-muted-foreground truncate">{{ user.email|default('—') }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1">
+                <span class="h-2 w-2 rounded-full {{ user.isActive ? 'bg-emerald-500' : 'bg-zinc-400' }}"></span>
+                <span class="text-[11px] font-medium {{ user.isActive ? 'text-emerald-600' : 'text-muted-foreground' }}">{{ user.isActive ? 'Active' : 'Inactive' }}</span>
+            </div>
+        </div>
+        <div class="flex items-center justify-between">
+            {% set role_colors = {
+                'Administrator': 'destructive',
+                'Client': 'default',
+                'Trainer': 'secondary',
+                'Freelancer': 'outline',
+            } %}
+            {{ include('components/badge.html.twig', {
+                label: user.roleDisplayName,
+                variant: role_colors[user.roleDisplayName]|default('secondary')
+            }) }}
+            <div class="flex items-center gap-1">
+                <button @click="$dispatch('open-edit-dialog', {
+                            title: 'Edit User',
+                            description: 'Update details for {{ user.displayName|e('js') }}',
+                            url: '{{ path('app_admin_user_edit', {id: user.id}) }}',
+                            size: 'lg'
+                        })"
+                        class="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+                    <i data-lucide="pencil" class="h-4 w-4"></i>
+                </button>
+                <button x-data
+                        @click="
+                            const fd = new FormData();
+                            fd.append('_token', '{{ csrf_token('toggle-user-status-' ~ user.id) }}');
+                            const res = await fetch('{{ path('app_admin_user_toggle_status', {id: user.id}) }}', {
+                                method: 'POST',
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                                body: fd
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                Alpine.store('toast').success(data.message);
+                                $el.closest('#user-table-container').dispatchEvent(new CustomEvent('refresh-table'));
+                            }
+                        "
+                        class="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+                    <i data-lucide="{{ user.isActive ? 'user-x' : 'user-check' }}" class="h-4 w-4"></i>
+                </button>
+                <button x-data
+                        @click="
+                            if (!confirm('Delete {{ user.displayName|e('js') }}? This cannot be undone.')) return;
+                            const fd = new FormData();
+                            fd.append('_token', '{{ csrf_token('delete-user-' ~ user.id) }}');
+                            const res = await fetch('{{ path('app_admin_user_delete', {id: user.id}) }}', {
+                                method: 'POST',
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                                body: fd
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                Alpine.store('toast').success(data.message);
+                                $el.closest('#user-table-container').dispatchEvent(new CustomEvent('refresh-table'));
+                            }
+                        "
+                        class="inline-flex items-center justify-center rounded-lg p-2 text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-colors">
+                    <i data-lucide="trash-2" class="h-4 w-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{# ── Desktop table view (md+) ── #}
+<div class="hidden md:block overflow-x-auto">
     <table class="w-full text-sm">
         <thead>
             <tr class="border-b border-border bg-muted/30">

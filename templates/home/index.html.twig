@@ -141,8 +141,8 @@
             </section>
 
 
-            {# 3. Massive Horizontal Scroll Section #}
-            <section id="horizontal-section" class="relative w-full h-screen bg-white text-zinc-950 flex items-center overflow-hidden">
+            {# 3. Massive Horizontal Scroll Section — desktop only #}
+            <section id="horizontal-section" class="relative w-full h-screen bg-white text-zinc-950 items-center overflow-hidden hidden md:flex">
                 <div class="w-full flex items-center overflow-hidden">
                     <div id="horizontal-track" class="flex items-center pl-[50vw] pr-[5vw] gap-32 whitespace-nowrap">
                         <div class="text-[15vw] font-black tracking-tighter uppercase leading-none">Find</div>
@@ -156,6 +156,20 @@
                         <div class="text-[15vw] font-black tracking-tighter uppercase leading-none">Next</div>
                         <div class="text-[15vw] font-black tracking-tighter uppercase leading-none">Hire</div>
                     </div>
+                </div>
+            </section>
+
+            {# 3b. Mobile-only alternative — stacked typographic layout #}
+            <section class="md:hidden bg-white text-zinc-950 py-16 px-6 overflow-hidden">
+                <div class="flex flex-col">
+                    <span class="text-[22vw] font-black tracking-tighter uppercase leading-none">Find</span>
+                    <div class="my-6 w-full h-56 rounded-[2rem] overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
+                             alt="Team collaborating" class="w-full h-full object-cover" loading="lazy">
+                    </div>
+                    <span class="text-[22vw] font-black tracking-tighter uppercase leading-none self-end">Your</span>
+                    <span class="text-[22vw] font-black tracking-tighter uppercase leading-none">Next</span>
+                    <span class="text-[22vw] font-black tracking-tighter uppercase leading-none self-end text-transparent" style="-webkit-text-stroke: 3px #09090b;">Hire.</span>
                 </div>
             </section>
 

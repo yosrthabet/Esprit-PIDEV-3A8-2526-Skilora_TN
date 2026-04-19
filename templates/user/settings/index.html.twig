@@ -227,6 +227,86 @@
 
             {# ── Active Sessions ─────────────────────────────────── #}
             <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+
+            {# ── Passkeys / Biometric Login ──────────────────────── #}
+            <div x-data="passkeyManager()" class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="fingerprint" class="h-5 w-5 text-primary"></i>
+                        <h3 class="font-semibold leading-none tracking-tight">Passkeys &amp; Biometric Login</h3>
+                    </div>
+                    <p class="text-sm text-muted-foreground">Sign in with Face ID, Touch ID, Windows Hello, or a security key. No password needed.</p>
+                </div>
+                <div class="p-6 pt-0 space-y-4">
+                    <template x-if="!supported">
+                        <div class="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+                            <p class="text-sm text-amber-600 dark:text-amber-400">Your browser does not support passkeys/WebAuthn.</p>
+                        </div>
+                    </template>
+
+                    <template x-if="supported">
+                        <div class="space-y-4">
+                            {# List existing passkeys #}
+                            <template x-if="passkeys.length === 0 && !loading">
+                                <div class="flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-4">
+                                    <i data-lucide="key-round" class="h-5 w-5 text-muted-foreground shrink-0"></i>
+                                    <p class="text-sm text-muted-foreground">No passkeys registered yet. Add one to enable biometric login.</p>
+                                </div>
+                            </template>
+
+                            <template x-for="pk in passkeys" :key="pk.id">
+                                <div class="flex items-center justify-between rounded-lg border border-border p-4">
+                                    <div class="flex items-center gap-3">
+                                        <i data-lucide="fingerprint" class="h-5 w-5 text-muted-foreground shrink-0"></i>
+                                        <div>
+                                            <p class="text-sm font-medium" x-text="pk.name"></p>
+                                            <p class="text-xs text-muted-foreground">
+                                                Added <span x-text="pk.createdAt"></span>
+                                                <template x-if="pk.lastUsedAt"> · Last used <span x-text="pk.lastUsedAt"></span></template>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button @click="deletePasskey(pk.id)"
+                                            class="inline-flex h-8 items-center justify-center rounded-md border border-destructive bg-transparent px-3 text-xs font-medium text-destructive shadow-sm transition-colors hover:bg-destructive hover:text-destructive-foreground">
+                                        Remove
+                                    </button>
+                                </div>
+                            </template>
+
+                            {# Add new passkey #}
+                            <div x-show="!registering" class="flex items-center gap-3">
+                                <button @click="register()"
+                                        class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
+                                    <i data-lucide="plus" class="mr-2 h-3.5 w-3.5"></i>
+                                    Add Passkey
+                                </button>
+                            </div>
+
+                            <div x-show="registering" class="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+                                <svg class="h-5 w-5 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                <p class="text-sm text-primary">Waiting for your device... Follow the prompts from your browser.</p>
+                            </div>
+
+                            <template x-if="error">
+                                <div class="rounded-lg border border-destructive/20 bg-destructive/10 p-3">
+                                    <p class="text-sm text-destructive" x-text="error"></p>
+                                </div>
+                            </template>
+
+                            <template x-if="successMsg">
+                                <div class="rounded-lg border border-green-500/20 bg-green-500/10 p-3">
+                                    <p class="text-sm text-green-600 dark:text-green-400" x-text="successMsg"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            {# ── Active Sessions (continued) ────────────────────── #}
                 <div class="flex flex-col space-y-1.5 p-6">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
@@ -363,4 +443,140 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+function passkeyManager() {
+    return {
+        supported: !!window.PublicKeyCredential,
+        passkeys: [],
+        loading: true,
+        registering: false,
+        error: null,
+        successMsg: null,
+
+        init() {
+            if (this.supported) this.loadPasskeys();
+        },
+
+        async loadPasskeys() {
+            this.loading = true;
+            try {
+                const res = await fetch('{{ path("passkey_list") }}');
+                this.passkeys = await res.json();
+            } catch (e) {
+                // silently fail
+            }
+            this.loading = false;
+        },
+
+        async register() {
+            this.error = null;
+            this.successMsg = null;
+            this.registering = true;
+
+            try {
+                // 1. Get options
+                const optRes = await fetch('{{ path("passkey_register_options") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                const options = await optRes.json();
+
+                // 2. Convert fields
+                options.challenge = this._b64ToBuffer(options.challenge);
+                options.user.id = this._b64ToBuffer(options.user.id);
+                if (options.excludeCredentials) {
+                    options.excludeCredentials = options.excludeCredentials.map(c => {
+                        c.id = this._b64ToBuffer(c.id);
+                        return c;
+                    });
+                }
+
+                // 3. Create credential
+                const cred = await navigator.credentials.create({ publicKey: options });
+
+                // 4. Send to server
+                const credential = {
+                    id: cred.id,
+                    rawId: this._bufferToB64(cred.rawId),
+                    type: cred.type,
+                    response: {
+                        attestationObject: this._bufferToB64(cred.response.attestationObject),
+                        clientDataJSON: this._bufferToB64(cred.response.clientDataJSON),
+                        transports: cred.response.getTransports ? cred.response.getTransports() : [],
+                    },
+                };
+
+                const deviceName = this._detectDeviceName();
+
+                const verifyRes = await fetch('{{ path("passkey_register_verify") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential, name: deviceName }),
+                });
+
+                const result = await verifyRes.json();
+                if (result.success) {
+                    this.successMsg = 'Passkey "' + result.passkey.name + '" registered successfully!';
+                    await this.loadPasskeys();
+                } else {
+                    throw new Error(result.error || 'Registration failed');
+                }
+            } catch (e) {
+                if (e.name !== 'NotAllowedError') {
+                    this.error = e.message || 'Failed to register passkey';
+                }
+            }
+            this.registering = false;
+        },
+
+        async deletePasskey(id) {
+            if (!confirm('Remove this passkey? You will no longer be able to sign in with it.')) return;
+            this.error = null;
+            this.successMsg = null;
+
+            try {
+                const res = await fetch('/passkey/delete/' + id, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    this.successMsg = 'Passkey removed.';
+                    await this.loadPasskeys();
+                } else {
+                    throw new Error('Failed to remove passkey');
+                }
+            } catch (e) {
+                this.error = e.message;
+            }
+        },
+
+        _detectDeviceName() {
+            const ua = navigator.userAgent;
+            if (/Macintosh/.test(ua)) return 'Mac Touch ID';
+            if (/Windows/.test(ua)) return 'Windows Hello';
+            if (/iPhone|iPad/.test(ua)) return 'iPhone Face ID';
+            if (/Android/.test(ua)) return 'Android Biometric';
+            return 'Security Key';
+        },
+
+        _b64ToBuffer(b64url) {
+            const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+            const pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4));
+            const bin = atob(b64 + pad);
+            const buf = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+            return buf.buffer;
+        },
+
+        _bufferToB64(buf) {
+            const bytes = new Uint8Array(buf);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        },
+    };
+}
+</script>
 {% endblock %}
