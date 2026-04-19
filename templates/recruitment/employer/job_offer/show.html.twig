@@ -1,0 +1,259 @@
+{% extends 'recruitment/employer/base.html.twig' %}
+
+{% block employer_title %}{{ job_offer.title }} · Skilora{% endblock %}
+{% block page_title %}Job Offer Details{% endblock %}
+
+{% set status_en = { 'OPEN': 'Open', 'CLOSED': 'Closed', 'DRAFT': 'Draft' } %}
+{% set work_en = {
+    'ONSITE': 'On-site',
+    'REMOTE': 'Remote',
+    'PART_TIME': 'Part-time',
+    'FREELANCE': 'Freelance',
+    'INTERNSHIP': 'Internship',
+} %}
+
+{% block employer_content %}
+<div class="mx-auto max-w-5xl space-y-6">
+    {# Main Header & Actions #}
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <a href="{{ path('app_employer_job_offer_index') }}" class="group flex w-fit items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <i data-lucide="arrow-left" class="mr-1.5 h-4 w-4 transition-transform group-hover:-translate-x-1"></i>
+            Back to job offers
+        </a>
+        
+        <div class="flex flex-wrap items-center gap-2">
+            {% if can_manage|default(false) %}
+                <a href="{{ path('app_employer_job_offer_edit', {id: job_offer.id}) }}"
+                   class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                    <i data-lucide="edit" class="mr-2 h-4 w-4"></i>Edit
+                </a>
+                <form method="post" action="{{ path('app_employer_job_offer_delete', {id: job_offer.id}) }}"
+                      onsubmit="return confirm('Delete this job offer? This action cannot be undone.');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_job_offer_' ~ job_offer.id) }}"/>
+                    <button type="submit"
+                            class="inline-flex h-9 items-center justify-center rounded-md bg-destructive px-4 text-sm font-medium text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90">
+                        <i data-lucide="trash-2" class="mr-2 h-4 w-4"></i>Delete
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if global_view_readonly|default(false) %}
+        <div class="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
+            <i data-lucide="info" class="h-5 w-5 shrink-0"></i>
+            <p>Read-only view: this job offer doesn't belong to your company, but it's visible because the global view is active.</p>
+        </div>
+    {% endif %}
+
+    {# Hero Banner Header #}
+    <div class="relative overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        {# Top decorative gradient #}
+        <div class="absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-primary/60 via-accent to-primary/20"></div>
+        
+        <div class="p-6 sm:p-8">
+            <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div class="space-y-4 lg:max-w-2xl">
+                    <div class="flex flex-wrap items-center gap-2">
+                        {{ include('components/badge.html.twig', {
+                            label: status_en[job_offer.status]|default(job_offer.status),
+                            variant: job_offer.status == 'OPEN' ? 'success' : (job_offer.status == 'CLOSED' ? 'secondary' : 'warning'),
+                        }) }}
+                        {% if job_offer.isFeatured %}
+                            <span class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ring-inset bg-amber-500/10 text-amber-700 ring-amber-600/20">
+                                <i data-lucide="star" class="h-3.5 w-3.5 fill-amber-500 text-amber-500"></i> Featured
+                            </span>
+                        {% endif %}
+                        <span class="ml-2 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                            <i data-lucide="clock" class="h-3.5 w-3.5"></i>
+                            Posted on {{ job_offer.postedDate ? job_offer.postedDate|date('Y-m-d') : '—' }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{{ job_offer.title }}</h1>
+                        <p class="mt-2 flex items-center gap-2 text-base text-muted-foreground">
+                            <i data-lucide="building-2" class="h-4 w-4"></i>
+                            {{ job_offer.companyName|default(job_offer.company.name|default('—')) }}
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-4 text-sm pt-2">
+                        {% if job_offer.location %}
+                            <div class="flex items-center gap-1.5 text-muted-foreground">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                    <i data-lucide="map-pin" class="h-3.5 w-3.5"></i>
+                                </span>
+                                <span class="font-medium text-card-foreground">{{ job_offer.location }}</span>
+                            </div>
+                        {% endif %}
+                        {% set wt = job_offer.workType %}
+                        {% if wt %}
+                            <div class="flex items-center gap-1.5 text-muted-foreground">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                    <i data-lucide="briefcase" class="h-3.5 w-3.5"></i>
+                                </span>
+                                <span class="font-medium text-card-foreground">{{ work_en[wt]|default(wt|replace({'_': ' '})) }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="flex items-center gap-1.5 text-muted-foreground">
+                            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <i data-lucide="wallet" class="h-3.5 w-3.5"></i>
+                            </span>
+                            <span class="font-medium text-card-foreground">
+                                {% if job_offer.minSalary or job_offer.maxSalary %}
+                                    {{ job_offer.minSalary|default('—') }} – {{ job_offer.maxSalary|default('—') }} {{ job_offer.currency }}
+                                {% else %}
+                                    Negotiable
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {# Huge Stats for views and apps #}
+                <div class="flex shrink-0 items-center justify-start gap-4 lg:justify-end">
+                    <div class="flex min-w-24 flex-col items-center justify-center rounded-xl border border-border bg-muted/30 p-4 text-center">
+                        <span class="text-3xl font-bold text-primary">{{ job_offer.applicationsCount }}</span>
+                        <span class="mt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Applications</span>
+                    </div>
+                    <div class="flex min-w-24 flex-col items-center justify-center rounded-xl border border-border bg-muted/30 p-4 text-center">
+                        <span class="text-3xl font-bold text-foreground">{{ job_offer.viewsCount }}</span>
+                        <span class="mt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Views</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# 2-Column Main Layout #}
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+        
+        {# Main Content Column #}
+        <div class="space-y-6 lg:col-span-2">
+            {% if job_offer.description %}
+            <div class="rounded-xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+                <h3 class="mb-4 flex items-center gap-2 border-b border-border pb-4 text-lg font-semibold text-foreground">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <i data-lucide="file-text" class="h-4 w-4"></i>
+                    </div>
+                    Job Description
+                </h3>
+                <div class="prose prose-sm sm:prose-base dark:prose-invert max-w-none whitespace-pre-wrap text-muted-foreground leading-relaxed">{{ job_offer.description }}</div>
+            </div>
+            {% endif %}
+
+            {% if job_offer.requirements %}
+            <div class="rounded-xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+                <h3 class="mb-4 flex items-center gap-2 border-b border-border pb-4 text-lg font-semibold text-foreground">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <i data-lucide="list-checks" class="h-4 w-4"></i>
+                    </div>
+                    Requirements & Profile
+                </h3>
+                <div class="prose prose-sm sm:prose-base dark:prose-invert max-w-none whitespace-pre-wrap text-muted-foreground leading-relaxed">{{ job_offer.requirements }}</div>
+            </div>
+            {% endif %}
+
+            {% if job_offer.skillsRequired %}
+            <div class="rounded-xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+                <h3 class="mb-4 flex items-center gap-2 border-b border-border pb-4 text-lg font-semibold text-foreground">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <i data-lucide="zap" class="h-4 w-4"></i>
+                    </div>
+                    Technical Skills
+                </h3>
+                {% if ',' in job_offer.skillsRequired %}
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        {% for skill in job_offer.skillsRequired|split(',')|filter(v => v|trim is not empty) %}
+                            <span class="inline-flex items-center rounded-lg bg-secondary px-3 py-1 text-sm font-medium text-secondary-foreground">
+                                {{ skill|trim }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="prose prose-sm sm:prose-base dark:prose-invert max-w-none whitespace-pre-wrap text-muted-foreground leading-relaxed">{{ job_offer.skillsRequired }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if job_offer.benefits %}
+            <div class="rounded-xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+                <h3 class="mb-4 flex items-center gap-2 border-b border-border pb-4 text-lg font-semibold text-foreground">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <i data-lucide="heart-handshake" class="h-4 w-4"></i>
+                    </div>
+                    Benefits
+                </h3>
+                <div class="prose prose-sm sm:prose-base dark:prose-invert max-w-none whitespace-pre-wrap text-muted-foreground leading-relaxed">{{ job_offer.benefits }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Sidebar Column #}
+        <div class="space-y-6">
+            <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+                <h3 class="mb-4 border-b border-border pb-3 text-base font-semibold text-foreground">Additional Information</h3>
+                
+                <dl class="space-y-5">
+                    {% if job_offer.experienceLevel %}
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
+                            <i data-lucide="graduation-cap" class="h-4 w-4 text-muted-foreground"></i>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium text-muted-foreground">Experience Required</dt>
+                            <dd class="mt-0.5 text-sm font-medium text-card-foreground">{{ job_offer.experienceLevel }}</dd>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if job_offer.deadline %}
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md {% if job_offer.deadline < date() %}bg-destructive/10{% else %}bg-muted{% endif %}">
+                            <i data-lucide="calendar-x" class="h-4 w-4 {% if job_offer.deadline < date() %}text-destructive{% else %}text-muted-foreground{% endif %}"></i>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium text-muted-foreground">Deadline</dt>
+                            <dd class="mt-0.5 text-sm font-medium {% if job_offer.deadline < date() %}text-destructive{% else %}text-card-foreground{% endif %}">{{ job_offer.deadline|date('Y-m-d') }}</dd>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
+                            <i data-lucide="refresh-cw" class="h-4 w-4 text-muted-foreground"></i>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium text-muted-foreground">Last Updated</dt>
+                            <dd class="mt-0.5 text-sm font-medium text-card-foreground">{{ job_offer.updatedAt ? job_offer.updatedAt|date('Y-m-d H:i') : '—' }}</dd>
+                        </div>
+                    </div>
+                </dl>
+                
+                {% if job_offer.status == 'OPEN' %}
+                    <div class="mt-6 rounded-lg border border-green-500/20 bg-green-500/10 p-4">
+                        <h4 class="flex items-center gap-2 text-sm font-semibold text-green-700 dark:text-green-400">
+                            <i data-lucide="check-circle-2" class="h-4 w-4"></i> Open for applications
+                        </h4>
+                    </div>
+                {% elseif job_offer.status == 'CLOSED' %}
+                    <div class="mt-6 rounded-lg border border-border bg-muted p-4">
+                        <h4 class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                            <i data-lucide="x-circle" class="h-4 w-4"></i> This job offer is closed
+                        </h4>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="rounded-xl border border-border bg-card p-6 text-center shadow-sm">
+                <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <i data-lucide="building-2" class="h-6 w-6"></i>
+                </div>
+                <h3 class="text-base font-semibold text-foreground">{{ job_offer.companyName|default(job_offer.company.name|default('—')) }}</h3>
+                <p class="mb-2 text-xs text-muted-foreground">Hiring Company</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

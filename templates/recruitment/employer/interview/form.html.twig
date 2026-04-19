@@ -1,4 +1,4 @@
-﻿{% extends 'recrutement/employer/base.html.twig' %}
+﻿{% extends 'recruitment/employer/base.html.twig' %}
 
 {% block employer_title %}Planifier un entretien · Skilora{% endblock %}
 {% block page_title %}Planifier un entretien{% endblock %}
@@ -83,7 +83,7 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {% include 'recrutement/components/_interview_countdown_script.html.twig' %}
+    {% include 'recruitment/components/_interview_countdown_script.html.twig' %}
     <script>
         (function () {
             var dateEl = document.getElementById({{ form.interviewDate.vars.id|json_encode|raw }});

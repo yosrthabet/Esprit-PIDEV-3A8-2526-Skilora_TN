@@ -14,7 +14,7 @@ final class EmployerPlaceholderController extends AbstractController
     #[Route('/profil', name: 'profile', methods: ['GET'])]
     public function profile(): Response
     {
-        return $this->render('recrutement/employer/placeholder.html.twig', [
+        return $this->render('recruitment/employer/placeholder.html.twig', [
             'title' => 'Mon profil',
             'message' => 'Ce module sera disponible prochainement.',
         ]);

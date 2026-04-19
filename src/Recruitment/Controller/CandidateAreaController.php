@@ -35,7 +35,7 @@ final class CandidateAreaController extends AbstractController
 
         $uid = $user->getId();
         if ($uid === null) {
-            return $this->render('recrutement/candidate/applications/index.html.twig', [
+            return $this->render('recruitment/candidate/applications/index.html.twig', [
                 'applications' => [],
             ]);
         }
@@ -68,7 +68,7 @@ final class CandidateAreaController extends AbstractController
             ];
         }
 
-        return $this->render('recrutement/candidate/applications/index.html.twig', [
+        return $this->render('recruitment/candidate/applications/index.html.twig', [
             'applications' => $applications,
         ]);
     }

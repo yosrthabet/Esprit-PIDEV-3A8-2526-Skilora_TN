@@ -113,7 +113,7 @@ final class EmployerDashboardController extends AbstractController
             $upcomingInterviews = \array_slice($upcomingInterviews, 0, 6);
         }
 
-        return $this->render('recrutement/employer/dashboard/index.html.twig', [
+        return $this->render('recruitment/employer/dashboard/index.html.twig', [
             'company' => $company ?? ($ownedCompanies[0] ?? null),
             'open_job_count' => $openCount,
             'total_job_count' => $totalCount,
@@ -158,7 +158,7 @@ final class EmployerDashboardController extends AbstractController
             $simpTax = $payslipPayrollCalculator->computeFromGross((float) $simpGrossStr, 0.0);
         }
 
-        return $this->render('recrutement/employer/finance/index.html.twig', [
+        return $this->render('recruitment/employer/finance/index.html.twig', [
             'page_title' => 'Finance',
             'employer_portal_json' => json_encode($portal, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT),
             'employer_greeting' => $greeting,

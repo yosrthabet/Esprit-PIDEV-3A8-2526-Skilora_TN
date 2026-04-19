@@ -1,0 +1,113 @@
+{# Single job offer card — reused by index and infinite scroll #}
+{% set work_fr = {
+    'ONSITE': 'Sur site',
+    'REMOTE': 'Télétravail',
+    'PART_TIME': 'Temps partiel',
+    'FREELANCE': 'Freelance',
+    'INTERNSHIP': 'Stage',
+} %}
+{% set status_open = job.status == 'OPEN' %}
+{% set status_closed = job.status == 'CLOSED' %}
+
+<li class="job-card group relative overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md cursor-pointer"
+    style="opacity:0; animation: cardFadeIn .25s ease-out forwards"
+    onclick="if(!event.target.closest('button, a:not(.card-title-link), form')){window.location='{{ path('app_employer_job_offer_show', {id: job.id}) }}';}">
+
+    {# Card body #}
+    <div class="flex flex-1 flex-col p-4">
+        {# Title + status #}
+        <div class="flex flex-wrap items-center gap-2">
+            <h3 class="text-sm font-semibold leading-snug text-foreground line-clamp-1 group-hover:text-primary transition-colors pr-2">
+                <a href="{{ path('app_employer_job_offer_show', {id: job.id}) }}" class="card-title-link">
+                    {{ job.title }}
+                </a>
+            </h3>
+            {{ include('components/badge.html.twig', {
+                label: status_open ? 'Ouvert' : (status_closed ? 'Fermé' : 'Brouillon'),
+                variant: status_open ? 'success' : (status_closed ? 'secondary' : 'warning'),
+            }) }}
+            {% if job.isFeatured %}
+                <span class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset bg-amber-500/10 text-amber-700 ring-amber-600/20">
+                    <i data-lucide="star" class="h-3 w-3"></i> Vedette
+                </span>
+            {% endif %}
+        </div>
+
+        {# Company #}
+        {% if job.companyName %}
+            <p class="mt-1 text-xs text-muted-foreground">{{ job.companyName }}</p>
+        {% endif %}
+
+        {# Meta tags #}
+        <div class="mt-3 flex flex-wrap items-center gap-1.5">
+            {% if job.location %}
+                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset bg-secondary/50 text-secondary-foreground ring-border">
+                    <i data-lucide="map-pin" class="mr-1 h-3 w-3"></i>{{ job.location }}
+                </span>
+            {% endif %}
+            {% set wt = job.workType %}
+            {% if wt %}
+                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset bg-secondary/50 text-secondary-foreground ring-border">
+                    <i data-lucide="briefcase" class="mr-1 h-3 w-3"></i>{{ work_fr[wt]|default(wt|replace({'_': ' '})) }}
+                </span>
+            {% endif %}
+            {% if job.experienceLevel %}
+                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset bg-secondary/50 text-secondary-foreground ring-border">
+                    <i data-lucide="zap" class="mr-1 h-3 w-3"></i>{{ job.experienceLevel }}
+                </span>
+            {% endif %}
+        </div>
+
+        {# Bottom meta: salary + date + candidatures #}
+        <div class="mt-auto pt-3 flex items-center justify-between text-xs text-muted-foreground">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1">
+                    <i data-lucide="calendar" class="h-3.5 w-3.5"></i>
+                    {{ job.postedDate ? job.postedDate|date('d/m/Y') : '—' }}
+                </span>
+                {% if job.deadline %}
+                    <span class="inline-flex items-center gap-1 {{ job.deadline < date() ? 'text-destructive' : '' }}">
+                        <i data-lucide="clock" class="h-3.5 w-3.5"></i>
+                        Limite {{ job.deadline|date('d/m/Y') }}
+                    </span>
+                {% endif %}
+                <span class="inline-flex items-center gap-1">
+                    <i data-lucide="users" class="h-3.5 w-3.5"></i>
+                    {{ job.applicationsCount }} candidature{{ job.applicationsCount != 1 ? 's' : '' }}
+                </span>
+            </div>
+            <span class="font-semibold text-foreground">
+                {% if job.minSalary or job.maxSalary %}
+                    {{ job.minSalary|default('—') }}–{{ job.maxSalary|default('—') }} <span class="text-muted-foreground font-normal">{{ job.currency }}</span>
+                {% else %}
+                    Négociable
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    {# Card footer — always visible actions #}
+    <div class="border-t border-border px-4 py-3 flex items-center justify-end gap-2">
+        <a href="{{ path('app_employer_job_offer_edit', {id: job.id}) }}"
+           class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+            <i data-lucide="edit" class="mr-1.5 h-3.5 w-3.5"></i>Modifier
+        </a>
+        {% if status_open %}
+            <form method="post" action="{{ path('app_employer_job_offer_close', {id: job.id}) }}" class="inline"
+                  onsubmit="return confirm('Fermer cette offre ?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('close_job_offer_' ~ job.id) }}"/>
+                <button type="submit"
+                        class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                    <i data-lucide="ban" class="mr-1.5 h-3.5 w-3.5"></i>Fermer
+                </button>
+            </form>
+        {% endif %}
+        <form method="post" action="{{ path('app_employer_job_offer_delete', {id: job.id}) }}" class="inline"
+              onsubmit="return confirm('Supprimer définitivement cette offre ?');">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete_job_offer_' ~ job.id) }}"/>
+            <button type="submit" class="inline-flex h-8 items-center justify-center rounded-md px-3 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10">
+                <i data-lucide="trash-2" class="mr-1.5 h-3.5 w-3.5"></i>Supprimer
+            </button>
+        </form>
+    </div>
+</li>

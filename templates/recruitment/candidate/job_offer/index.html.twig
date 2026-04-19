@@ -1,0 +1,201 @@
+{% extends 'recruitment/candidate/base.html.twig' %}
+
+{% block candidate_title %}Toutes les offres{% endblock %}
+{% block candidate_page_title %}Offres d'emploi{% endblock %}
+
+{% set work_fr = work_type_labels() %}
+{% set work_type = work_type|default('all') %}
+{% set search = search|default(null) %}
+{% set sort = sort|default('posted') %}
+
+{% block candidate_content %}
+<div class="space-y-6 pb-6">
+
+    {# ── HEADER ── #}
+    <div class="rounded-2xl border border-border bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Portail Candidat</p>
+                <h2 class="mt-1 text-2xl font-bold tracking-tight text-foreground">Offres d'emploi</h2>
+                <p class="mt-2 max-w-2xl text-sm text-muted-foreground">
+                    Trouvez l'offre idéale parmi notre sélection de <strong class="font-semibold text-foreground">{{ total }}</strong> opportunité{{ total > 1 ? 's' : '' }}.
+                </p>
+                {% if aneti_count|default(0) > 0 %}
+                    <p class="mt-2 text-xs text-muted-foreground">
+                        Inclut {{ aneti_count }} offre{{ aneti_count > 1 ? 's' : '' }} externe{{ aneti_count > 1 ? 's' : '' }} du réseau ANETI
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if is_employer %}
+        <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm font-medium text-amber-800 dark:text-amber-300">
+            Mode Employeur actif — la postulation est désactivée.
+        </div>
+    {% endif %}
+
+    {# ── SEARCH FORM ── #}
+    <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <form method="get" action="{{ path('app_candidate_offres_index') }}" role="search">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:items-end">
+                <div class="flex flex-col gap-1.5 xl:col-span-2">
+                    <label for="q" class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mots-clés</label>
+                    <div class="flex items-center gap-2 rounded-xl border border-input bg-background px-3 py-2.5 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+                        <svg class="h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input id="q" type="text" name="q" value="{{ search|default('') }}" placeholder="Développeur, React, Tunis…" autocomplete="off" class="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0"/>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label for="work_type" class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mode de travail</label>
+                    <select id="work_type" name="work_type" class="rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+                        <option value="all" {{ work_type == 'all' ? 'selected' }}>Tous modes</option>
+                        {% for wt_key, wt_label in work_fr %}
+                            <option value="{{ wt_key }}" {{ work_type == wt_key ? 'selected' }}>{{ wt_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label for="sort" class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Trier par</label>
+                    <select id="sort" name="sort" class="rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+                        <option value="posted" {{ sort == 'posted' ? 'selected' }}>Plus récentes</option>
+                        <option value="salary" {{ sort == 'salary' ? 'selected' }}>Salaire max</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-3 xl:col-span-4">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        Rechercher
+                    </button>
+                    {% if search or work_type != 'all' or sort == 'salary' %}
+                        <a href="{{ path('app_candidate_offres_index') }}" class="text-sm font-medium text-muted-foreground hover:text-foreground">
+                            Réinitialiser
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {# ── RESULTS ── #}
+    {% if job_offers is empty %}
+        <div class="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
+            <p class="text-base font-semibold text-foreground">Aucune offre trouvée</p>
+            <p class="mt-1 text-sm text-muted-foreground">Essayez des termes plus généraux ou réinitialisez vos filtres.</p>
+            {% if search or work_type != 'all' %}
+                <a href="{{ path('app_candidate_offres_index') }}" class="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95">
+                    Effacer les filtres
+                </a>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="space-y-4">
+            {% for job in job_offers %}
+                {% set company_label = job.companyName|default(job.company.name|default('Entreprise')) %}
+                {% set initials = company_label|slice(0, 1)|upper %}
+                {% set wt = job.workType %}
+                {% set has_salary = job.minSalary or job.maxSalary %}
+                {% set is_aneti = job.source is defined and job.source == 'ANETI' %}
+                {% set job_href = is_aneti ? (job.externalUrl|default('#')) : path('app_candidate_offres_show', {id: job.id}) %}
+
+                <a href="{{ job_href }}" {% if is_aneti %}target="_blank" rel="noopener noreferrer"{% endif %}
+                   class="block rounded-2xl border border-border bg-card p-5 shadow-sm hover:shadow-md hover:border-primary/30 transition-shadow">
+                    <div class="flex items-start gap-4">
+                        {# Avatar #}
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-lg font-bold text-primary">
+                            {{ initials }}
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-start justify-between gap-2">
+                                <div>
+                                    <p class="text-xs font-semibold text-muted-foreground">{{ company_label }}{% if is_aneti %} · <span class="text-blue-600 dark:text-blue-400">ANETI</span>{% endif %}</p>
+                                    <h2 class="mt-0.5 text-base font-bold text-foreground">{{ job.title }}</h2>
+                                </div>
+                                {% if job.isFeatured|default(false) %}
+                                    <span class="rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">En vedette</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                {% if job.location %}
+                                    <span class="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/40 px-2.5 py-1 text-xs font-medium text-foreground">
+                                        <svg class="h-3 w-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        {{ job.location }}
+                                    </span>
+                                {% endif %}
+                                {% if wt %}
+                                    <span class="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                                        {{ wt|work_type_label }}
+                                    </span>
+                                {% endif %}
+                                {% if has_salary %}
+                                    <span class="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                                        {% if job.minSalary and job.maxSalary %}{{ job.minSalary }} – {{ job.maxSalary }}{% elseif job.minSalary %}Dès {{ job.minSalary }}{% else %}Jusqu'à {{ job.maxSalary }}{% endif %} {{ job.currency }}
+                                    </span>
+                                {% endif %}
+                                {% if job.experienceLevel %}
+                                    <span class="inline-flex items-center rounded-lg border border-border bg-muted/40 px-2.5 py-1 text-xs font-medium text-foreground">
+                                        {{ job.experienceLevel }}
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            {% if job.description %}
+                                <p class="mt-3 text-sm text-muted-foreground line-clamp-2">{{ job.description|striptags }}</p>
+                            {% endif %}
+
+                            <div class="mt-4 flex items-center justify-between border-t border-border/40 pt-3">
+                                <div class="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                                    {% if job.postedDate %}
+                                        <span>Publiée le {{ job.postedDate|date('d/m/Y') }}</span>
+                                    {% endif %}
+                                    {% if job.deadline %}
+                                        <span class="text-orange-600 dark:text-orange-400">Expire le {{ job.deadline|date('d/m/Y') }}</span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-xs font-semibold text-primary">{{ is_aneti ? "Voir l'offre" : "Consulter →" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+
+        {# ── PAGINATION ── #}
+        {% if page_count > 1 %}
+            {% set base_query = {} %}
+            {% if search %}{% set base_query = base_query|merge({q: search}) %}{% endif %}
+            {% if work_type != 'all' %}{% set base_query = base_query|merge({work_type: work_type}) %}{% endif %}
+            {% if sort == 'salary' %}{% set base_query = base_query|merge({sort: 'salary'}) %}{% endif %}
+
+            <nav class="mt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border pt-5">
+                <p class="text-sm text-muted-foreground">
+                    Page <span class="font-semibold text-foreground">{{ current_page }}</span> / {{ page_count }} &middot; {{ total }} offres
+                </p>
+                <div class="flex items-center gap-2">
+                    <a href="{{ path('app_candidate_offres_index', base_query|merge({page: current_page - 1})) }}"
+                       class="inline-flex items-center gap-1 rounded-xl border border-input bg-card px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted {{ current_page <= 1 ? 'pointer-events-none opacity-40' : '' }}">
+                        ← Précédent
+                    </a>
+                    {% for p in 1..page_count %}
+                        {% if p <= 2 or p > page_count - 2 or (p >= current_page - 1 and p <= current_page + 1) %}
+                            <a href="{{ path('app_candidate_offres_index', base_query|merge({page: p})) }}"
+                               class="hidden md:inline-flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold {{ p == current_page ? 'bg-primary text-primary-foreground shadow-sm' : 'border border-input bg-card hover:bg-muted' }}">
+                                {{ p }}
+                            </a>
+                        {% elseif p == 3 or p == page_count - 2 %}
+                            <span class="hidden md:inline-flex h-9 w-6 items-center justify-center text-sm text-muted-foreground">…</span>
+                        {% endif %}
+                    {% endfor %}
+                    <a href="{{ path('app_candidate_offres_index', base_query|merge({page: current_page + 1})) }}"
+                       class="inline-flex items-center gap-1 rounded-xl border border-input bg-card px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted {{ current_page >= page_count ? 'pointer-events-none opacity-40' : '' }}">
+                        Suivant →
+                    </a>
+                </div>
+            </nav>
+        {% endif %}
+    {% endif %}
+
+</div>
+{% endblock %}

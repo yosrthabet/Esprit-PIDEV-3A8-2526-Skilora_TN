@@ -24,8 +24,8 @@ final class CvPdfGeneratorService
     public function generatePdfBinary(CvBuilderData $data): string
     {
         $tpl = $data->template === 'classic'
-            ? 'recrutement/cv/pdf/classic.html.twig'
-            : 'recrutement/cv/pdf/modern.html.twig';
+            ? 'recruitment/cv/pdf/classic.html.twig'
+            : 'recruitment/cv/pdf/modern.html.twig';
 
         $html = $this->twig->render($tpl, ['cv' => $data]);
 

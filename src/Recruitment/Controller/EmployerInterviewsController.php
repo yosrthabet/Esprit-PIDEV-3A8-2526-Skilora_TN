@@ -53,7 +53,7 @@ final class EmployerInterviewsController extends AbstractController
             $this->employerSeesAllCandidatures,
         );
 
-        return $this->render('recrutement/employer/interview/index.html.twig', [
+        return $this->render('recruitment/employer/interview/index.html.twig', [
             'company' => $company,
             'interview_rows' => $interviewRows,
         ]);
@@ -123,7 +123,7 @@ final class EmployerInterviewsController extends AbstractController
             if (!$dateRaw instanceof \DateTimeImmutable || !$timeRaw instanceof \DateTimeImmutable) {
                 $this->addFlash('error', 'Date et heure invalides.');
 
-                return $this->render('recrutement/employer/interview/form.html.twig', [
+                return $this->render('recruitment/employer/interview/form.html.twig', [
                     'candidature' => $candidature,
                     'job_offer' => $job,
                     'form' => $form,
@@ -172,7 +172,7 @@ final class EmployerInterviewsController extends AbstractController
             return $this->redirectToRoute('app_employer_interviews');
         }
 
-        return $this->render('recrutement/employer/interview/form.html.twig', [
+        return $this->render('recruitment/employer/interview/form.html.twig', [
             'candidature' => $candidature,
             'job_offer' => $job,
             'form' => $form,

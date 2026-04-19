@@ -1,0 +1,220 @@
+﻿{% extends 'recruitment/employer/base.html.twig' %}
+
+{% block employer_title %}Mes offres · Skilora{% endblock %}
+{% block page_title %}Mes offres{% endblock %}
+
+{% block employer_content %}
+{% set filter = filter|default('all') %}
+{% set search = search|default(null) %}
+{% set work_type = work_type|default('all') %}
+{% set work_fr = {
+    'ONSITE': 'Sur site',
+    'REMOTE': 'Télétravail',
+    'PART_TIME': 'Temps partiel',
+    'FREELANCE': 'Freelance',
+    'INTERNSHIP': 'Stage',
+} %}
+
+<style>
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.skeleton-shimmer{background:linear-gradient(90deg,hsl(var(--muted)) 25%,hsl(var(--muted)/.5) 50%,hsl(var(--muted)) 75%);background-size:800px 100%;animation:shimmer 1.5s infinite linear}
+@keyframes cardFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+
+<div class="mx-auto max-w-5xl space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+            <p class="text-3xl font-semibold tracking-tight text-foreground">
+                {{ total }} offre{{ total == 1 ? '' : 's' }}
+            </p>
+            <p class="mt-1 text-sm text-muted-foreground">
+                {% if employer_sees_all_offers|default(false) %}
+                    Vue globale des offres (toutes entreprises).
+                {% elseif company %}
+                    {{ company.name }}
+                {% else %}
+                    Aucune entreprise liée
+                {% endif %}
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            {% if company %}
+                <a href="{{ path('app_employer_job_offer_new') }}"
+                   class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+                    Nouvelle offre
+                </a>
+            {% endif %}
+            {% set refresh_q = {filter: filter}|merge(search ? {q: search} : {})|merge(work_type != 'all' ? {work_type: work_type} : {}) %}
+            <a href="{{ path('app_employer_job_offer_index', refresh_q) }}"
+               class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-5 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                Actualiser
+            </a>
+        </div>
+    </div>
+
+    {% if company is null and not (employer_sees_all_offers|default(false)) %}
+        <div class="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+            Liez une entreprise à votre compte pour gérer des offres.
+        </div>
+    {% else %}
+        <div class="flex flex-col gap-4 border-b border-border pb-4">
+            <div class="flex flex-wrap gap-2">
+                {% set tabs = {
+                    'all': 'Toutes',
+                    'open': 'Ouvertes',
+                    'draft': 'Brouillons',
+                    'closed': 'Fermées',
+                } %}
+                {% for key, label in tabs %}
+                    {% set qparams = {filter: key}|merge(search ? {q: search} : {})|merge(work_type != 'all' ? {work_type: work_type} : {}) %}
+                    <a href="{{ path('app_employer_job_offer_index', qparams) }}"
+                       class="rounded-md border px-4 py-2 text-sm font-medium transition
+                              {{ filter == key ? 'border-foreground bg-accent text-accent-foreground' : 'border-transparent text-muted-foreground hover:text-foreground' }}">
+                        {{ label }}
+                    </a>
+                {% endfor %}
+            </div>
+            <form method="get" action="{{ path('app_employer_job_offer_index') }}" class="flex max-w-3xl flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <input type="hidden" name="filter" value="{{ filter }}"/>
+                <input type="search" name="q" value="{{ search|default('') }}" placeholder="Titre, lieu, entreprise…"
+                       class="h-10 min-w-[200px] flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"/>
+                <select name="work_type" class="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground">
+                    <option value="all" {{ work_type == 'all' ? 'selected' }}>Tous les modes</option>
+                    {% for wt_key, wt_label in work_fr %}
+                        <option value="{{ wt_key }}" {{ work_type == wt_key ? 'selected' }}>{{ wt_label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="h-10 shrink-0 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90">Rechercher</button>
+                <a href="{{ path('app_employer_job_offer_index', {filter: filter}) }}" class="h-10 shrink-0 content-center text-sm text-muted-foreground hover:text-foreground">Réinitialiser</a>
+            </form>
+        </div>
+
+        {% if job_offers is empty %}
+            <div class="rounded-xl border border-border bg-muted/30 py-16 text-center text-muted-foreground">
+                <p class="text-sm">Aucune offre pour ce filtre.</p>
+                <a href="{{ path('app_employer_job_offer_new') }}" class="mt-4 inline-block text-sm font-medium text-primary underline">Créer une offre</a>
+            </div>
+        {% else %}
+            {# ====== Infinite-scroll wrapper ====== #}
+            <div x-data="jobOfferScroll()" x-ref="scrollRoot">
+                <ul class="space-y-4" x-ref="list">
+                    {# Server-rendered first page (instant paint) #}
+                    {% for job in job_offers %}
+                        {{ include('recruitment/employer/job_offer/_card.html.twig', {job: job}) }}
+                    {% endfor %}
+
+                    {% if has_more %}
+                        {# Sentinel — triggers next page load when it enters viewport #}
+                        <li x-intersect:enter.margin.200px="loadMore()" x-ref="sentinel" x-show="hasMore" class="h-1"></li>
+                    {% endif %}
+                </ul>
+
+                {# Loading skeleton (shown while fetching next batch) #}
+                <template x-if="loading">
+                    <div class="mt-4 space-y-4">
+                        <template x-for="i in 3" :key="i">
+                            <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+                                <div class="space-y-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="skeleton-shimmer h-5 w-48 rounded-md"></div>
+                                        <div class="skeleton-shimmer h-5 w-16 rounded-full"></div>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <div class="skeleton-shimmer h-3.5 w-24 rounded"></div>
+                                        <div class="skeleton-shimmer h-3.5 w-20 rounded"></div>
+                                        <div class="skeleton-shimmer h-3.5 w-28 rounded"></div>
+                                        <div class="skeleton-shimmer h-3.5 w-20 rounded"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                {# End-of-list indicator #}
+                <div x-show="!hasMore && !loading" class="py-8 text-center text-sm text-muted-foreground">
+                    Toutes les offres sont affichées.
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('jobOfferScroll', () => ({
+        page: {{ page }},
+        hasMore: {{ has_more ? 'true' : 'false' }},
+        loading: false,
+        _inflight: false,
+
+        buildUrl(page) {
+            const params = new URLSearchParams();
+            params.set('page', page);
+            {% if filter != 'all' %}params.set('filter', {{ filter|json_encode|raw }});{% endif %}
+            {% if search %}params.set('q', {{ search|json_encode|raw }});{% endif %}
+            {% if work_type != 'all' %}params.set('work_type', {{ work_type|json_encode|raw }});{% endif %}
+            return '{{ path('app_employer_job_offer_page') }}?' + params.toString();
+        },
+
+        async loadMore() {
+            if (this._inflight || !this.hasMore) return;
+            this._inflight = true;
+            this.loading = true;
+
+            try {
+                const nextPage = this.page + 1;
+                const resp = await fetch(this.buildUrl(nextPage), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!resp.ok) throw new Error(resp.status);
+
+                const html = await resp.text();
+                const list = this.$refs.list;
+
+                // Remove current sentinel before appending
+                const oldSentinel = this.$refs.sentinel;
+                if (oldSentinel) oldSentinel.remove();
+
+                // Parse and append new cards
+                const tmp = document.createElement('template');
+                tmp.innerHTML = html.trim();
+                const fragment = tmp.content;
+
+                // Check if there's a next sentinel in the response
+                const newSentinel = fragment.querySelector('[data-sentinel]');
+                if (newSentinel) {
+                    this.hasMore = true;
+                    newSentinel.remove(); // We'll re-add Alpine sentinel
+                } else {
+                    this.hasMore = false;
+                }
+
+                list.appendChild(fragment);
+
+                // Re-init Lucide icons in newly appended cards
+                if (window.lucide) lucide.createIcons();
+
+                // Re-add Alpine-managed sentinel if more pages
+                if (this.hasMore) {
+                    const s = document.createElement('li');
+                    s.setAttribute('x-intersect:enter.margin.200px', 'loadMore()');
+                    s.setAttribute('x-ref', 'sentinel');
+                    s.setAttribute('x-show', 'hasMore');
+                    s.className = 'h-1';
+                    list.appendChild(s);
+                }
+
+                this.page = nextPage;
+            } catch (e) {
+                console.error('Failed to load offers page:', e);
+                this.hasMore = false;
+            } finally {
+                this.loading = false;
+                this._inflight = false;
+            }
+        }
+    }));
+});
+</script>
+{% endblock %}

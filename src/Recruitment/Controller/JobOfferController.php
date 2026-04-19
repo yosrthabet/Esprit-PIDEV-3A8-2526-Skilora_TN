@@ -12,6 +12,7 @@ use App\Recruitment\Service\EmployerContext;
 use App\Recruitment\WorkTypeCatalog;
 use App\Recruitment\Service\JobOfferManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -25,6 +26,8 @@ final class JobOfferController extends AbstractController
         private readonly bool $employerSeesAllCandidatures = false,
     ) {
     }
+
+    private const PER_PAGE = 20;
 
     #[Route('/job-offers', name: 'job_offer_index', methods: ['GET'])]
     public function index(
@@ -46,6 +49,79 @@ final class JobOfferController extends AbstractController
             $ownedCompanies,
         ))));
 
+        [$filter, $search, $workType, $workTypeParam] = $this->extractFilters($request);
+
+        $jobs = [];
+        $total = 0;
+        if ($this->employerSeesAllCandidatures) {
+            $jobs = $jobOfferRepository->findAllForEmployerViewFiltered($filter, $search, $workType, 1, self::PER_PAGE);
+            $total = $jobOfferRepository->countAllForEmployerViewFiltered($filter, $search, $workType);
+        } elseif ($ownedCompanyIds !== [] || $ownedNamesLower !== []) {
+            $jobs = $jobOfferRepository->findAccessibleToEmployerFiltered($ownedCompanyIds, $ownedNamesLower, $filter, $search, $workType, 1, self::PER_PAGE);
+            $total = $jobOfferRepository->countAccessibleToEmployerFiltered($ownedCompanyIds, $ownedNamesLower, $filter, $search, $workType);
+        }
+
+        return $this->render('recruitment/employer/job_offer/index.html.twig', [
+            'company' => $company ?? ($ownedCompanies[0] ?? null),
+            'job_offers' => $jobs,
+            'total' => $total,
+            'page' => 1,
+            'per_page' => self::PER_PAGE,
+            'has_more' => $total > self::PER_PAGE,
+            'filter' => $filter,
+            'search' => $search,
+            'work_type' => $workTypeParam === '' ? 'all' : ($workType ?? 'all'),
+            'employer_sees_all_offers' => $this->employerSeesAllCandidatures,
+        ]);
+    }
+
+    #[Route('/job-offers/page', name: 'job_offer_page', methods: ['GET'])]
+    public function page(
+        Request $request,
+        EmployerContext $employerContext,
+        CompanyRepository $companyRepository,
+        JobOfferRepository $jobOfferRepository,
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $uid = $user->getId();
+        $ownedCompanyIds = $uid !== null ? $companyRepository->findCompanyIdsByOwnerUserId((int) $uid) : [];
+        /** @var list<Company> $ownedCompanies */
+        $ownedCompanies = $companyRepository->findBy(['owner' => $user], ['id' => 'ASC']);
+        $ownedNamesLower = array_values(array_unique(array_filter(array_map(
+            static fn (Company $c) => mb_strtolower(trim((string) $c->getName())),
+            $ownedCompanies,
+        ))));
+
+        [$filter, $search, $workType] = $this->extractFilters($request);
+
+        $page = max(1, (int) $request->query->get('page', 1));
+
+        $jobs = [];
+        $total = 0;
+        if ($this->employerSeesAllCandidatures) {
+            $jobs = $jobOfferRepository->findAllForEmployerViewFiltered($filter, $search, $workType, $page, self::PER_PAGE);
+            $total = $jobOfferRepository->countAllForEmployerViewFiltered($filter, $search, $workType);
+        } elseif ($ownedCompanyIds !== [] || $ownedNamesLower !== []) {
+            $jobs = $jobOfferRepository->findAccessibleToEmployerFiltered($ownedCompanyIds, $ownedNamesLower, $filter, $search, $workType, $page, self::PER_PAGE);
+            $total = $jobOfferRepository->countAccessibleToEmployerFiltered($ownedCompanyIds, $ownedNamesLower, $filter, $search, $workType);
+        }
+
+        $hasMore = ($page * self::PER_PAGE) < $total;
+
+        return $this->render('recruitment/employer/job_offer/_cards.html.twig', [
+            'job_offers' => $jobs,
+            'has_more' => $hasMore,
+            'page' => $page,
+        ]);
+    }
+
+    /**
+     * @return array{string, ?string, ?string, string}
+     */
+    private function extractFilters(Request $request): array
+    {
         $filter = (string) $request->query->get('filter', 'all');
         if (!\in_array($filter, ['all', 'open', 'closed', 'draft'], true)) {
             $filter = 'all';
@@ -55,36 +131,11 @@ final class JobOfferController extends AbstractController
         if ($search === '') {
             $search = null;
         }
-
         $workTypeParam = $request->query->get('work_type');
         $workTypeParam = \is_string($workTypeParam) ? trim($workTypeParam) : '';
         $workType = WorkTypeCatalog::normalizeFilter($workTypeParam);
 
-        $jobs = [];
-        if ($this->employerSeesAllCandidatures) {
-            $jobs = $jobOfferRepository->findAllForEmployerViewFiltered(
-                $filter,
-                $search,
-                $workType,
-            );
-        } elseif ($ownedCompanyIds !== [] || $ownedNamesLower !== []) {
-            $jobs = $jobOfferRepository->findAccessibleToEmployerFiltered(
-                $ownedCompanyIds,
-                $ownedNamesLower,
-                $filter,
-                $search,
-                $workType,
-            );
-        }
-
-        return $this->render('recrutement/employer/job_offer/index.html.twig', [
-            'company' => $company ?? ($ownedCompanies[0] ?? null),
-            'job_offers' => $jobs,
-            'filter' => $filter,
-            'search' => $search,
-            'work_type' => $workTypeParam === '' ? 'all' : ($workType ?? 'all'),
-            'employer_sees_all_offers' => $this->employerSeesAllCandidatures,
-        ]);
+        return [$filter, $search, $workType, $workTypeParam];
     }
 
     #[Route('/job-offers/new', name: 'job_offer_new', methods: ['GET', 'POST'])]
@@ -114,7 +165,7 @@ final class JobOfferController extends AbstractController
             return $this->redirectToRoute('app_employer_job_offer_show', ['id' => $jobOffer->getId()]);
         }
 
-        return $this->render('recrutement/employer/job_offer/form.html.twig', [
+        return $this->render('recruitment/employer/job_offer/form.html.twig', [
             'company' => $company,
             'form' => $form,
             'title' => 'Publier une offre',
@@ -136,7 +187,7 @@ final class JobOfferController extends AbstractController
             $jobOfferManager->assertEmployerOwns($user, $jobOffer);
         }
 
-        return $this->render('recrutement/employer/job_offer/show.html.twig', [
+        return $this->render('recruitment/employer/job_offer/show.html.twig', [
             'job_offer' => $jobOffer,
             'can_manage' => $canManage,
             'global_view_readonly' => !$canManage && $this->employerSeesAllCandidatures,
@@ -163,7 +214,7 @@ final class JobOfferController extends AbstractController
             return $this->redirectToRoute('app_employer_job_offer_show', ['id' => $jobOffer->getId()]);
         }
 
-        return $this->render('recrutement/employer/job_offer/form.html.twig', [
+        return $this->render('recruitment/employer/job_offer/form.html.twig', [
             'company' => $jobOffer->getCompany(),
             'form' => $form,
             'title' => 'Modifier l’offre',

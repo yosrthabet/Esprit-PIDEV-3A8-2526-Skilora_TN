@@ -1,0 +1,7 @@
+{# AJAX fragment — batch of job cards for infinite scroll #}
+{% for job in job_offers %}
+    {{ include('recruitment/employer/job_offer/_card.html.twig', {job: job}) }}
+{% endfor %}
+{% if has_more|default(false) %}
+    <li data-sentinel data-page="{{ page + 1 }}" class="h-1"></li>
+{% endif %}

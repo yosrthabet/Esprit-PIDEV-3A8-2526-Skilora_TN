@@ -1,4 +1,4 @@
-﻿{% extends 'recrutement/employer/base.html.twig' %}
+﻿{% extends 'recruitment/employer/base.html.twig' %}
 
 {% block employer_title %}Candidatures reçues · Skilora{% endblock %}
 {% block page_title %}Candidatures{% endblock %}
@@ -96,7 +96,7 @@
                                 <span class="text-sm text-foreground">{{ c.statusLabelFr }}</span>
                             </td>
                             <td class="px-4 py-4 align-top text-right">
-                                {{ include('recrutement/employer/applications/_status_actions.html.twig', {
+                                {{ include('recruitment/employer/applications/_status_actions.html.twig', {
                                     application: c,
                                     return_to: 'list',
                                     show_profile_link: true,

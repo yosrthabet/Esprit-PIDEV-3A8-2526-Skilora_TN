@@ -1,4 +1,4 @@
-﻿{% extends 'recrutement/employer/base.html.twig' %}
+﻿{% extends 'recruitment/employer/base.html.twig' %}
 
 {% block employer_title %}Tableau de bord · Skilora{% endblock %}
 {% block page_title %}Tableau de bord{% endblock %}
@@ -185,6 +185,6 @@
 {% block javascripts %}
     {{ parent() }}
     {% if upcoming_interviews is not empty %}
-        {% include 'recrutement/components/_interview_countdown_script.html.twig' %}
+        {% include 'recruitment/components/_interview_countdown_script.html.twig' %}
     {% endif %}
 {% endblock %}

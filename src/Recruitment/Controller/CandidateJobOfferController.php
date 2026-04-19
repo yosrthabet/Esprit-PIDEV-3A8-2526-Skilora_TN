@@ -69,7 +69,7 @@ final class CandidateJobOfferController extends AbstractController
             $workTypeForTemplate = $workType ?? 'all';
         }
 
-        return $this->render('recrutement/candidate/job_offer/index.html.twig', [
+        return $this->render('recruitment/candidate/job_offer/index.html.twig', [
             'job_offers' => $combinedOffers,
             'is_employer' => \in_array('ROLE_EMPLOYER', $user->getRoles(), true),
             'search' => $search,
@@ -147,7 +147,7 @@ final class CandidateJobOfferController extends AbstractController
             }
         }
 
-        return $this->render('recrutement/candidate/job_offer/show.html.twig', [
+        return $this->render('recruitment/candidate/job_offer/show.html.twig', [
             'job_offer' => $jobOffer,
             'is_employer' => $isEmployer,
             'has_applied' => $hasApplied,
@@ -203,7 +203,7 @@ final class CandidateJobOfferController extends AbstractController
             if (!$cv instanceof UploadedFile && !($useGeneratedCv && $hasSavedGeneratedCv)) {
                 $this->addFlash('error', 'Veuillez joindre votre CV ou utiliser le CV généré.');
 
-                return $this->render('recrutement/candidate/job_offer/apply.html.twig', [
+                return $this->render('recruitment/candidate/job_offer/apply.html.twig', [
                     'job_offer' => $jobOffer,
                     'form' => $form,
                     'has_saved_generated_cv' => $hasSavedGeneratedCv,
@@ -256,7 +256,7 @@ final class CandidateJobOfferController extends AbstractController
             }
         }
 
-        return $this->render('recrutement/candidate/job_offer/apply.html.twig', [
+        return $this->render('recruitment/candidate/job_offer/apply.html.twig', [
             'job_offer' => $jobOffer,
             'form' => $form,
             'has_saved_generated_cv' => $hasSavedGeneratedCv,

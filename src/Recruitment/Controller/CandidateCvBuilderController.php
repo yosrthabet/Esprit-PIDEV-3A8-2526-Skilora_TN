@@ -49,7 +49,7 @@ final class CandidateCvBuilderController extends AbstractController
             if (!\is_array($payload)) {
                 $form->addError(new FormError('Données de formulaire invalides.'));
 
-                return $this->render('recrutement/cv/builder.html.twig', ['form' => $form]);
+                return $this->render('recruitment/cv/builder.html.twig', ['form' => $form]);
             }
 
             $data = $this->buildCvDataFromPayload($payload, $form->get('photo')->getData());
@@ -71,7 +71,7 @@ final class CandidateCvBuilderController extends AbstractController
             }
         }
 
-        return $this->render('recrutement/cv/builder.html.twig', [
+        return $this->render('recruitment/cv/builder.html.twig', [
             'form' => $form,
             'saved_cv_relpath' => $request->getSession()->get('candidate_generated_cv_relpath'),
         ]);

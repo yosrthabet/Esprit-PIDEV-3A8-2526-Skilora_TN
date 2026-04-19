@@ -34,6 +34,8 @@ class JobOfferRepository extends ServiceEntityRepository
         string $filter = 'all',
         ?string $search = null,
         ?string $workType = null,
+        int $page = 1,
+        int $perPage = 20,
     ): array {
         $qb = $this->createEmployerScopedQueryBuilder($ownedCompanyIds, $ownedCompanyNamesLower);
         if ($qb === null) {
@@ -64,7 +66,49 @@ class JobOfferRepository extends ServiceEntityRepository
             ))->setParameter('q', $q);
         }
 
-        return $qb->getQuery()->getResult();
+        return $qb->setFirstResult(($page - 1) * $perPage)
+            ->setMaxResults($perPage)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countAccessibleToEmployerFiltered(
+        array $ownedCompanyIds,
+        array $ownedCompanyNamesLower,
+        string $filter = 'all',
+        ?string $search = null,
+        ?string $workType = null,
+    ): int {
+        $qb = $this->createEmployerScopedQueryBuilder($ownedCompanyIds, $ownedCompanyNamesLower);
+        if ($qb === null) {
+            return 0;
+        }
+
+        $qb->select('COUNT(j.id)');
+
+        if ($filter === 'open') {
+            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'open');
+        } elseif ($filter === 'closed') {
+            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'closed');
+        } elseif ($filter === 'draft') {
+            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'draft');
+        }
+
+        if ($workType !== null && $workType !== '') {
+            $qb->andWhere('j.workType = :wt')->setParameter('wt', $workType);
+        }
+
+        if ($search !== null && $search !== '') {
+            $q = '%'.mb_strtolower($search).'%';
+            $qb->andWhere($qb->expr()->orX(
+                'LOWER(j.title) LIKE :q',
+                'LOWER(COALESCE(j.location, \'\')) LIKE :q',
+                'LOWER(COALESCE(j.companyName, \'\')) LIKE :q',
+                'LOWER(COALESCE(c.name, \'\')) LIKE :q',
+            ))->setParameter('q', $q);
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
     /**
@@ -229,6 +273,8 @@ class JobOfferRepository extends ServiceEntityRepository
         string $filter = 'all',
         ?string $search = null,
         ?string $workType = null,
+        int $page = 1,
+        int $perPage = 20,
     ): array {
         $qb = $this->createQueryBuilder('j')
             ->leftJoin('j.company', 'c')
@@ -259,7 +305,45 @@ class JobOfferRepository extends ServiceEntityRepository
             ))->setParameter('q', $q);
         }
 
-        return $qb->getQuery()->getResult();
+        return $qb->setFirstResult(($page - 1) * $perPage)
+            ->setMaxResults($perPage)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countAllForEmployerViewFiltered(
+        string $filter = 'all',
+        ?string $search = null,
+        ?string $workType = null,
+    ): int {
+        $qb = $this->createQueryBuilder('j')
+            ->select('COUNT(j.id)')
+            ->leftJoin('j.company', 'c');
+
+        if ($filter === 'open') {
+            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'open');
+        } elseif ($filter === 'closed') {
+            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'closed');
+        } elseif ($filter === 'draft') {
+            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'draft');
+        }
+
+        if ($workType !== null && $workType !== '') {
+            $qb->andWhere('UPPER(TRIM(COALESCE(j.workType, \'\'))) = :wt')
+                ->setParameter('wt', strtoupper($workType));
+        }
+
+        if ($search !== null && $search !== '') {
+            $q = '%'.mb_strtolower($search).'%';
+            $qb->andWhere($qb->expr()->orX(
+                'LOWER(j.title) LIKE :q',
+                'LOWER(COALESCE(j.location, \'\')) LIKE :q',
+                'LOWER(COALESCE(j.companyName, \'\')) LIKE :q',
+                'LOWER(COALESCE(c.name, \'\')) LIKE :q',
+            ))->setParameter('q', $q);
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
     /**

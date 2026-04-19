@@ -58,7 +58,7 @@ final class EmployerApplicationsController extends AbstractController
             }
         }
 
-        return $this->render('recrutement/employer/applications/index.html.twig', [
+        return $this->render('recruitment/employer/applications/index.html.twig', [
             'company' => $company,
             'candidatures' => $candidatures,
             'applications_total' => $total,
@@ -85,7 +85,7 @@ final class EmployerApplicationsController extends AbstractController
             throw $this->createNotFoundException('Candidature introuvable.');
         }
 
-        return $this->render('recrutement/employer/applications/profile.html.twig', [
+        return $this->render('recruitment/employer/applications/profile.html.twig', [
             'candidature' => $candidature,
         ]);
     }
@@ -144,7 +144,7 @@ final class EmployerApplicationsController extends AbstractController
             throw $this->createNotFoundException('Aucune lettre de motivation pour cette candidature.');
         }
 
-        return $this->render('recrutement/employer/applications/cover_letter.html.twig', [
+        return $this->render('recruitment/employer/applications/cover_letter.html.twig', [
             'candidature' => $candidature,
             'cover_letter' => $letter,
         ]);

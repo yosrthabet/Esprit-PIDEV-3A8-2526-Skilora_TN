@@ -21,8 +21,9 @@ final class ApplicationCandidateJoinParts
             if (!$c->createSchemaManager()->tablesExist(['applications'])) {
                 return false;
             }
-            foreach ($c->createSchemaManager()->listTableColumns('applications') as $col) {
-                self::$applicationsColumnNames[strtolower($col->getName())] = true;
+            $rows = $c->fetchAllAssociative('SHOW COLUMNS FROM applications');
+            foreach ($rows as $row) {
+                self::$applicationsColumnNames[strtolower($row['Field'])] = true;
             }
         }
 
