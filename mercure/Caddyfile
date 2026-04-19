@@ -1,0 +1,17 @@
+{
+	# Disable HTTPS for dev
+	auto_https off
+	http_port 3000
+}
+
+:3000
+
+route {
+	mercure {
+		publisher_jwt {env.MERCURE_PUBLISHER_JWT_KEY} hs256
+		subscriber_jwt {env.MERCURE_SUBSCRIBER_JWT_KEY} hs256
+		anonymous
+		cors_origins http://127.0.0.1:8000
+	}
+	respond "Mercure Hub" 200
+}

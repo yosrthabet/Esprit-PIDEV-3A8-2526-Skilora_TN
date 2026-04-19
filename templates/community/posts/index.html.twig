@@ -7,37 +7,137 @@
     {% include 'community/_subnav.html.twig' %}
 
     <div>
-        <h2 class="text-2xl font-semibold tracking-tight">Fil d’actualité</h2>
-        <p class="mt-1 text-sm text-muted-foreground">Créez une publication (texte + lien d’image optionnel). Vous pouvez modifier ou supprimer uniquement vos propres posts.</p>
+        <h2 class="text-2xl font-semibold tracking-tight">Fil d'actualité</h2>
+        <p class="mt-1 text-sm text-muted-foreground">Créez une publication (texte + lien d'image optionnel). Vous pouvez modifier ou supprimer uniquement vos propres posts.</p>
     </div>
 
-    {# Composer #}
-    <div class="rounded-xl border border-border bg-card p-4 shadow-sm">
-        <div class="flex gap-3">
+    {# Composer – Facebook style #}
+    {% for message in app.flashes('moderation') %}
+    <div class="rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4 shadow-sm">
+        <div class="flex items-start gap-3">
+            <svg class="h-6 w-6 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+            </svg>
+            <div>
+                <p class="font-semibold text-red-700 dark:text-red-400">Publication bloquée par la modération AI</p>
+                <p class="text-sm text-red-600 dark:text-red-300 mt-1">{{ message }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="rounded-xl border border-border bg-card shadow-sm" x-data="{ expanded: false, showEmoji: false, imagePreview: null, imageName: null }">
+        {{ form_start(form, { attr: { class: '', enctype: 'multipart/form-data' } }) }}
+        {{ form_errors(form) }}
+
+        {# Top tabs #}
+        <div class="flex items-center border-b border-border px-3 py-2 gap-1">
+            <button type="button" class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-muted transition-colors">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
+                Créer un post
+            </button>
+            <button type="button" class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+                Photo / Vidéo
+            </button>
+        </div>
+
+        {# Input area with avatar #}
+        <div class="flex items-start gap-3 px-4 pt-4 pb-2">
             {% set u = app.user %}
             {% set initials = u.fullName|default(u.username)|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
             {{ include('components/avatar.html.twig', { initials: initials, size: 'default' }) }}
-            <div class="min-w-0 flex-1 space-y-3">
-                {{ form_start(form, { attr: { class: 'space-y-3' } }) }}
-                    {{ form_errors(form) }}
-                    <div class="space-y-1">
-                        {{ form_label(form.content, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                        {{ form_widget(form.content) }}
-                        {{ form_errors(form.content) }}
-                        <p class="text-xs text-muted-foreground">1 à 5000 caractères.</p>
-                    </div>
-                    <div class="space-y-1">
-                        {{ form_label(form.imageUrl, null, { label_attr: { class: 'text-sm font-medium' } }) }}
-                        {{ form_widget(form.imageUrl) }}
-                        {{ form_errors(form.imageUrl) }}
-                        <p class="text-xs text-muted-foreground">URL https recommandée, laisser vide si pas d’image.</p>
-                    </div>
-                    <div class="flex justify-end">
-                        {{ include('components/button.html.twig', { label: 'Publier', type: 'submit', variant: 'default' }) }}
-                    </div>
-                {{ form_end(form) }}
+            <div class="flex-1 relative">
+                {{ form_widget(form.content, { id: 'post-content-field', attr: {
+                    class: 'w-full resize-none rounded-full bg-muted/50 border-0 px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 focus:bg-background transition-all',
+                    placeholder: 'Quoi de neuf, ' ~ u.fullName|default(u.username)|split(' ')|first ~ ' ?',
+                    rows: '1',
+                    '@focus': 'expanded = true',
+                    '@input': '$el.style.height = \"auto\"; $el.style.height = $el.scrollHeight + \"px\"'
+                } }) }}
             </div>
         </div>
+
+        {# Expanded area (hidden by default, shown on focus) #}
+        <div x-show="expanded" x-collapse x-cloak class="px-4 pb-2 space-y-3">
+            {{ form_errors(form.content) }}
+
+            {# Emoji picker #}
+            <div class="relative">
+                <button type="button" @click="showEmoji = !showEmoji"
+                        class="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
+                        title="Emoji">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z"/></svg>
+                </button>
+                <div x-show="showEmoji" @click.away="showEmoji = false" x-transition
+                     class="absolute bottom-8 left-0 z-20 grid grid-cols-8 gap-1 rounded-lg border border-border bg-popover p-2 shadow-lg">
+                    {% for emoji in ['😀','😂','😍','🥳','👍','👏','🔥','💡','🎉','❤️','👋','🤔','😎','🙌','✨','💪','🚀','🎯','💼','📚','🏆','💬','📣','🤝','😊','🙏','⭐','💎','🌟','📝','🎓','💰'] %}
+                    <button type="button" class="rounded p-1 text-lg hover:bg-muted transition-colors"
+                            @click="const f = document.getElementById('post-content-field'); f.value += '{{ emoji }}'; f.focus(); showEmoji = false">{{ emoji }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# Image preview + Post Type #}
+            <div x-show="imagePreview" x-transition class="relative">
+                <div class="relative rounded-lg overflow-hidden border border-border bg-muted/30">
+                    <img :src="imagePreview" class="w-full max-h-64 object-cover" alt="Aperçu">
+                    <button type="button"
+                            @click="imagePreview = null; imageName = null; document.getElementById('{{ form.imageFile.vars.id }}').value = ''"
+                            class="absolute top-2 right-2 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80 transition-colors">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <p x-show="imageName" class="text-xs text-muted-foreground mt-1" x-text="imageName"></p>
+            </div>
+
+            {# Hidden file input #}
+            <div class="hidden">
+                {{ form_widget(form.imageFile, { id: form.imageFile.vars.id, attr: {
+                    '@change': "const file = $event.target.files[0]; if(file) { imagePreview = URL.createObjectURL(file); imageName = file.name; expanded = true; }"
+                } }) }}
+            </div>
+            {{ form_errors(form.imageFile) }}
+
+            <div class="space-y-1">
+                {{ form_widget(form.postType, { attr: {
+                    class: 'w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:outline-none'
+                } }) }}
+                {{ form_errors(form.postType) }}
+            </div>
+        </div>
+
+        {# Bottom action bar – always visible #}
+        <div class="flex items-center justify-between border-t border-border px-4 py-2.5">
+            <div class="flex items-center gap-1">
+                {# Photos/Videos #}
+                <button type="button" @click="document.getElementById('{{ form.imageFile.vars.id }}').click()"
+                        class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
+                    <svg class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+                    Photos
+                </button>
+
+                {# Feeling/Emoji #}
+                <button type="button" @click="expanded = true; showEmoji = !showEmoji"
+                        class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
+                    <svg class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z"/></svg>
+                    Humeur
+                </button>
+
+                {# More options #}
+                <button type="button" @click="expanded = !expanded"
+                        class="flex items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors">
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                </button>
+            </div>
+
+            {# Publish button #}
+            <button type="submit"
+                    class="rounded-lg bg-primary px-5 py-1.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors">
+                Publier
+            </button>
+        </div>
+        {{ form_end(form) }}
     </div>
 
     {# Feed #}
@@ -45,7 +145,7 @@
         {% for post in posts %}
             {% set author = post.author %}
             {% set a_initials = author.fullName|default(author.username)|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
-            <article class="overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <article id="post-{{ post.id }}" class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
                 <div class="flex gap-3 p-4">
                     {% if author.photoUrl %}
                         {{ include('components/avatar.html.twig', { src: author.photoUrl, alt: author.fullName, initials: a_initials, size: 'default' }) }}
@@ -55,7 +155,13 @@
                     <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-start justify-between gap-2">
                             <div>
-                                <p class="font-semibold leading-none">{{ author.fullName|default(author.username) }}</p>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-semibold leading-none">{{ author.fullName|default(author.username) }}</p>
+                                    {# Post type badge #}
+                                    {% if post.postType != 'STATUS' %}
+                                        <span class="inline-flex items-center rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-medium text-accent-foreground">{{ post.postTypeLabel }}</span>
+                                    {% endif %}
+                                </div>
                                 <p class="mt-1 text-xs text-muted-foreground">
                                     @{{ author.username }} · {{ post.createdAt|date('d/m/Y H:i') }}
                                     {% if post.updatedAt > post.createdAt %}
@@ -77,12 +183,101 @@
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="mt-3 whitespace-pre-wrap text-sm">{{ post.content }}</div>
+                        <div class="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{{ post.content }}</div>
                         {% if post.imageUrl %}
                             <div class="mt-3 overflow-hidden rounded-lg border border-border bg-muted/30">
                                 <img src="{{ post.imageUrl }}" alt="" class="max-h-80 w-full object-cover" loading="lazy" referrerpolicy="no-referrer">
                             </div>
                         {% endif %}
+
+                        {# Action bar: like, comment, share, translate #}
+                        <div class="mt-3 flex items-center gap-4 border-t border-border pt-3">
+                            {# Like toggle #}
+                            <button type="button"
+                                    class="btn-like inline-flex items-center gap-1.5 text-xs font-medium transition-colors {{ post.isLikedBy(app.user) ? 'text-red-500' : 'text-muted-foreground hover:text-red-500' }}"
+                                    data-post-id="{{ post.id }}"
+                                    data-url="{{ path('app_community_post_like', { id: post.id }) }}"
+                                    data-token="{{ csrf_token('like_post_' ~ post.id) }}">
+                                <svg class="h-4 w-4" fill="{{ post.isLikedBy(app.user) ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+                                <span class="like-count">{{ post.likesCount }}</span>
+                            </button>
+
+                            {# Comment toggle #}
+                            <button type="button"
+                                    class="btn-toggle-comments inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                                    data-post-id="{{ post.id }}">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+                                <span class="comment-count">{{ post.commentsCount }}</span>
+                            </button>
+
+                            {# Share (copy link) #}
+                            <button type="button"
+                                    class="btn-share inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                                    data-post-id="{{ post.id }}"
+                                    title="Copier le lien">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/></svg>
+                                <span class="share-count">{{ post.sharesCount }}</span>
+                            </button>
+
+                            {# Translate #}
+                            <div class="relative ml-auto" x-data="{ open: false }">
+                                <button type="button" @click="open = !open"
+                                        class="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 01-3.827-5.802"/></svg>
+                                    Traduire
+                                </button>
+                                <div x-show="open" @click.away="open = false" x-transition
+                                     class="absolute right-0 bottom-full z-50 mb-1 w-36 rounded-lg border border-border bg-popover p-1 shadow-md">
+                                    {% for lang, label in { fr: 'Français', en: 'English', ar: 'العربية', es: 'Español', de: 'Deutsch' } %}
+                                        <button type="button"
+                                                class="btn-translate w-full rounded-md px-3 py-1.5 text-left text-xs hover:bg-muted"
+                                                data-post-id="{{ post.id }}"
+                                                data-lang="{{ lang }}"
+                                                data-url="{{ path('app_community_post_translate', { id: post.id }) }}"
+                                                @click="open = false">
+                                            {{ label }}
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        {# Translation result #}
+                        <div class="translation-result hidden mt-2 rounded-lg border border-border bg-muted/30 p-3 text-sm" data-post-id="{{ post.id }}"></div>
+
+                        {# Comments section (hidden by default) #}
+                        <div class="comments-section hidden mt-3 space-y-3 border-t border-border pt-3" data-post-id="{{ post.id }}">
+                            {# Existing comments #}
+                            {% if post.comments|length > 0 %}
+                                <div class="space-y-2">
+                                    {% for comment in post.comments %}
+                                        <div class="flex gap-2 text-sm" data-comment-id="{{ comment.id }}">
+                                            <div class="shrink-0 font-semibold text-primary">{{ comment.author.fullName|default(comment.author.username) }}</div>
+                                            <div class="min-w-0 flex-1">
+                                                <span>{{ comment.content }}</span>
+                                                <span class="ml-2 text-xs text-muted-foreground">{{ comment.createdAt|date('d/m H:i') }}</span>
+                                            </div>
+                                            {% if comment.author.id == app.user.id %}
+                                                <form method="post" action="{{ path('app_community_comment_delete', { id: comment.id }) }}" class="inline">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ comment.id) }}">
+                                                    <button type="submit" class="text-xs text-destructive/60 hover:text-destructive">&times;</button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            {# New comment form #}
+                            <form class="comment-form flex gap-2" data-post-id="{{ post.id }}" data-url="{{ path('app_community_post_comment', { id: post.id }) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('comment_post_' ~ post.id) }}">
+                                <input type="text" name="content" placeholder="Écrire un commentaire…" required maxlength="2000"
+                                       class="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+                                <button type="submit" class="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+                                    Envoyer
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </article>
@@ -93,4 +288,135 @@
         {% endfor %}
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Like toggle
+    document.querySelectorAll('.btn-like').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+            try {
+                const formData = new FormData();
+                formData.append('_token', btn.dataset.token);
+                const resp = await fetch(btn.dataset.url, { method: 'POST', body: formData });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (data.likesCount !== undefined) {
+                    btn.querySelector('.like-count').textContent = data.likesCount;
+                    const svg = btn.querySelector('svg');
+                    if (data.liked) {
+                        btn.classList.remove('text-muted-foreground');
+                        btn.classList.add('text-red-500');
+                        svg.setAttribute('fill', 'currentColor');
+                    } else {
+                        btn.classList.add('text-muted-foreground');
+                        btn.classList.remove('text-red-500');
+                        svg.setAttribute('fill', 'none');
+                    }
+                }
+            } catch (e) { console.error('Like error:', e); }
+        });
+    });
+
+    // Toggle comments
+    document.querySelectorAll('.btn-toggle-comments').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const postId = btn.dataset.postId;
+            const section = document.querySelector('.comments-section[data-post-id="' + postId + '"]');
+            section.classList.toggle('hidden');
+        });
+    });
+
+    // Submit comment via AJAX
+    document.querySelectorAll('.comment-form').forEach(function(form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '...';
+            try {
+                const formData = new FormData(form);
+                const resp = await fetch(form.dataset.url, { method: 'POST', body: formData });
+                const data = await resp.json();
+                if (data.success) {
+                    const input = form.querySelector('input[name="content"]');
+                    input.value = '';
+                    const postId = form.dataset.postId;
+                    const countEl = document.querySelector('.btn-toggle-comments[data-post-id="' + postId + '"] .comment-count');
+                    if (countEl) countEl.textContent = data.commentsCount;
+                    const commentHtml = '<div class="flex gap-2 text-sm"><div class="shrink-0 font-semibold text-primary">' + data.comment.author + '</div><div class="min-w-0 flex-1"><span>' + data.comment.content.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span><span class="ml-2 text-xs text-muted-foreground">' + data.comment.createdAt + '</span></div></div>';
+                    form.insertAdjacentHTML('beforebegin', commentHtml);
+                }
+            } catch (e) { console.error('Comment error:', e); }
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Envoyer';
+        });
+    });
+
+    // Translate — use event delegation to avoid Alpine.js @click conflicts
+    document.addEventListener('click', async function(e) {
+        const btn = e.target.closest('.btn-translate');
+        if (!btn) return;
+        const postId = btn.dataset.postId;
+        const lang = btn.dataset.lang;
+        const url = btn.dataset.url;
+        if (!postId || !lang || !url) { console.error('Translate: missing data attributes', btn.dataset); return; }
+        const resultDiv = document.querySelector('.translation-result[data-post-id="' + postId + '"]');
+        if (!resultDiv) { console.error('Translate: no result div for post', postId); return; }
+        resultDiv.innerHTML = '<span class="text-muted-foreground italic">Traduction en cours…</span>';
+        resultDiv.classList.remove('hidden');
+        try {
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+                body: 'lang=' + encodeURIComponent(lang),
+            });
+            if (!resp.ok) {
+                let errMsg = 'Erreur ' + resp.status;
+                try { const errData = await resp.json(); errMsg = errData.error || errMsg; if (errData.trace) errMsg += ' (' + errData.trace + ')'; } catch(x) {}
+                console.error('Translate HTTP error', resp.status, errMsg);
+                resultDiv.innerHTML = '<span class="text-red-500 text-xs">' + errMsg + '</span>';
+                return;
+            }
+            const data = await resp.json();
+            if (data.translatedContent) {
+                resultDiv.innerHTML = '<div class="flex items-center justify-between"><span>' + data.translatedContent.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span><button type="button" class="btn-revert-translate ml-2 text-xs text-primary hover:underline" data-post-id="' + postId + '">Original</button></div>';
+            } else if (data.error) {
+                resultDiv.innerHTML = '<span class="text-red-500 text-xs">' + data.error + '</span>';
+            } else {
+                resultDiv.innerHTML = '<span class="text-muted-foreground text-xs">Aucune traduction disponible</span>';
+            }
+        } catch (err) {
+            console.error('Translate error:', err);
+            resultDiv.innerHTML = '<span class="text-red-500 text-xs">Erreur réseau</span>';
+        }
+    });
+
+    // Revert translation — also use delegation
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-revert-translate');
+        if (!btn) return;
+        const postId = btn.dataset.postId;
+        const resultDiv = document.querySelector('.translation-result[data-post-id="' + postId + '"]');
+        if (resultDiv) { resultDiv.classList.add('hidden'); resultDiv.innerHTML = ''; }
+    });
+
+    // Share (copy link)
+    document.querySelectorAll('.btn-share').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const url = window.location.origin + '/community/posts#post-' + btn.dataset.postId;
+            navigator.clipboard.writeText(url).then(function() {
+                const countEl = btn.querySelector('.share-count');
+                if (countEl) {
+                    const orig = countEl.textContent;
+                    countEl.textContent = '✓';
+                    setTimeout(function() { countEl.textContent = orig; }, 1500);
+                }
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

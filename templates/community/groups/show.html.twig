@@ -1,0 +1,110 @@
+{% extends 'layouts/app.html.twig' %}
+
+{% block page_title %}{{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-3xl space-y-6 animate-fade-in pb-8">
+    {% include 'community/_subnav.html.twig' %}
+
+    <div class="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        {% if group.coverImageUrl %}
+            <div class="aspect-[21/9] overflow-hidden bg-muted">
+                <img src="{{ group.coverImageUrl }}" alt="" class="h-full w-full object-cover" loading="lazy" referrerpolicy="no-referrer">
+            </div>
+        {% endif %}
+
+        <div class="p-6 sm:p-8">
+            <div class="flex flex-wrap items-center gap-2">
+                {% if group.category %}
+                    <span class="inline-block rounded-full bg-purple-500/10 px-2.5 py-0.5 text-xs font-medium text-purple-600">{{ group.category }}</span>
+                {% endif %}
+                {% if not group.isPublic %}
+                    <span class="inline-block rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-600">Privé</span>
+                {% endif %}
+            </div>
+
+            <h1 class="mt-3 text-3xl font-bold tracking-tight">{{ group.name }}</h1>
+
+            <div class="mt-2 flex items-center gap-3 text-sm text-muted-foreground">
+                <span>Créé par <strong class="text-foreground">{{ group.creator.fullName|default(group.creator.username) }}</strong></span>
+                <span>·</span>
+                <span>{{ group.memberCount }} membre{{ group.memberCount != 1 ? 's' : '' }}</span>
+                <span>·</span>
+                <span>{{ group.createdAt|date('d/m/Y') }}</span>
+            </div>
+
+            {% if group.description %}
+                <p class="mt-4 whitespace-pre-wrap text-sm leading-relaxed">{{ group.description }}</p>
+            {% endif %}
+
+            {# Actions #}
+            <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+                {% if group.creator.id == app.user.id %}
+                    <a href="{{ path('app_community_group_edit', { id: group.id }) }}"
+                       class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted/50">
+                        Modifier
+                    </a>
+                    <form method="post" action="{{ path('app_community_group_delete', { id: group.id }) }}"
+                          onsubmit="return confirm('Supprimer ce groupe et tous ses membres ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete_group_' ~ group.id) }}">
+                        <button type="submit" class="inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/5">
+                            Supprimer
+                        </button>
+                    </form>
+                {% endif %}
+
+                {% if membership %}
+                    {% if group.creator.id != app.user.id %}
+                        <form method="post" action="{{ path('app_community_group_leave', { id: group.id }) }}" class="ml-auto">
+                            <input type="hidden" name="_token" value="{{ csrf_token('leave_group_' ~ group.id) }}">
+                            <button type="submit" class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted/50">
+                                Quitter le groupe
+                            </button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <form method="post" action="{{ path('app_community_group_join', { id: group.id }) }}" class="ml-auto">
+                        <input type="hidden" name="_token" value="{{ csrf_token('join_group_' ~ group.id) }}">
+                        <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            Rejoindre
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Members list #}
+    {% if members|length > 0 %}
+        <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <h3 class="text-lg font-semibold tracking-tight">Membres ({{ members|length }})</h3>
+            <div class="mt-4 divide-y divide-border">
+                {% for gm in members %}
+                    {% set member_user = gm.user %}
+                    {% set m_initials = member_user.fullName|default(member_user.username)|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
+                    <div class="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                        {% if member_user.photoUrl %}
+                            {{ include('components/avatar.html.twig', { src: member_user.photoUrl, alt: member_user.fullName, initials: m_initials, size: 'sm' }) }}
+                        {% else %}
+                            {{ include('components/avatar.html.twig', { initials: m_initials, size: 'sm' }) }}
+                        {% endif %}
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium">{{ member_user.fullName|default(member_user.username) }}</p>
+                            <p class="text-xs text-muted-foreground">@{{ member_user.username }}</p>
+                        </div>
+                        <span class="rounded-full {{ gm.role == 'ADMIN' ? 'bg-primary/10 text-primary' : (gm.role == 'MODERATOR' ? 'bg-yellow-500/10 text-yellow-600' : 'bg-muted text-muted-foreground') }} px-2.5 py-0.5 text-xs font-medium">
+                            {{ gm.role == 'ADMIN' ? 'Admin' : (gm.role == 'MODERATOR' ? 'Modérateur' : 'Membre') }}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <a href="{{ path('app_community_groups') }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        Retour aux groupes
+    </a>
+</div>
+{% endblock %}

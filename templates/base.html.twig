@@ -8,6 +8,7 @@
 
         {% block stylesheets %}
         <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ date().timestamp }}">
+        <style>[x-cloak]{display:none!important}</style>
         {% endblock %}
 
         {% block head %}{% endblock %}
