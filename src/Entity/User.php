@@ -6,12 +6,15 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfigurationInterface;
+use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFactorInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -65,6 +68,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(name: 'reset_token_expires_at', type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $resetTokenExpiresAt = null;
+
+    // --- OAuth ---
+
+    #[ORM\Column(name: 'google_id', length: 255, nullable: true)]
+    private ?string $googleId = null;
+
+    #[ORM\Column(name: 'github_id', length: 255, nullable: true)]
+    private ?string $githubId = null;
+
+    // --- 2FA TOTP ---
+
+    #[ORM\Column(name: 'totp_secret', length: 255, nullable: true)]
+    private ?string $totpSecret = null;
 
     /** @var Collection<int, CommunityPost> */
     #[ORM\OneToMany(targetEntity: CommunityPost::class, mappedBy: 'author', orphanRemoval: true)]
@@ -262,4 +278,47 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return strtoupper($this->role ?? '') === 'ADMIN';
     }
+
+    // --- OAuth ---
+
+    public function getGoogleId(): ?string { return $this->googleId; }
+    public function setGoogleId(?string $googleId): static { $this->googleId = $googleId; return $this; }
+
+    public function getGithubId(): ?string { return $this->githubId; }
+    public function setGithubId(?string $githubId): static { $this->githubId = $githubId; return $this; }
+
+    // --- 2FA TOTP (Scheb interface) ---
+
+    public function isTotpAuthenticationEnabled(): bool
+    {
+        return $this->twoFactorEnabled && $this->totpSecret !== null;
+    }
+
+    public function getTotpAuthenticationUsername(): string
+    {
+        return $this->getUserIdentifier();
+    }
+
+    public function getTotpAuthenticationConfiguration(): ?TotpConfigurationInterface
+    {
+        if (!$this->totpSecret) {
+            return null;
+        }
+
+        return new TotpConfiguration($this->totpSecret, TotpConfiguration::ALGORITHM_SHA1, 30, 6);
+    }
+
+    public function getTotpSecret(): ?string { return $this->totpSecret; }
+    public function setTotpSecret(?string $totpSecret): static { $this->totpSecret = $totpSecret; return $this; }
+
+    // --- 2FA state ---
+
+    public function isTwoFactorEnabled(): bool { return $this->twoFactorEnabled; }
+    public function setTwoFactorEnabled(bool $enabled): static { $this->twoFactorEnabled = $enabled; return $this; }
+
+    public function getTwoFactorEnabledAt(): ?\DateTimeImmutable { return $this->twoFactorEnabledAt; }
+    public function setTwoFactorEnabledAt(?\DateTimeImmutable $at): static { $this->twoFactorEnabledAt = $at; return $this; }
+
+    public function getTwoFactorLockedUntil(): ?\DateTimeImmutable { return $this->twoFactorLockedUntil; }
+    public function setTwoFactorLockedUntil(?\DateTimeImmutable $until): static { $this->twoFactorLockedUntil = $until; return $this; }
 }

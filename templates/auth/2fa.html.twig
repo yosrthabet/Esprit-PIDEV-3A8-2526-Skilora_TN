@@ -1,0 +1,56 @@
+{% extends 'layouts/auth.html.twig' %}
+
+{% block page_title %}Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[380px]">
+
+    <div class="flex flex-col space-y-2 text-center">
+        <i data-lucide="shield-check" class="mx-auto h-10 w-10 text-primary"></i>
+        <h1 class="text-2xl font-semibold tracking-tight">Two-Factor Verification</h1>
+        <p class="text-sm text-muted-foreground">Enter the 6-digit code from your authenticator app.</p>
+    </div>
+
+    {% if authenticationError %}
+        <div class="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            {{ authenticationError|trans(authenticationErrorData, 'SchebTwoFactorBundle') }}
+        </div>
+    {% endif %}
+
+    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <form action="{{ checkPathUrl ? checkPathUrl : path(checkPathRoute) }}" method="post" class="space-y-4">
+
+            <div class="space-y-2">
+                <label for="totp_code" class="text-sm font-medium leading-none">Authentication Code</label>
+                <input type="text" id="totp_code" name="_auth_code"
+                       maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"
+                       autofocus required
+                       class="flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-2 text-lg tracking-[0.4em] text-center ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                       placeholder="000000">
+            </div>
+
+            {% if isCsrfProtectionEnabled %}
+                <input type="hidden" name="{{ csrfParameterName }}" value="{{ csrf_token(csrfTokenId) }}">
+            {% endif %}
+
+            {% if displayTrustedOption %}
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="trusted" name="{{ trustedParameterName }}"
+                           class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
+                    <label for="trusted" class="text-sm text-muted-foreground">Trust this device for 30 days</label>
+                </div>
+            {% endif %}
+
+            <button type="submit"
+                    class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
+                Verify
+            </button>
+        </form>
+    </div>
+
+    <a href="{{ logoutPath }}" class="text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <i data-lucide="arrow-left" class="inline h-3.5 w-3.5 mr-1"></i>
+        Cancel and sign out
+    </a>
+</div>
+{% endblock %}

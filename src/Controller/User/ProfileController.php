@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\User;
 
 use App\Entity\Experience;
 use App\Entity\PortfolioItem;
@@ -49,7 +49,7 @@ class ProfileController extends AbstractController
         $experiences = $this->experienceRepository->findBy(['profile' => $profile], ['startDate' => 'DESC']);
         $portfolioItems = $this->portfolioItemRepository->findBy(['user' => $user], ['createdDate' => 'DESC']);
 
-        return $this->render('profile/index.html.twig', [
+        return $this->render('user/profile/index.html.twig', [
             'profile' => $profile,
             'skills' => $skills,
             'experiences' => $experiences,
@@ -252,7 +252,7 @@ class ProfileController extends AbstractController
         $experiences = $profile ? $this->experienceRepository->findBy(['profile' => $profile], ['startDate' => 'DESC']) : [];
         $portfolioItems = $this->portfolioItemRepository->findBy(['user' => $user], ['createdDate' => 'DESC']);
 
-        return $this->render('profile/public.html.twig', [
+        return $this->render('user/profile/public.html.twig', [
             'profileUser' => $user,
             'profile' => $profile,
             'skills' => $skills,

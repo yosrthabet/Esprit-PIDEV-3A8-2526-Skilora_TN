@@ -1,0 +1,19 @@
+knpu_oauth2_client:
+    clients:
+        google:
+            type: google
+            client_id: '%env(OAUTH_GOOGLE_CLIENT_ID)%'
+            client_secret: '%env(OAUTH_GOOGLE_CLIENT_SECRET)%'
+            redirect_route: app_oauth_check
+            redirect_params:
+                provider: google
+            access_type: online
+            hosted_domain: ~
+
+        github:
+            type: github
+            client_id: '%env(OAUTH_GITHUB_CLIENT_ID)%'
+            client_secret: '%env(OAUTH_GITHUB_CLIENT_SECRET)%'
+            redirect_route: app_oauth_check
+            redirect_params:
+                provider: github

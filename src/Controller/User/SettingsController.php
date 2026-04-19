@@ -1,9 +1,15 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\User;
 
+use App\Entity\LoginHistory;
+use App\Entity\UserSession;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\Writer\PngWriter;
+use Scheb\TwoFactorBundle\Security\TwoFactor\Provider\Totp\TotpAuthenticatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,10 +21,49 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class SettingsController extends AbstractController
 {
     #[Route('/settings', name: 'app_settings', methods: ['GET'])]
-    public function index(): Response
-    {
-        return $this->render('settings/index.html.twig', [
-            'user' => $this->getUser(),
+    public function index(
+        Request $request,
+        EntityManagerInterface $em,
+        TotpAuthenticatorInterface $totpAuthenticator,
+    ): Response {
+        $user = $this->getUser();
+
+        // Login history (last 10)
+        $loginHistory = $em->getRepository(LoginHistory::class)->findBy(
+            ['user' => $user],
+            ['createdAt' => 'DESC'],
+            10
+        );
+
+        // Active sessions
+        $sessions = $em->getRepository(UserSession::class)->findBy(
+            ['user' => $user],
+            ['lastActivity' => 'DESC']
+        );
+
+        // 2FA QR content (if setting up)
+        $totpQrContent = null;
+        $totpQrDataUri = null;
+        if ($user->getTotpSecret() && !$user->isTotpAuthenticationEnabled()) {
+            $totpQrContent = $totpAuthenticator->getQRContent($user);
+            $result = Builder::create()
+                ->writer(new PngWriter())
+                ->data($totpQrContent)
+                ->encoding(new Encoding('UTF-8'))
+                ->size(200)
+                ->margin(10)
+                ->build();
+            $totpQrDataUri = $result->getDataUri();
+        }
+
+        return $this->render('user/settings/index.html.twig', [
+            'user' => $user,
+            'tab' => $request->query->get('tab', 'account'),
+            'login_history' => $loginHistory,
+            'sessions' => $sessions,
+            'totp_qr_content' => $totpQrContent,
+            'totp_qr_data_uri' => $totpQrDataUri,
+            'current_session_id' => $request->getSession()->getId(),
         ]);
     }
 
