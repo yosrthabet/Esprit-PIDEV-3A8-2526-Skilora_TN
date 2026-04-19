@@ -26,4 +26,9 @@
 /public/uploads/
 # Mercure dev binary
 /mercure/
+# Local scripts & scratch files
+push_modules*.sh
+page.html
+/python/
+*.bak
 ###< project ###

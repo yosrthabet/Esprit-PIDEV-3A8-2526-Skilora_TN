@@ -25,8 +25,10 @@
         "symfony/flex": "^2.10",
         "symfony/form": "6.4.*",
         "symfony/framework-bundle": "6.4.*",
+        "symfony/google-mailer": "6.4.*",
         "symfony/http-client": "6.4.*",
         "symfony/mailer": "6.4.*",
+        "symfony/mercure-bundle": "^0.4.2",
         "symfony/runtime": "6.4.*",
         "symfony/security-bundle": "6.4.*",
         "symfony/translation": "6.4.*",
@@ -34,7 +36,9 @@
         "symfony/ux-chartjs": "^2.35",
         "symfony/ux-twig-component": "^2.34",
         "symfony/validator": "6.4.*",
-        "symfony/yaml": "6.4.*"
+        "symfony/yaml": "6.4.*",
+        "tattali/calendar-bundle": "*",
+        "web-auth/webauthn-lib": "*"
     },
     "config": {
         "allow-plugins": {
