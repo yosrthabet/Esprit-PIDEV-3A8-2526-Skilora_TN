@@ -225,7 +225,7 @@ final class BaseUrlResolver
             return false;
         }
 
-        return !\in_array(strtolower($host), ['localhost', '127.0.0.1', '0.0.0.0'], true);
+        return true;
     }
 
     private function isLanIp(string $ip): bool

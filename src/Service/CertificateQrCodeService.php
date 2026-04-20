@@ -87,8 +87,8 @@ final class CertificateQrCodeService
         }
 
         if (\in_array(strtolower($host), ['localhost', '127.0.0.1', '0.0.0.0'], true)) {
-            throw new \RuntimeException(sprintf(
-                'Generated certificate verification URL host "%s" is not reachable from mobile devices. Configure APP_URL with a LAN IP or public domain.',
+            $this->logger->warning(sprintf(
+                'Certificate QR URL uses "%s" — not scannable from other devices. Set APP_URL to a LAN IP or public domain for production.',
                 $host
             ));
         }

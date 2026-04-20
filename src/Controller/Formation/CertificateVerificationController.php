@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Formation;
 
+use App\Certificate\Branding\CertificateBrandingAssetResolverInterface;
 use App\Repository\CertificateRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,8 +13,11 @@ use Symfony\Component\Routing\Attribute\Route;
 final class CertificateVerificationController extends AbstractController
 {
     #[Route('/certificate/verify/{verificationId}', name: 'certificate_verify', methods: ['GET'])]
-    public function verify(string $verificationId, CertificateRepository $certificateRepository): Response
-    {
+    public function verify(
+        string $verificationId,
+        CertificateRepository $certificateRepository,
+        CertificateBrandingAssetResolverInterface $brandingAssetResolver,
+    ): Response {
         $certificate = $certificateRepository->findOneByVerificationId($verificationId);
 
         if (null === $certificate) {
@@ -24,6 +28,7 @@ final class CertificateVerificationController extends AbstractController
 
         return $this->render('certificate/verify.html.twig', [
             'certificate' => $certificate,
+            'formationDirectorSignatureDataUri' => $brandingAssetResolver->getDirectorSignatureDataUri($certificate),
         ]);
     }
 }

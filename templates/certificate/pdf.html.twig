@@ -10,15 +10,38 @@
             padding: 0;
             background: #020617;
         }
+        .cert-img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .qr-footer {
+            text-align: center;
+            padding: 6pt 0 10pt;
+            background: #020617;
+        }
+        .qr-footer img {
+            width: 80pt;
+            height: 80pt;
+        }
+        .qr-scan {
+            font-size: 8pt;
+            color: #9ca3af;
+            margin: 4pt 0 2pt;
+        }
+        .qr-url {
+            font-size: 7pt;
+            color: #818cf8;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
-    {% include 'certificate/_certificate_pdf_dompdf.html.twig' with {
-        certificate: certificate,
-        verificationUrl: verificationUrl,
-        verificationHost: verificationHost,
-        qrCodeDataUri: qrCodeDataUri,
-        formationDirectorSignatureDataUri: formationDirectorSignatureDataUri|default(null),
-    } %}
+    <img class="cert-img" src="{{ certImageDataUri }}" />
+    <div class="qr-footer">
+        <img src="{{ qrCodeDataUri }}" alt="QR" />
+        <div class="qr-scan">Scan to verify</div>
+        <div class="qr-url">{{ verificationUrl }}</div>
+    </div>
 </body>
 </html>

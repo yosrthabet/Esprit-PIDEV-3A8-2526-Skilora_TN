@@ -35,21 +35,33 @@ final class CertificatePdfGenerator
         }
         $qrCodeDataUri = $this->certificateQrCodeService->generateDataUri($certificate, 160);
         $formationDirectorSignatureDataUri = $this->certificateBrandingAssetResolver->getDirectorSignatureDataUri($certificate);
-        // Dompdf embeds PNG images via GD (imagecreatefrompng). Without ext-gd, skip the signature image so PDF still generates.
         if (!\extension_loaded('gd')) {
             $formationDirectorSignatureDataUri = null;
         }
+
+        // Render the SVG certificate from Twig
+        $svgHtml = $this->twig->render('certificate/_certificate_core.html.twig', [
+            'certificate' => $certificate,
+            'qrCodeDataUri' => null,
+            'formationDirectorSignatureDataUri' => $formationDirectorSignatureDataUri,
+            'forPdf' => true,
+        ]);
+
+        // Convert SVG → PNG via rsvg-convert for pixel-perfect rendering
+        $pngDataUri = $this->convertSvgToPngDataUri($svgHtml);
+
         $html = $this->twig->render('certificate/pdf.html.twig', [
             'certificate' => $certificate,
             'verificationUrl' => $verificationUrl,
             'verificationHost' => $verificationHost,
             'qrCodeDataUri' => $qrCodeDataUri,
+            'certImageDataUri' => $pngDataUri,
             'formationDirectorSignatureDataUri' => $formationDirectorSignatureDataUri,
         ]);
 
         $options = new Options();
         $options->setIsHtml5ParserEnabled(true);
-        $options->setIsRemoteEnabled(false);
+        $options->setIsRemoteEnabled(true);
         $options->setDefaultFont('DejaVu Sans');
 
         $dompdf = new Dompdf($options);
@@ -58,5 +70,34 @@ final class CertificatePdfGenerator
         $dompdf->render();
 
         return $dompdf->output();
+    }
+
+    private function convertSvgToPngDataUri(string $svgContent): string
+    {
+        $tmpSvg = tempnam(sys_get_temp_dir(), 'cert_') . '.svg';
+        $tmpPng = tempnam(sys_get_temp_dir(), 'cert_') . '.png';
+
+        try {
+            file_put_contents($tmpSvg, $svgContent);
+
+            // rsvg-convert at 2x resolution (2246×1588) for crisp A4 landscape output
+            $cmd = sprintf(
+                'rsvg-convert -w 2246 -h 1588 -o %s %s 2>&1',
+                escapeshellarg($tmpPng),
+                escapeshellarg($tmpSvg)
+            );
+            exec($cmd, $output, $exitCode);
+
+            if (0 !== $exitCode || !file_exists($tmpPng) || 0 === filesize($tmpPng)) {
+                throw new \RuntimeException('rsvg-convert failed: ' . implode("\n", $output));
+            }
+
+            $pngData = file_get_contents($tmpPng);
+
+            return 'data:image/png;base64,' . base64_encode($pngData);
+        } finally {
+            @unlink($tmpSvg);
+            @unlink($tmpPng);
+        }
     }
 }
