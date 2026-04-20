@@ -263,4 +263,8 @@
 
 {# Global edit/update dialog — available on all dashboard pages #}
 {{ include('components/edit-dialog.html.twig') }}
+
+{# Hand Gesture Control — floating widget on all authenticated pages #}
+<script src="{{ asset('js/hand-gesture.js') }}"></script>
+{{ include('components/hand-gesture.html.twig') }}
 {% endblock %}

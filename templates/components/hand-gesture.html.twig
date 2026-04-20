@@ -1,0 +1,561 @@
+{# ─── Hand Gesture Control ─────────────────────────────────────────────
+     ZERO Alpine dependency — pure HTML + vanilla JS
+     Include via: {{ include('components/hand-gesture.html.twig') }}
+   ──────────────────────────────────────────────────────────────────────── #}
+
+{# ═══ Virtual Cursor (hidden by default) ═══ #}
+<div id="gesture-cursor" style="display:none; position:fixed; top:0; left:0; z-index:99999; pointer-events:none;">
+    <div style="width:12px; height:12px; border-radius:50%; background:#3b82f6; box-shadow:0 0 12px rgba(59,130,246,0.5); transform:translate(-50%,-50%);"></div>
+    <div style="position:absolute; top:50%; left:50%; width:32px; height:32px; border-radius:50%; border:2px solid rgba(59,130,246,0.3); transform:translate(-50%,-50%);"></div>
+</div>
+
+{# ═══ Floating Widget Container ═══ #}
+<div id="gesture-widget" style="position:fixed; bottom:112px; right:24px; z-index:9999; display:flex; flex-direction:column; align-items:flex-end; gap:12px;">
+
+    {# ── Camera Error Toast (hidden) ── #}
+    <div id="gesture-error" style="display:none; width:288px; padding:12px; border-radius:8px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.1); backdrop-filter:blur(8px); box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+        <div style="display:flex; align-items:flex-start; gap:8px;">
+            <span style="color:#ef4444; font-size:16px; flex-shrink:0;">⚠️</span>
+            <p id="gesture-error-text" style="font-size:12px; color:#ef4444; margin:0;"></p>
+        </div>
+        <button onclick="document.getElementById('gesture-error').style.display='none'" style="margin-top:8px; font-size:11px; color:rgba(239,68,68,0.7); background:none; border:none; cursor:pointer; text-decoration:underline;">Dismiss</button>
+    </div>
+
+    {# ── Gesture Indicator Badge (hidden until active + hand detected) ── #}
+    <div id="gesture-badge" style="display:none !important; align-items:center; gap:8px; border-radius:9999px; border:1px solid var(--border, #e2e8f0); background:rgba(255,255,255,0.9); padding:6px 12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); backdrop-filter:blur(8px);">
+        <span id="gesture-badge-icon" style="font-size:18px;">—</span>
+        <span id="gesture-badge-label" style="font-size:12px; font-weight:500;">Gesture Control</span>
+    </div>
+
+    {# ── Camera Preview (hidden) ── #}
+    <div id="gesture-preview" style="display:none; position:relative; overflow:hidden; border-radius:12px; border:2px solid rgba(59,130,246,0.3); box-shadow:0 8px 32px rgba(0,0,0,0.2); width:200px; height:150px;">
+        <video id="gesture-video" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1);" autoplay playsinline muted></video>
+        <canvas id="gesture-canvas" style="position:absolute; inset:0; width:100%; height:100%; transform:scaleX(-1);"></canvas>
+        <div style="position:absolute; top:8px; left:8px; display:flex; align-items:center; gap:6px;">
+            <div id="gesture-status-dot" style="width:8px; height:8px; border-radius:50%; background:#f59e0b; animation:gesture-pulse 2s infinite;"></div>
+            <span id="gesture-status-text" style="font-size:10px; font-weight:500; color:white; text-shadow:0 1px 3px rgba(0,0,0,0.5);">Show hand…</span>
+        </div>
+        <button onclick="document.getElementById('gesture-preview').style.display='none'" style="position:absolute; top:6px; right:6px; border-radius:50%; background:rgba(0,0,0,0.4); border:none; padding:4px; color:rgba(255,255,255,0.7); cursor:pointer; line-height:0;">
+            <svg style="width:12px; height:12px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+    </div>
+
+    {# ── Standby Detection Indicator — tiny, appears only during palm hold ── #}
+    <div id="gesture-standby-indicator" style="display:none; position:relative; width:32px; height:32px;">
+        <svg style="width:32px; height:32px; transform:rotate(-90deg);" viewBox="0 0 32 32">
+            <circle cx="16" cy="16" r="13" fill="rgba(34,197,94,0.15)" stroke="rgba(34,197,94,0.3)" stroke-width="2"/>
+            <circle id="gesture-standby-ring" cx="16" cy="16" r="13" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" style="transition:stroke-dashoffset 0.15s ease;"/>
+        </svg>
+        <span style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:14px;">✋</span>
+    </div>
+
+    {# ── Active Status Button — HIDDEN by default, fades in when gestures activate ── #}
+    <button id="gesture-toggle-btn"
+            onclick="window.SkiloraGestureUI.toggle()"
+            style="position:relative; display:flex; align-items:center; justify-content:center; width:56px; height:56px; border-radius:50%; background:#22c55e; color:white; border:none; cursor:pointer; box-shadow:0 4px 20px rgba(34,197,94,0.4), 0 0 0 3px rgba(34,197,94,0.2); transition:all 0.4s ease; opacity:0; pointer-events:none; transform:scale(0.5);"
+            onmouseenter="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 28px rgba(34,197,94,0.5), 0 0 0 4px rgba(34,197,94,0.3)'"
+            onmouseleave="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 20px rgba(34,197,94,0.4), 0 0 0 3px rgba(34,197,94,0.2)'"
+            title="Gesture control active — hold ✊ fist for 1.5s to deactivate">
+        {# Hand icon #}
+        <svg id="gesture-icon-hand" style="width:24px; height:24px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.05 4.575a1.575 1.575 0 10-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 013.15 0v1.5m-3.15 0l.075 5.925m3.075-7.425a1.575 1.575 0 10-3.15 0v4.5m3.15-4.5a1.575 1.575 0 013.15 0v3.075M13.2 9.15v1.275a1.575 1.575 0 003.15 0V7.5m0 0a1.575 1.575 0 013.15 0v5.325a7.125 7.125 0 01-7.125 7.125H9.7a4.875 4.875 0 01-4.55-3.12 4.994 4.994 0 01-.237-.975l-.467-5.14a1.232 1.232 0 012.403-.516l.694 2.606"/>
+        </svg>
+        {# Loading spinner (hidden) #}
+        <svg id="gesture-icon-spinner" style="display:none; width:24px; height:24px; animation:gesture-spin 1s linear infinite;" fill="none" viewBox="0 0 24 24">
+            <circle style="opacity:0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path style="opacity:0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        {# Pulse ring (hidden) #}
+        <span id="gesture-pulse" style="display:none; position:absolute; inset:0; border-radius:50%; background:rgba(59,130,246,0.2); animation:gesture-ping 1.5s cubic-bezier(0,0,0.2,1) infinite; pointer-events:none;"></span>
+
+    </button>
+</div>
+
+{# ═══ Tutorial Modal (hidden) ═══ #}
+<div id="gesture-tutorial" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); justify-content:center; align-items:center;">
+    <div style="width:100%; max-width:480px; margin:16px; border-radius:16px; border:1px solid var(--border, #e2e8f0); background:var(--card, #fff); box-shadow:0 16px 48px rgba(0,0,0,0.2); overflow:hidden;" onclick="event.stopPropagation()">
+        <div style="background:linear-gradient(to right, rgba(59,130,246,0.1), rgba(168,85,247,0.1), rgba(6,182,212,0.1)); padding:24px; text-align:center;">
+            <div style="font-size:40px; margin-bottom:8px;">🖐️</div>
+            <h2 style="font-size:20px; font-weight:700; margin:0;">Hand Gesture Control</h2>
+            <p style="font-size:13px; color:#64748b; margin-top:4px;">Control Skilora with your hands — no mouse needed</p>
+        </div>
+        <div style="padding:24px; max-height:50vh; overflow-y:auto;" id="gesture-tutorial-list"></div>
+        <div style="border-top:1px solid var(--border, #e2e8f0); padding:16px; display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.02);">
+            <p style="font-size:12px; color:#64748b; margin:0;">Position your hand 30–60 cm from camera</p>
+            <button onclick="window.SkiloraGestureUI.dismissTutorial()" style="display:inline-flex; height:36px; align-items:center; padding:0 16px; border-radius:6px; background:#3b82f6; color:white; border:none; font-size:13px; font-weight:500; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                Got it, let's go!
+            </button>
+        </div>
+    </div>
+</div>
+
+{# ═══ Keyframe animations ═══ #}
+<style>
+@keyframes gesture-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes gesture-ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+@keyframes gesture-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes gesture-fadein { from { opacity:0; transform:scale(0.5); } to { opacity:1; transform:scale(1); } }
+@keyframes gesture-fadeout { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.5); } }
+</style>
+
+{# ═══ UI Controller — pure vanilla JS, zero frameworks ═══ #}
+<script>
+(function() {
+    var GESTURES = [
+        { icon: '\u261D\uFE0F', name: 'Point',      desc: 'Extend index finger to move the virtual cursor' },
+        { icon: '\uD83E\uDD0F', name: 'Pinch',      desc: 'Touch thumb to index finger to click' },
+        { icon: '\u270B',       name: 'Open Palm',   desc: 'Show open palm for 1.5s to ACTIVATE (also scrolls when active)' },
+        { icon: '\u270A',       name: 'Fist',        desc: 'Hold fist for 1.5s to DEACTIVATE (also pauses when active)' },
+        { icon: '\u270C\uFE0F', name: 'Peace Sign',  desc: 'V-sign to enter zoom mode' },
+        { icon: '\uD83D\uDC4D', name: 'Thumbs Up',   desc: 'Confirm the current action' },
+        { icon: '\uD83D\uDC4B', name: 'Swipe',       desc: 'Fast palm swipe to navigate back/forward' }
+    ];
+
+    /* Build tutorial list HTML */
+    var list = document.getElementById('gesture-tutorial-list');
+    if (list) {
+        var h = '';
+        for (var i = 0; i < GESTURES.length; i++) {
+            var g = GESTURES[i];
+            h += '<div style="display:flex;align-items:flex-start;gap:16px;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:rgba(0,0,0,0.02);margin-bottom:8px;">'
+               + '<span style="font-size:24px;flex-shrink:0;">' + g.icon + '</span>'
+               + '<div><p style="font-size:13px;font-weight:600;margin:0;">' + g.name + '</p>'
+               + '<p style="font-size:12px;color:#64748b;margin:2px 0 0;">' + g.desc + '</p></div></div>';
+        }
+        list.innerHTML = h;
+    }
+
+    var active = false;
+    var loading = false;
+    var standbyActive = false;
+    var fistDeactivateStart = 0;
+    var FIST_HOLD_TIME = 1500;
+
+    /* ── Standby indicator (tiny ring that appears during palm hold) ── */
+    function updateStandbyIndicator(progress) {
+        var indicator = document.getElementById('gesture-standby-indicator');
+        var ring      = document.getElementById('gesture-standby-ring');
+        if (!indicator || !ring) return;
+        var circumference = 2 * Math.PI * 13; /* r=13 */
+        if (progress <= 0) {
+            indicator.style.display = 'none';
+            return;
+        }
+        indicator.style.display = 'block';
+        ring.style.strokeDasharray = circumference;
+        ring.style.strokeDashoffset = circumference * (1 - progress);
+    }
+
+    /* Show/hide the active button with animation */
+    function showActiveButton() {
+        var btn = document.getElementById('gesture-toggle-btn');
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+        btn.style.transform = 'scale(1)';
+        btn.style.animation = 'gesture-fadein 0.4s ease forwards';
+    }
+    function hideActiveButton() {
+        var btn = document.getElementById('gesture-toggle-btn');
+        btn.style.animation = 'gesture-fadeout 0.3s ease forwards';
+        setTimeout(function() {
+            btn.style.opacity = '0';
+            btn.style.pointerEvents = 'none';
+            btn.style.transform = 'scale(0.5)';
+            btn.style.animation = '';
+        }, 300);
+    }
+
+    window.SkiloraGestureUI = {
+        toggle: function() {
+            if (loading) return;
+            if (active) this.deactivate();
+            else this.activate();
+        },
+
+        activate: async function() {
+            loading = true;
+            var handIcon = document.getElementById('gesture-icon-hand');
+            var spinner  = document.getElementById('gesture-icon-spinner');
+            var errBox   = document.getElementById('gesture-error');
+            var errText  = document.getElementById('gesture-error-text');
+
+            handIcon.style.display = 'none';
+            spinner.style.display  = 'block';
+
+            try {
+                /* Stop standalone standby camera FIRST to free the hardware */
+                if (standbyActive && window.SkiloraGesture) {
+                    SkiloraGesture.stopStandby();
+                    standbyActive = false;
+                    /* Small delay to let camera hardware fully release */
+                    await new Promise(function(r) { setTimeout(r, 300); });
+                }
+
+                /* Read sensitivity from settings */
+                var sensitivity = 5;
+                try {
+                    var saved = JSON.parse(localStorage.getItem('skilora_gesture_prefs') || '{}');
+                    if (saved.sensitivity) sensitivity = saved.sensitivity;
+                } catch(_) {}
+
+                var mult = sensitivity / 5;
+                if (window.SkiloraGesture) {
+                    SkiloraGesture.config.cursorSmoothing = 0.15 + (sensitivity / 10) * 0.3;
+                    SkiloraGesture.config.scrollSpeed     = 12 * mult;
+                    SkiloraGesture.config.pinchThreshold  = 0.05 + (1 - mult) * 0.04;
+                }
+
+                var video  = document.getElementById('gesture-video');
+                var canvas = document.getElementById('gesture-canvas');
+                var cursor = document.getElementById('gesture-cursor');
+                var self   = this;
+
+                await SkiloraGesture.start(video, canvas, cursor, function(r) {
+                    var badge      = document.getElementById('gesture-badge');
+                    var badgeIcon  = document.getElementById('gesture-badge-icon');
+                    var badgeLabel = document.getElementById('gesture-badge-label');
+                    var statusDot  = document.getElementById('gesture-status-dot');
+                    var statusText = document.getElementById('gesture-status-text');
+
+                    var detected = r.gesture !== 0;
+                    badge.style.setProperty('display', detected ? 'flex' : 'none', 'important');
+                    statusDot.style.background = detected ? '#22c55e' : '#f59e0b';
+                    statusText.textContent     = detected ? 'Hand detected' : 'Show hand\u2026';
+
+                    if (r.meta) {
+                        badgeIcon.textContent  = r.meta.icon  || '\u2014';
+                        badgeLabel.textContent = r.meta.label || 'Gesture Control';
+                        badgeLabel.style.color = r.meta.color || '#64748b';
+                    }
+
+                    /* Fist-to-deactivate watcher (uses MAIN camera, no second camera needed) */
+                    if (r.gesture === SkiloraGesture.G.FIST) {
+                        var now = Date.now();
+                        if (fistDeactivateStart === 0) fistDeactivateStart = now;
+                        var progress = Math.min(1, (now - fistDeactivateStart) / FIST_HOLD_TIME);
+                        updateStandbyIndicator(progress);
+                        if (progress >= 1) {
+                            fistDeactivateStart = 0;
+                            self.deactivate();
+                        }
+                    } else {
+                        if (fistDeactivateStart !== 0) updateStandbyIndicator(0);
+                        fistDeactivateStart = 0;
+                    }
+                });
+
+                active = true;
+                localStorage.setItem('skilora_gesture_active', '1');
+
+                /* Show active UI elements */
+                document.getElementById('gesture-preview').style.display = 'block';
+                document.getElementById('gesture-cursor').style.display  = 'block';
+                document.getElementById('gesture-pulse').style.display   = 'block';
+                updateStandbyIndicator(0);
+                showActiveButton();
+
+                /* Tutorial on first use */
+                if (!localStorage.getItem('skilora_gesture_tutorial_seen')) {
+                    document.getElementById('gesture-tutorial').style.display = 'flex';
+                }
+
+            } catch(err) {
+                var msg = 'Failed to start: ' + err.message;
+                if (err.name === 'NotAllowedError') msg = 'Camera access denied. Allow camera in browser settings.';
+                if (err.name === 'NotFoundError')   msg = 'No camera detected on this device.';
+                errText.textContent  = msg;
+                errBox.style.display = 'block';
+                localStorage.removeItem('skilora_gesture_active');
+            } finally {
+                loading = false;
+                spinner.style.display  = 'none';
+                handIcon.style.display = 'block';
+            }
+        },
+
+        deactivate: function() {
+            if (window.SkiloraGesture) {
+                SkiloraGesture.stop();
+            }
+            active = false;
+            fistDeactivateStart = 0;
+            localStorage.removeItem('skilora_gesture_active');
+            updateStandbyIndicator(0);
+
+            document.getElementById('gesture-preview').style.display = 'none';
+            document.getElementById('gesture-cursor').style.display  = 'none';
+            document.getElementById('gesture-badge').style.setProperty('display', 'none', 'important');
+            document.getElementById('gesture-pulse').style.display   = 'none';
+            hideActiveButton();
+
+            /* Restart standalone standby camera after short delay */
+            var self = this;
+            setTimeout(function() {
+                standbyActive = false;
+                self.startStandby();
+            }, 800);
+        },
+
+        dismissTutorial: function() {
+            document.getElementById('gesture-tutorial').style.display = 'none';
+            localStorage.setItem('skilora_gesture_tutorial_seen', '1');
+        },
+
+        /* Start standby (passive gesture detection) */
+        startStandby: async function(retryCount) {
+            if (standbyActive) return;
+            retryCount = retryCount || 0;
+            try {
+                await SkiloraGesture.startStandby({
+                    onActivate: function() {
+                        if (!active && !loading) {
+                            window.SkiloraGestureUI.activate();
+                        }
+                    },
+                    onDeactivate: function() {
+                        if (active) {
+                            window.SkiloraGestureUI.deactivate();
+                        }
+                    },
+                    onStatus: function(status, progress) {
+                        if (status === 'activating') {
+                            updateStandbyIndicator(progress);
+                        } else if (status === 'deactivating') {
+                            /* Deactivating uses the active button's ring */
+                            updateStandbyIndicator(0);
+                        } else {
+                            updateStandbyIndicator(0);
+                        }
+                    }
+                });
+                standbyActive = true;
+
+            } catch(e) {
+                /* Retry up to 3 times with increasing delay (camera may still be releasing from previous page) */
+                if (retryCount < 3) {
+                    var delay = (retryCount + 1) * 1000;
+                    console.log('Gesture standby retry ' + (retryCount + 1) + ' in ' + delay + 'ms:', e.message);
+                    setTimeout(function() {
+                        window.SkiloraGestureUI.startStandby(retryCount + 1);
+                    }, delay);
+                } else {
+                    console.log('Gesture standby unavailable after retries:', e.message);
+                }
+            }
+        }
+    };
+
+    /* Close tutorial on backdrop click */
+    var tutEl = document.getElementById('gesture-tutorial');
+    if (tutEl) tutEl.addEventListener('click', function(e) {
+        if (e.target === tutEl) window.SkiloraGestureUI.dismissTutorial();
+    });
+
+    /* Only start gesture system if user has enabled it in Settings > Preferences */
+    if (localStorage.getItem('skilora_gesture_enabled') === '1') {
+        setTimeout(function() {
+            if (localStorage.getItem('skilora_gesture_active') === '1') {
+                window.SkiloraGestureUI.activate();
+            } else {
+                window.SkiloraGestureUI.startStandby();
+            }
+        }, 500);
+    }
+})();
+</script>
+{# ─── Hand Gesture Control Overlay ────────────────────────────────────
+     Include on any page via: {{ include('components/hand-gesture.html.twig') }}
+     Requires: public/js/hand-gesture.js loaded before this component
+   ─────────────────────────────────────────────────────────────────────── #}
+
+<div x-data="gestureControl()" class="gesture-control">
+
+    {# ═══ Virtual Cursor ═══ #}
+    <div x-ref="gestureCursor"
+         x-show="active"
+         class="gesture-cursor"
+         :class="{ 'gesture-cursor--active': handDetected }"
+         style="opacity: 0;">
+        <div class="gesture-cursor__dot"></div>
+        <div class="gesture-cursor__ring"></div>
+    </div>
+
+    {# ═══ Floating Control Widget (bottom-right) ═══ #}
+    <div class="fixed bottom-28 right-6 z-[9999] flex flex-col items-end gap-3">
+
+        {# ── Camera Error Toast ── #}
+        <div x-show="cameraError" x-transition
+             class="w-72 rounded-lg border border-destructive/30 bg-destructive/10 p-3 shadow-lg backdrop-blur-sm">
+            <div class="flex items-start gap-2">
+                <svg class="h-4 w-4 mt-0.5 text-destructive shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-xs text-destructive" x-text="cameraError"></p>
+            </div>
+            <button @click="cameraError = null" class="mt-2 text-xs text-destructive/70 hover:text-destructive underline">
+                Dismiss
+            </button>
+        </div>
+
+        {# ── Gesture Indicator Badge ── #}
+        <div x-show="active && handDetected" x-transition
+             class="flex items-center gap-2 rounded-full border border-border bg-card/90 px-3 py-1.5 shadow-lg backdrop-blur-sm">
+            <span class="text-lg" x-text="gestureIcon"></span>
+            <span class="text-xs font-medium" x-text="gestureLabel" :style="'color:' + gestureColor"></span>
+        </div>
+
+        {# ── Camera Preview (PiP) ── #}
+        <div x-show="active && showPreview" x-transition
+             class="relative overflow-hidden rounded-xl border-2 border-primary/30 shadow-2xl"
+             style="width: 200px; height: 150px;">
+
+            {# Video feed #}
+            <video x-ref="gestureVideo"
+                   class="absolute inset-0 w-full h-full object-cover"
+                   style="transform: scaleX(-1);"
+                   autoplay playsinline muted></video>
+
+            {# Canvas overlay for hand skeleton #}
+            <canvas x-ref="gestureCanvas"
+                    class="absolute inset-0 w-full h-full"
+                    style="transform: scaleX(-1);"></canvas>
+
+            {# Status overlay #}
+            <div class="absolute top-2 left-2 flex items-center gap-1.5">
+                <div class="h-2 w-2 rounded-full animate-pulse"
+                     :class="handDetected ? 'bg-green-500' : 'bg-amber-500'"></div>
+                <span class="text-[10px] font-medium text-white drop-shadow-md"
+                      x-text="handDetected ? 'Hand detected' : 'Show hand…'"></span>
+            </div>
+
+            {# Close preview button #}
+            <button @click="showPreview = false; savePrefs()"
+                    class="absolute top-1.5 right-1.5 rounded-full bg-black/40 p-1 text-white/70 hover:text-white hover:bg-black/60 transition">
+                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        {# ── Show preview button (when hidden) ── #}
+        <button x-show="active && !showPreview"
+                @click="showPreview = true; savePrefs()"
+                class="rounded-full border border-border bg-card p-2 shadow-md hover:bg-accent transition"
+                title="Show camera preview">
+            <svg class="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+        </button>
+
+        {# ── Main Toggle Button ── #}
+        <button @click="toggle()"
+                :disabled="loading"
+                class="group relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-all duration-300"
+                :class="active
+                    ? 'ring-4 ring-primary/20 hover:bg-primary/90'
+                    : 'ring-2 ring-primary/30 hover:bg-primary/80'"
+                :title="active ? 'Disable gesture control' : 'Enable gesture control'">
+
+            {# Loading spinner #}
+            <svg x-show="loading" class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+
+            {# Hand icon #}
+            <svg x-show="!loading" class="h-5 w-5 transition-transform" :class="active && 'scale-110'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.05 4.575a1.575 1.575 0 10-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 013.15 0v1.5m-3.15 0l.075 5.925m3.075-7.425a1.575 1.575 0 10-3.15 0v4.5m3.15-4.5a1.575 1.575 0 013.15 0v3.075M13.2 9.15v1.275a1.575 1.575 0 003.15 0V7.5m0 0a1.575 1.575 0 013.15 0v5.325a7.125 7.125 0 01-7.125 7.125H9.7a4.875 4.875 0 01-4.55-3.12 4.994 4.994 0 01-.237-.975l-.467-5.14a1.232 1.232 0 012.403-.516l.694 2.606"/>
+            </svg>
+
+            {# Active pulse ring #}
+            <span x-show="active && !loading"
+                  class="absolute inset-0 rounded-full animate-ping bg-primary/20 pointer-events-none"></span>
+        </button>
+    </div>
+
+    {# ═══ Tutorial Overlay ═══ #}
+    <div x-show="showTutorial && active" x-transition.opacity
+         class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+         @click.self="dismissTutorial()">
+
+        <div class="w-full max-w-lg mx-4 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden"
+             @click.stop>
+
+            {# Header #}
+            <div class="bg-gradient-to-r from-primary/10 via-purple-500/10 to-cyan-500/10 p-6 text-center">
+                <div class="text-4xl mb-2">🖐️</div>
+                <h2 class="text-xl font-bold tracking-tight">Hand Gesture Control</h2>
+                <p class="text-sm text-muted-foreground mt-1">Control Skilora with your hands — no mouse needed</p>
+            </div>
+
+            {# Gesture list #}
+            <div class="p-6 space-y-3 max-h-[50vh] overflow-y-auto">
+                <template x-for="(g, i) in tutorialGestures" :key="i">
+                    <div class="flex items-start gap-4 rounded-lg border border-border/50 bg-muted/30 p-3 transition hover:bg-muted/50">
+                        <span class="text-2xl shrink-0 mt-0.5" x-text="g.icon"></span>
+                        <div>
+                            <p class="text-sm font-semibold" x-text="g.name"></p>
+                            <p class="text-xs text-muted-foreground" x-text="g.desc"></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            {# Footer #}
+            <div class="border-t border-border p-4 flex items-center justify-between bg-muted/20">
+                <p class="text-xs text-muted-foreground">Position your hand 30–60 cm from the camera</p>
+                <button @click="dismissTutorial()"
+                        class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition">
+                    Got it, let's go!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ═══ Inline Styles (scoped to gesture components) ═══ #}
+<style>
+    /* Virtual cursor */
+    .gesture-cursor {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 99999;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+    .gesture-cursor__dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #3b82f6;
+        box-shadow: 0 0 12px rgba(59,130,246,0.5);
+        transform: translate(-50%, -50%);
+    }
+    .gesture-cursor__ring {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 2px solid rgba(59,130,246,0.3);
+        transform: translate(-50%, -50%);
+        transition: all 0.15s ease;
+    }
+    .gesture-cursor--active .gesture-cursor__dot {
+        background: #22c55e;
+        box-shadow: 0 0 14px rgba(34,197,94,0.5);
+    }
+    .gesture-cursor--active .gesture-cursor__ring {
+        border-color: rgba(34,197,94,0.3);
+    }
+    .gesture-cursor--click .gesture-cursor__dot {
+        background: #ef4444 !important;
+        transform: translate(-50%, -50%) scale(1.5);
+    }
+    .gesture-cursor--click .gesture-cursor__ring {
+        border-color: rgba(239,68,68,0.5) !important;
+        transform: translate(-50%, -50%) scale(1.3);
+    }
+</style>

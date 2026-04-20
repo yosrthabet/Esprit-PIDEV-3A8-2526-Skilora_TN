@@ -139,14 +139,20 @@ final class ProjectAdvancePaymentController extends AbstractController
         try {
             $out = $twilio->sendWhatsAppAndOptionalSms($whatsappTo, $body);
         } catch (\Throwable $e) {
+            // Payment succeeded on Stripe — don't fail the whole flow because of Twilio
             return $this->json([
-                'error' => 'Paiement OK, mais notification Twilio échouée : '.$e->getMessage(),
-            ], Response::HTTP_BAD_REQUEST);
+                'ok' => true,
+                'message' => 'Paiement confirmé. Notification WhatsApp échouée : '.$e->getMessage(),
+                'whatsapp_sid' => null,
+                'sms_sid' => null,
+                'whatsapp_status' => 'failed',
+                'delivery_warning' => $e->getMessage(),
+            ]);
         }
 
         return $this->json([
             'ok' => true,
-            'message' => 'Notification Twilio acceptée.',
+            'message' => 'Paiement confirmé. Notification Twilio envoyée.',
             'whatsapp_sid' => $out['whatsapp_sid'],
             'sms_sid' => $out['sms_sid'],
             'whatsapp_status' => $out['whatsapp_status'],

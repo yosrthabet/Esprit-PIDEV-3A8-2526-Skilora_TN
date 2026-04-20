@@ -99,7 +99,7 @@ final class TwilioWhatsAppNotifier
         $response = $this->httpClient->request('POST', $url, [
             'auth_basic' => [$this->accountSid, $this->authToken],
             'body' => $formFields,
-            'timeout' => 30,
+            'timeout' => 10,
         ]);
         $code = $response->getStatusCode();
         $data = $response->toArray(false);

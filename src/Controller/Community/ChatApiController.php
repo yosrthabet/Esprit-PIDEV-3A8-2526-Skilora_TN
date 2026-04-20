@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Repository\DmConversationRepository;
 use App\Repository\DmMessageRepository;
 use App\Repository\MemberInvitationRepository;
+use App\Service\AISummaryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -464,6 +465,7 @@ class ChatApiController extends AbstractController
         int $conversationId,
         DmConversationRepository $conversationRepository,
         EntityManagerInterface $em,
+        AISummaryService $aiService,
     ): JsonResponse {
         $me = $this->requireUser();
 
@@ -489,67 +491,18 @@ class ChatApiController extends AbstractController
             return $this->json(['error' => 'Pas assez de messages à résumer (minimum 2).'], 400);
         }
 
-        // Build payload for Python service
-        $payload = [];
+        $formatted = [];
         foreach ($messages as $m) {
-            $payload[] = [
-                'sender' => $m->getSender()->getFullName() ?? $m->getSender()->getUsername(),
-                'body' => $m->getBody(),
-            ];
+            $sender = $m->getSender()->getFullName() ?? $m->getSender()->getUsername();
+            $formatted[] = $sender . ': ' . $m->getBody();
         }
 
-        // Call Python summarization service
-        $summarizeUrl = $_ENV['SUMMARIZE_SERVICE_URL'] ?? 'http://127.0.0.1:5001';
+        $summary = $aiService->summarizeDiscussion($formatted, 'fr');
 
-        try {
-            $ch = curl_init($summarizeUrl . '/summarize');
-            curl_setopt_array($ch, [
-                CURLOPT_POST => true,
-                CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-                CURLOPT_POSTFIELDS => json_encode(['messages' => $payload, 'lang' => 'fr']),
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 30,
-                CURLOPT_CONNECTTIMEOUT => 5,
-            ]);
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlError = curl_error($ch);
-            curl_close($ch);
-
-            if ($response === false) {
-                return $this->json([
-                    'error' => 'Service de résumé indisponible. Assurez-vous que le service Python est lancé (port 5001).',
-                ], 503);
-            }
-
-            $data = json_decode($response, true);
-
-            if ($httpCode === 429) {
-                return $this->json([
-                    'error' => $data['error'] ?? 'Quota API épuisé. Réessayez dans quelques minutes.',
-                ], 429);
-            }
-
-            if ($httpCode !== 200) {
-                return $this->json([
-                    'error' => $data['error'] ?? 'Erreur du service de résumé.',
-                ], $httpCode);
-            }
-
-            if (isset($data['error'])) {
-                return $this->json(['error' => $data['error']], 400);
-            }
-
-            return $this->json([
-                'summary' => $data['summary'] ?? 'Aucun résumé disponible.',
-                'message_count' => count($messages),
-            ]);
-        } catch (\Throwable $e) {
-            return $this->json([
-                'error' => 'Erreur de connexion au service de résumé: ' . $e->getMessage(),
-            ], 503);
-        }
+        return $this->json([
+            'summary' => $summary ?: 'Aucun résumé disponible.',
+            'message_count' => count($messages),
+        ]);
     }
 
     private function requireUser(): User
