@@ -1,4 +1,3 @@
-import './bootstrap.js';
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 window.createToastStore = () => ({
@@ -116,48 +115,111 @@ window.initHomepage = () => {
   window.initOsmoNavbar();
   if (!window.gsap || !window.ScrollTrigger) return;
   const { gsap, ScrollTrigger } = window;
-  gsap.registerPlugin(ScrollTrigger);
+  gsap.registerPlugin(ScrollTrigger); console.log("GSAP INIT");
 
+  // Loader → hero reveal
   const loaderTL = gsap.timeline();
   loaderTL.to("#loader-dot", { scale: 0, opacity: 0, duration: 0.5, ease: "power2.inOut" })
-          .to("#loader", { opacity: 0, duration: 0.5, display: "none" }, "-=0.2")
-          .to("#hero-title", { y: "0%", duration: 1.2, ease: "power4.out" }, "-=0.3")
-          .to("#hero-title-2", { y: "0%", duration: 1.2, ease: "power4.out" }, "-=1");
+          .to("#loader", { opacity: 0, duration: 0.5, display: "none" }, "-=0.2");
 
+  // Hero title + subtitle stagger
+  loaderTL.from(".hero-title", { y: 60, opacity: 0, duration: 1, ease: "power4.out", stagger: 0.15 }, "-=0.2")
+          .from(".hero-subtitle", { y: 40, opacity: 0, duration: 0.8, ease: "power3.out", stagger: 0.1 }, "-=0.6")
+          .from(".hero-scroll-indicator", { opacity: 0, y: 20, duration: 0.6, ease: "power2.out" }, "-=0.3");
+
+  // Hero blob parallax
   gsap.to("#hero-blob", {
       y: "40vh", scale: 1.5,
       scrollTrigger: { trigger: "#hero-section", start: "top top", end: "bottom top", scrub: true }
   });
 
+  // Hero marquee
   if (document.getElementById("hero-marquee")) {
     gsap.to("#hero-marquee", { xPercent: -50, ease: "none", duration: 20, repeat: -1 });
   }
 
+  // Companies marquee
+  const companiesTrack = document.querySelector('.companies-track');
+  if (companiesTrack) {
+      gsap.to(companiesTrack, { xPercent: -33.33, ease: "none", duration: 30, repeat: -1 });
+  }
 
+  // About section
+  gsap.from("#about-section .space-y-8 > *", {
+      y: 40, opacity: 0, stagger: 0.1, duration: 0.8, ease: "power3.out",
+      scrollTrigger: { trigger: "#about-section", start: "top 70%" }
+  });
+  gsap.from("#about-section .grid.grid-cols-2 > *", {
+      y: 60, opacity: 0, stagger: 0.15, duration: 1, ease: "power3.out",
+      scrollTrigger: { trigger: "#about-section .relative", start: "top 75%" }
+  });
+
+  // Horizontal scroll (desktop)
   const horizontalSection = document.getElementById("horizontal-section");
   const horizontalTrack = document.getElementById("horizontal-track");
   if (horizontalSection && horizontalTrack && window.innerWidth >= 768) {
       let getScrollAmount = () => -(horizontalTrack.scrollWidth - window.innerWidth);
-      gsap.to(horizontalTrack, { 
-          x: getScrollAmount, 
-          ease: "none", 
-          scrollTrigger: { 
-              trigger: horizontalSection, 
+      gsap.to(horizontalTrack, {
+          x: getScrollAmount,
+          ease: "none",
+          scrollTrigger: {
+              trigger: horizontalSection,
               start: "top top",
-              end: () => `+=${horizontalTrack.scrollWidth}`, 
+              end: () => `+=${horizontalTrack.scrollWidth}`,
               scrub: 1,
               pin: true,
-              invalidateOnRefresh: true 
+              invalidateOnRefresh: true
           }
       });
   }
 
-  if (document.getElementById("footer-cta")) {
-    const footerTL = gsap.timeline({ scrollTrigger: { trigger: "#footer-cta", start: "top 50%", end: "bottom bottom", scrub: 1 } });
-    footerTL.to(["#cta-title", "#cta-btn"], { scale: 1, opacity: 1, stagger: 0.1, ease: "back.out(1.5)" });
+  // Process steps (How it works)
+  const featuresSection = document.getElementById("features-section");
+  if (featuresSection) {
+      gsap.from(".process-step", {
+          y: 40, opacity: 0, stagger: 0.15, duration: 0.8, ease: "power3.out",
+          scrollTrigger: { trigger: featuresSection, start: "top 85%" }
+      });
+  }
+
+  // Categories cards
+  const categoriesSection = document.querySelector(".categories-section");
+  if (categoriesSection) {
+      gsap.from(".category-card", {
+          y: 50, opacity: 0, stagger: 0.08, duration: 0.7, ease: "power3.out",
+          scrollTrigger: { trigger: categoriesSection, start: "top 85%" }
+      });
+  }
+
+  // Platform features cards
+  const platformSection = document.getElementById("platform-section");
+  if (platformSection) {
+      gsap.from("#platform-section .group", {
+          y: 50, opacity: 0, stagger: 0.08, duration: 0.7, ease: "power3.out",
+          scrollTrigger: { trigger: platformSection, start: "top 85%" }
+      });
+  }
+
+  // Testimonials
+  const testimonialsSection = document.getElementById("testimonials-section");
+  if (testimonialsSection) {
+      gsap.from("#testimonials-section .group", {
+          y: 50, opacity: 0, stagger: 0.12, duration: 0.8, ease: "power3.out",
+          scrollTrigger: { trigger: testimonialsSection, start: "top 85%" }
+      });
+  }
+
+  // CTA section
+  const ctaSection = document.querySelector('.cta-section');
+  if (ctaSection) {
+      gsap.to(".cta-element", {
+          opacity: 1, y: 0, stagger: 0.12, duration: 1.2, ease: "power4.out",
+          scrollTrigger: { trigger: ctaSection, start: "top 85%" }
+      });
   }
 
   setTimeout(() => ScrollTrigger.refresh(), 300);
+  window.addEventListener('load', () => ScrollTrigger.refresh());
 };
 
 window.bootstrapTheme();

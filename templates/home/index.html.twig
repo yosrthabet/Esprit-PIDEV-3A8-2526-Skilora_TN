@@ -110,30 +110,29 @@
         </div>
     </header>
 
-    <main id="smooth-wrapper" class="overflow-hidden">
-        <div id="smooth-content">
+    <main class="w-full relative overflow-x-hidden">
+        <div class="w-full">
             
-            {# 1. Hero Reveal #}
-            <section class="relative h-screen w-full flex flex-col justify-center items-center overflow-hidden bg-zinc-950 text-white" id="hero-section">
-                <!-- Parallax background element -->
+            {# ═══════════ 1. HERO ═══════════ #}
+            <section class="relative min-h-screen w-full flex flex-col justify-center items-center overflow-hidden bg-zinc-950 text-white" id="hero-section">
                 <div class="absolute inset-0 z-0">
                     <div id="hero-blob" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] bg-indigo-500/20 rounded-full blur-[120px] mix-blend-screen"></div>
                 </div>
 
-                <div class="relative z-10 text-center w-full px-4">
-                    <div class="overflow-hidden mb-4">
-                        <h1 id="hero-title" class="text-[12vw] leading-none font-black tracking-tighter uppercase whitespace-nowrap px-4 text-transparent bg-clip-text bg-gradient-to-br from-white to-zinc-500 translate-y-full">
-                            Connect.
+                <div class="relative z-10 text-center w-full pt-10">
+                    <div class="overflow-hidden mb-2">
+                        <h1 class="hero-title text-[20vw] md:text-[18vw] leading-[0.8] font-black tracking-tight uppercase text-transparent bg-clip-text bg-gradient-to-br from-white to-zinc-500 whitespace-nowrap">
+                            CONNECT.
                         </h1>
                     </div>
                     <div class="overflow-hidden">
-                        <h1 id="hero-title-2" class="text-[12vw] leading-none font-black tracking-tighter uppercase whitespace-nowrap px-4 text-transparent bg-clip-text bg-gradient-to-bl from-white to-zinc-500 translate-y-full">
-                            Hire.
+                        <h1 class="hero-title text-[20vw] md:text-[18vw] leading-[0.8] font-black tracking-tight uppercase text-transparent bg-clip-text bg-gradient-to-bl from-white to-zinc-500 whitespace-nowrap">
+                            HIRE.
                         </h1>
                     </div>
                 </div>
 
-                <div class="absolute bottom-10 whitespace-nowrap overflow-hidden z-10 w-full pointer-events-none">
+                <div class="hero-scroll-indicator absolute bottom-4 md:bottom-10 whitespace-nowrap overflow-hidden z-10 w-full pointer-events-none">
                     <div id="hero-marquee" class="text-[0.6rem] sm:text-xs uppercase tracking-[0.5em] text-zinc-400">
                         Scroll to explore &nbsp;—&nbsp; We bridge the gap between world-class talent and legendary companies &nbsp;—&nbsp; Scroll to explore &nbsp;—&nbsp; We bridge the gap between world-class talent and legendary companies &nbsp;—&nbsp; Scroll to explore &nbsp;—&nbsp; We bridge the gap between world-class talent and legendary companies
                     </div>
@@ -141,7 +140,71 @@
             </section>
 
 
-            {# 3. Massive Horizontal Scroll Section — desktop only #}
+            {# ═══════════ 2. COMPANIES MARQUEE ═══════════ #}
+            <section class="bg-white py-10 border-y border-zinc-200 overflow-hidden">
+                <p class="text-center text-xs uppercase tracking-[0.3em] text-zinc-400 mb-6">Trusted by teams at</p>
+                <div class="relative overflow-hidden">
+                    <div class="companies-track flex items-center gap-16 whitespace-nowrap">
+                        {% for company in ['Vermeg', 'Sofrecom', 'Proxym', 'Talan', 'LineData', 'Sopra HR', 'Focus Corp', 'Wevioo', 'Telnet', 'Cynapsys', 'Vermeg', 'Sofrecom', 'Proxym', 'Talan', 'LineData', 'Sopra HR', 'Focus Corp', 'Wevioo', 'Telnet', 'Cynapsys', 'Vermeg', 'Sofrecom', 'Proxym', 'Talan', 'LineData', 'Sopra HR', 'Focus Corp', 'Wevioo', 'Telnet', 'Cynapsys'] %}
+                            <span class="text-zinc-400 text-lg font-bold tracking-tight flex-shrink-0">{{ company }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+
+            {# ═══════════ 3. ABOUT / WHAT IS SKILORA ═══════════ #}
+            <section id="about-section" class="relative bg-zinc-950 text-white py-24 md:py-32 overflow-hidden">
+                <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:80px_80px] pointer-events-none"></div>
+                
+                <div class="relative z-10 max-w-6xl mx-auto px-6 md:px-12">
+                    <div class="grid md:grid-cols-2 gap-16 items-center">
+                        <div class="space-y-8">
+                            <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold">About Skilora</p>
+                            <h2 class="text-4xl md:text-6xl font-black tracking-tight leading-[0.95]">
+                                Where talent<br>
+                                <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">meets opportunity.</span>
+                            </h2>
+                            <p class="text-zinc-400 text-lg leading-relaxed">
+                                Skilora is Tunisia's first AI-powered freelancing ecosystem. We don't just list gigs — we match skills to missions, verify credentials, and ensure every collaboration is smooth, secure, and fair.
+                            </p>
+                            <div class="flex gap-6">
+                                <div>
+                                    <p class="text-2xl font-black text-white">AI</p>
+                                    <p class="text-xs text-zinc-500 uppercase tracking-wider">Smart Matching</p>
+                                </div>
+                                <div class="w-px bg-zinc-800"></div>
+                                <div>
+                                    <p class="text-2xl font-black text-white">24/7</p>
+                                    <p class="text-xs text-zinc-500 uppercase tracking-wider">Support</p>
+                                </div>
+                                <div class="w-px bg-zinc-800"></div>
+                                <div>
+                                    <p class="text-2xl font-black text-white">0%</p>
+                                    <p class="text-xs text-zinc-500 uppercase tracking-wider">Hidden Fees</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="rounded-2xl overflow-hidden h-64 translate-y-8">
+                                    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&q=80" alt="Team collaborating on project" class="w-full h-full object-cover" loading="lazy">
+                                </div>
+                                <div class="rounded-2xl overflow-hidden h-64 -translate-y-4">
+                                    <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=600&q=80" alt="Developer working remotely" class="w-full h-full object-cover" loading="lazy">
+                                </div>
+                                <div class="rounded-2xl overflow-hidden h-48 col-span-2">
+                                    <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=900&q=80" alt="Business meeting with freelancer" class="w-full h-full object-cover" loading="lazy">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            {# ═══════════ 4. HORIZONTAL SCROLL (desktop) ═══════════ #}
             <section id="horizontal-section" class="relative w-full h-screen bg-white text-zinc-950 items-center overflow-hidden hidden md:flex">
                 <div class="w-full flex items-center overflow-hidden">
                     <div id="horizontal-track" class="flex items-center pl-[50vw] pr-[5vw] gap-32 whitespace-nowrap">
@@ -159,7 +222,7 @@
                 </div>
             </section>
 
-            {# 3b. Mobile-only alternative — stacked typographic layout #}
+            {# 4b. Mobile-only alternative #}
             <section class="md:hidden bg-white text-zinc-950 py-16 px-6 overflow-hidden">
                 <div class="flex flex-col">
                     <span class="text-[22vw] font-black tracking-tighter uppercase leading-none">Find</span>
@@ -173,16 +236,228 @@
                 </div>
             </section>
 
-            {# 4. Footer Flow End #}
-            <section class="h-screen w-full bg-zinc-950 text-white flex flex-col justify-center items-center text-center px-4 relative overflow-hidden" id="footer-cta">
-                <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)] pointer-events-none"></div>
-                <h2 id="cta-title" class="text-5xl md:text-[8vw] font-black tracking-tighter uppercase z-10 mb-8 scale-50 opacity-0">Start Now.</h2>
-                <a href="/login" id="cta-btn" class="z-10 group relative inline-flex items-center justify-center px-12 py-6 text-xl font-bold text-white bg-zinc-800 rounded-full overflow-hidden transition-all hover:scale-105 scale-50 opacity-0">
-                    <span class="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black"></span>
-                    <span class="absolute inset-0 w-full h-full bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></span>
-                    <span class="relative z-10">Join Skilora</span>
-                </a>
+
+            {# ═══════════ 5. HOW IT WORKS ═══════════ #}
+            <section id="features-section" class="relative bg-zinc-950 text-white py-24 md:py-32 overflow-hidden">
+                <div class="max-w-6xl mx-auto px-6 md:px-12">
+                    <div class="text-center mb-16">
+                        <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold mb-4">How it works</p>
+                        <h2 class="text-4xl md:text-6xl font-black tracking-tight">Three steps. Zero friction.</h2>
+                    </div>
+
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <div class="process-step group relative p-8 rounded-2xl border border-zinc-800 bg-zinc-900/50 hover:border-indigo-500/50 transition-colors duration-500">
+                            <div class="text-6xl font-black text-zinc-800 group-hover:text-indigo-500/30 transition-colors absolute top-4 right-6">01</div>
+                            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-6">
+                                <i data-lucide="user-plus" class="w-6 h-6 text-indigo-400"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-3">Create Your Profile</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Sign up in seconds. Add your skills, portfolio, and availability. Our AI enhances your profile visibility automatically.</p>
+                        </div>
+
+                        <div class="process-step group relative p-8 rounded-2xl border border-zinc-800 bg-zinc-900/50 hover:border-indigo-500/50 transition-colors duration-500">
+                            <div class="text-6xl font-black text-zinc-800 group-hover:text-indigo-500/30 transition-colors absolute top-4 right-6">02</div>
+                            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-6">
+                                <i data-lucide="search" class="w-6 h-6 text-indigo-400"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-3">Get Matched</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Our smart matching engine pairs you with projects that fit your expertise, rate, and work style. No more endless scrolling.</p>
+                        </div>
+
+                        <div class="process-step group relative p-8 rounded-2xl border border-zinc-800 bg-zinc-900/50 hover:border-indigo-500/50 transition-colors duration-500">
+                            <div class="text-6xl font-black text-zinc-800 group-hover:text-indigo-500/30 transition-colors absolute top-4 right-6">03</div>
+                            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-6">
+                                <i data-lucide="rocket" class="w-6 h-6 text-indigo-400"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-3">Collaborate & Earn</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Work securely through our platform. Real-time chat, milestone tracking, and instant payments via Stripe. Built for pros.</p>
+                        </div>
+                    </div>
+                </div>
             </section>
+
+
+            {# ═══════════ 6. CATEGORIES ═══════════ #}
+            <section class="categories-section bg-white text-zinc-950 py-24 md:py-32 overflow-hidden">
+                <div class="max-w-6xl mx-auto px-6 md:px-12">
+                    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-16">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.3em] text-indigo-500 font-semibold mb-4">Explore</p>
+                            <h2 class="text-4xl md:text-6xl font-black tracking-tight">Talent categories.</h2>
+                        </div>
+                        <p class="text-zinc-500 max-w-sm text-sm">From code to creativity — find the exact skill you need for your next project.</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {% set categories = [
+                            { icon: 'code-2', name: 'Web Development', count: '420+ pros' },
+                            { icon: 'smartphone', name: 'Mobile Apps', count: '180+ pros' },
+                            { icon: 'palette', name: 'UI/UX Design', count: '310+ pros' },
+                            { icon: 'brain', name: 'AI & Data Science', count: '95+ pros' },
+                            { icon: 'megaphone', name: 'Digital Marketing', count: '250+ pros' },
+                            { icon: 'video', name: 'Video & Motion', count: '130+ pros' },
+                            { icon: 'pen-tool', name: 'Graphic Design', count: '290+ pros' },
+                            { icon: 'shield-check', name: 'Cybersecurity', count: '60+ pros' },
+                        ] %}
+                        {% for cat in categories %}
+                        <div class="category-card group p-6 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-950 hover:text-white transition-colors duration-500 cursor-pointer">
+                            <div class="w-10 h-10 rounded-xl bg-zinc-100 group-hover:bg-zinc-800 flex items-center justify-center mb-4 transition-colors">
+                                <i data-lucide="{{ cat.icon }}" class="w-5 h-5 text-zinc-600 group-hover:text-white transition-colors"></i>
+                            </div>
+                            <h3 class="font-bold text-sm mb-1">{{ cat.name }}</h3>
+                            <p class="text-xs text-zinc-400">{{ cat.count }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+
+            {# ═══════════ 7. PLATFORM FEATURES ═══════════ #}
+            <section id="platform-section" class="relative bg-zinc-950 text-white py-24 md:py-32 overflow-hidden">
+                <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:80px_80px] pointer-events-none"></div>
+                
+                <div class="relative z-10 max-w-6xl mx-auto px-6 md:px-12">
+                    <div class="text-center mb-16">
+                        <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold mb-4">Platform</p>
+                        <h2 class="text-4xl md:text-6xl font-black tracking-tight">Built for serious work.</h2>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% set features = [
+                            { icon: 'message-circle', title: 'Real-Time Chat', desc: 'Mercure-powered instant messaging with typing indicators, read receipts, and file sharing.' },
+                            { icon: 'credit-card', title: 'Secure Payments', desc: 'Stripe-integrated milestone payments. Escrow protection for both parties.' },
+                            { icon: 'award', title: 'Verified Certificates', desc: 'AI-generated PDF certificates with QR verification for completed trainings.' },
+                            { icon: 'bot', title: 'AI Content Moderation', desc: 'Automatic toxicity detection keeps the community professional and safe.' },
+                            { icon: 'graduation-cap', title: 'Learning Hub', desc: 'Curated formations and courses to level up your skills between projects.' },
+                            { icon: 'hand', title: 'Gesture Control', desc: 'Navigate hands-free with our MediaPipe-powered hand gesture recognition system.' },
+                        ] %}
+                        {% for feat in features %}
+                        <div class="group p-6 rounded-2xl border border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/80 transition-colors duration-300">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
+                                <i data-lucide="{{ feat.icon }}" class="w-5 h-5 text-indigo-400"></i>
+                            </div>
+                            <h3 class="font-bold mb-2">{{ feat.title }}</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">{{ feat.desc }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+
+            {# ═══════════ 8. TESTIMONIALS ═══════════ #}
+            <section id="testimonials-section" class="bg-white text-zinc-950 py-24 md:py-32 overflow-hidden">
+                <div class="max-w-6xl mx-auto px-6 md:px-12">
+                    <div class="text-center mb-16">
+                        <p class="text-xs uppercase tracking-[0.3em] text-indigo-500 font-semibold mb-4">Testimonials</p>
+                        <h2 class="text-4xl md:text-6xl font-black tracking-tight">People love Skilora.</h2>
+                    </div>
+
+                    <div class="grid md:grid-cols-3 gap-6">
+                        {% set testimonials = [
+                            { name: 'Amira Ben Salah', role: 'UI/UX Designer', text: 'Skilora completely changed how I find clients. The AI matching saved me hours of pitching — now projects come to me.' },
+                            { name: 'Yassine Khlifi', role: 'Full-Stack Developer', text: 'The real-time chat and milestone payments make collaboration seamless. Best freelancing platform in Tunisia, hands down.' },
+                            { name: 'Sarah Trabelsi', role: 'Marketing Manager at Vermeg', text: 'We hired 3 freelancers through Skilora in one week. The talent quality and verification process is outstanding.' },
+                        ] %}
+                        {% for t in testimonials %}
+                        <div class="group p-8 rounded-2xl border border-zinc-200 hover:shadow-lg transition-shadow duration-300">
+                            <div class="flex mb-3 gap-0.5">
+                                {% for i in 1..5 %}<svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>{% endfor %}
+                            </div>
+                            <p class="text-zinc-600 text-sm leading-relaxed mb-6">"{{ t.text }}"</p>
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center text-sm font-bold text-zinc-600">
+                                    {{ t.name|first }}
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-sm">{{ t.name }}</p>
+                                    <p class="text-xs text-zinc-400">{{ t.role }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+
+            {# ═══════════ 9. FINAL CTA ═══════════ #}
+            <section class="cta-section relative h-screen w-full bg-zinc-950 text-white flex flex-col justify-center items-center text-center px-4 overflow-hidden">
+                <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)] pointer-events-none"></div>
+                <div class="absolute inset-0 z-0">
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] bg-indigo-600/15 rounded-full blur-[120px]"></div>
+                </div>
+                <p class="cta-element text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold mb-6 relative z-10 opacity-0 translate-y-8">Ready to start?</p>
+                <h2 class="cta-element text-5xl md:text-[8vw] font-black tracking-tighter uppercase z-10 mb-4 opacity-0 translate-y-8">Join Skilora.</h2>
+                <p class="cta-element text-zinc-400 text-lg max-w-md mx-auto mb-10 z-10 opacity-0 translate-y-8">Create your free account today and start connecting with opportunities that match your talent.</p>
+                <div class="flex flex-wrap justify-center gap-4 z-10">
+                    {% if app.user %}
+                        <a href="{{ path('app_dashboard') }}" class="cta-element opacity-0 translate-y-8 group relative inline-flex items-center justify-center px-12 py-5 text-lg font-bold text-white bg-indigo-600 rounded-full overflow-hidden transition-colors hover:bg-indigo-500">
+                            <span class="relative z-10">Go to Dashboard</span>
+                        </a>
+                    {% else %}
+                        <a href="{{ path('app_register') }}" class="cta-element opacity-0 translate-y-8 group relative inline-flex items-center justify-center px-12 py-5 text-lg font-bold text-white bg-indigo-600 rounded-full overflow-hidden transition-colors hover:bg-indigo-500">
+                            <span class="relative z-10">Get Started Free</span>
+                        </a>
+                        <a href="{{ path('app_login') }}" class="cta-element opacity-0 translate-y-8 group relative inline-flex items-center justify-center px-10 py-5 text-lg font-bold text-white border border-zinc-700 rounded-full overflow-hidden transition-colors hover:border-zinc-500">
+                            <span class="relative z-10">Sign In</span>
+                        </a>
+                    {% endif %}
+                </div>
+            </section>
+
+            {# ═══════════ FOOTER ═══════════ #}
+            <footer class="bg-zinc-950 text-white border-t border-zinc-800">
+                <div class="max-w-6xl mx-auto px-6 md:px-12 py-16">
+                    <div class="grid md:grid-cols-4 gap-10">
+                        <div class="md:col-span-1">
+                            <p class="font-black text-xl tracking-tight mb-4">SKILORA</p>
+                            <p class="text-zinc-400 text-sm leading-relaxed">Tunisia's premier AI-powered freelancing platform. Connect, collaborate, create.</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.2em] text-zinc-500 font-semibold mb-4">Platform</p>
+                            <ul class="space-y-2 text-sm text-zinc-400">
+                                <li><a href="#" class="hover:text-white transition-colors">Find Work</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Hire Talent</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Learning Hub</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Community</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.2em] text-zinc-500 font-semibold mb-4">Company</p>
+                            <ul class="space-y-2 text-sm text-zinc-400">
+                                <li><a href="#" class="hover:text-white transition-colors">About</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Careers</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Blog</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Contact</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.2em] text-zinc-500 font-semibold mb-4">Legal</p>
+                            <ul class="space-y-2 text-sm text-zinc-400">
+                                <li><a href="#" class="hover:text-white transition-colors">Privacy Policy</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Terms of Service</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Cookie Policy</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-12 pt-8 border-t border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <p class="text-xs text-zinc-500">&copy; {{ 'now'|date('Y') }} Skilora. All rights reserved.</p>
+                        <div class="flex gap-4">
+                            <a href="#" class="text-zinc-500 hover:text-white transition-colors" aria-label="X (Twitter)">
+                                <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                            </a>
+                            <a href="#" class="text-zinc-500 hover:text-white transition-colors" aria-label="LinkedIn">
+                                <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                            </a>
+                            <a href="#" class="text-zinc-500 hover:text-white transition-colors" aria-label="GitHub">
+                                <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
 
         </div>
     </main>
