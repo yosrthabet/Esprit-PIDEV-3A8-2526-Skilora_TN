@@ -14,10 +14,12 @@ use App\Repository\UserRepository;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 class ProfileController extends AbstractController
 {
@@ -89,6 +91,107 @@ class ProfileController extends AbstractController
 
         $this->addFlash('success', 'Profile updated successfully');
         return $this->redirectToRoute('app_profile');
+    }
+
+    #[Route('/profile/photo/upload', name: 'app_profile_photo_upload', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function uploadPhoto(Request $request, SluggerInterface $slugger): JsonResponse
+    {
+        if (!$this->isCsrfTokenValid('profile_photo', $request->request->get('_token'))) {
+            return new JsonResponse(['error' => 'Invalid CSRF token.'], 403);
+        }
+
+        $user = $this->getUser();
+        $profile = $this->profileRepository->findOneBy(['user' => $user]);
+
+        if (!$profile) {
+            $profile = new Profile();
+            $profile->setUser($user);
+            $this->em->persist($profile);
+        }
+
+        // Handle base64 cropped image data
+        $croppedData = $request->request->get('cropped_image');
+        if (!$croppedData) {
+            return new JsonResponse(['error' => 'No image data received.'], 400);
+        }
+
+        // Validate and decode base64 data
+        if (!preg_match('/^data:image\/(jpeg|png|webp|gif);base64,/', $croppedData, $matches)) {
+            return new JsonResponse(['error' => 'Invalid image format.'], 400);
+        }
+
+        $extension = $matches[1] === 'jpeg' ? 'jpg' : $matches[1];
+        $imageData = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $croppedData));
+
+        if ($imageData === false || strlen($imageData) > 5 * 1024 * 1024) {
+            return new JsonResponse(['error' => 'Image too large (max 5MB).'], 400);
+        }
+
+        // Validate it's actually an image
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->buffer($imageData);
+        if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp', 'image/gif'])) {
+            return new JsonResponse(['error' => 'Invalid image type.'], 400);
+        }
+
+        // Create upload directory
+        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/avatars';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Delete old avatar if it's a local file
+        $oldPhoto = $profile->getPhotoUrl();
+        if ($oldPhoto && str_starts_with($oldPhoto, '/uploads/avatars/')) {
+            $oldFile = $this->getParameter('kernel.project_dir') . '/public' . $oldPhoto;
+            if (file_exists($oldFile)) {
+                unlink($oldFile);
+            }
+        }
+
+        // Generate unique filename
+        $filename = 'avatar-' . $user->getId() . '-' . bin2hex(random_bytes(8)) . '.' . $extension;
+        $filepath = $uploadDir . '/' . $filename;
+
+        file_put_contents($filepath, $imageData);
+
+        // Update profile
+        $photoUrl = '/uploads/avatars/' . $filename;
+        $profile->setPhotoUrl($photoUrl);
+        $this->em->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'photoUrl' => $photoUrl,
+            'message' => 'Profile photo updated!',
+        ]);
+    }
+
+    #[Route('/profile/photo/delete', name: 'app_profile_photo_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function deletePhoto(Request $request): JsonResponse
+    {
+        if (!$this->isCsrfTokenValid('profile_photo', $request->request->get('_token'))) {
+            return new JsonResponse(['error' => 'Invalid CSRF token.'], 403);
+        }
+
+        $user = $this->getUser();
+        $profile = $this->profileRepository->findOneBy(['user' => $user]);
+
+        if ($profile && $profile->getPhotoUrl()) {
+            $oldPhoto = $profile->getPhotoUrl();
+            if (str_starts_with($oldPhoto, '/uploads/avatars/')) {
+                $oldFile = $this->getParameter('kernel.project_dir') . '/public' . $oldPhoto;
+                if (file_exists($oldFile)) {
+                    unlink($oldFile);
+                }
+            }
+            $profile->setPhotoUrl(null);
+            $this->em->flush();
+        }
+
+        return new JsonResponse(['success' => true, 'message' => 'Photo removed.']);
     }
 
     #[Route('/profile/skills/add', name: 'app_profile_skill_add', methods: ['POST'])]

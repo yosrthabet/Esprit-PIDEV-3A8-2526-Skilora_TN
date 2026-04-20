@@ -306,19 +306,113 @@
     <div class="space-y-6">
         <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm sticky top-6">
             <div class="p-6 space-y-4">
-                {# Avatar + name #}
-                <div class="flex flex-col items-center space-y-3">
+                {# Avatar + photo upload #}
+                <div class="flex flex-col items-center space-y-3" x-data="profilePhoto()">
                     {% set initials = ((profile.firstName ?? '')|first|upper) ~ ((profile.lastName ?? '')|first|upper) %}
-                    {{ include('components/avatar.html.twig', {
-                        initials: initials ?: '?',
-                        src: profile.photoUrl,
-                        size: 'lg'
-                    }) }}
+
+                    {# Clickable avatar area #}
+                    <div class="relative group cursor-pointer" @click="$refs.fileInput.click()">
+                        <span class="relative flex shrink-0 overflow-hidden rounded-full h-20 w-20 text-xl ring-2 ring-transparent group-hover:ring-primary/50 transition-all">
+                            {% if profile.photoUrl %}
+                                <img
+                                    :src="currentPhoto || '{{ profile.photoUrl }}'"
+                                    alt="Profile photo"
+                                    class="aspect-square h-full w-full object-cover"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                />
+                                <span class="hidden items-center justify-center h-full w-full rounded-full bg-muted font-medium text-muted-foreground">
+                                    {{ initials ?: '?' }}
+                                </span>
+                            {% else %}
+                                <template x-if="currentPhoto">
+                                    <img :src="currentPhoto" alt="Profile photo" class="aspect-square h-full w-full object-cover" />
+                                </template>
+                                <span x-show="!currentPhoto" class="flex items-center justify-center h-full w-full rounded-full bg-muted font-medium text-muted-foreground">
+                                    {{ initials ?: '?' }}
+                                </span>
+                            {% endif %}
+                        </span>
+
+                        {# Hover overlay #}
+                        <div class="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <input type="file" x-ref="fileInput" @change="onFileSelected" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" />
+
+                    <div class="flex items-center gap-2">
+                        <button @click="$refs.fileInput.click()" type="button"
+                                class="text-xs text-primary hover:underline font-medium">
+                            Change photo
+                        </button>
+                        <template x-if="currentPhoto">
+                            <button @click="removePhoto()" type="button"
+                                    class="text-xs text-destructive hover:underline font-medium">
+                                Remove
+                            </button>
+                        </template>
+                    </div>
+
+                    {# Upload status #}
+                    <template x-if="uploading">
+                        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                            <svg class="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                            Uploading...
+                        </div>
+                    </template>
+
                     <div class="text-center">
                         <p class="font-semibold">{{ profile.fullName ?: app.user.displayName }}</p>
                         {% if profile.headline %}
                             <p class="text-sm text-muted-foreground">{{ profile.headline }}</p>
                         {% endif %}
+                    </div>
+
+                    {# ===== Crop Modal ===== #}
+                    <div x-show="showCropper" x-cloak
+                         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                         @keydown.escape.window="cancelCrop()">
+                        <div class="bg-card rounded-xl shadow-2xl border border-border w-full max-w-lg mx-4 overflow-hidden"
+                             @click.outside="cancelCrop()">
+                            <div class="flex items-center justify-between p-4 border-b border-border">
+                                <h3 class="font-semibold">Crop Profile Photo</h3>
+                                <button @click="cancelCrop()" type="button" class="text-muted-foreground hover:text-foreground transition-colors">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                            <div class="p-4">
+                                <div class="relative w-full" style="max-height: 400px;">
+                                    <img x-ref="cropImage" :src="cropImageSrc" class="max-w-full" style="display: block;" />
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-4 border-t border-border">
+                                <div class="flex gap-2">
+                                    <button @click="rotateCrop(-90)" type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 w-8 border border-input bg-background hover:bg-accent transition-colors" title="Rotate left">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/></svg>
+                                    </button>
+                                    <button @click="rotateCrop(90)" type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 w-8 border border-input bg-background hover:bg-accent transition-colors" title="Rotate right">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3"/></svg>
+                                    </button>
+                                    <button @click="resetCrop()" type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-2 border border-input bg-background hover:bg-accent transition-colors text-xs" title="Reset">
+                                        Reset
+                                    </button>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button @click="cancelCrop()" type="button"
+                                            class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background shadow-sm hover:bg-accent h-9 px-4">
+                                        Cancel
+                                    </button>
+                                    <button @click="applyCrop()" type="button"
+                                            class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4">
+                                        Apply & Upload
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -361,4 +455,156 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block head %}
+{{ parent() }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('profilePhoto', () => ({
+        currentPhoto: {{ profile.photoUrl ? ("'" ~ profile.photoUrl ~ "'")|raw : 'null' }},
+        showCropper: false,
+        cropImageSrc: '',
+        cropper: null,
+        uploading: false,
+
+        onFileSelected(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validate client-side
+            const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            if (!allowed.includes(file.type)) {
+                alert('Please select a JPG, PNG, WebP, or GIF image.');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Image must be under 10MB.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                this.cropImageSrc = ev.target.result;
+                this.showCropper = true;
+
+                this.$nextTick(() => {
+                    const img = this.$refs.cropImage;
+                    if (this.cropper) {
+                        this.cropper.destroy();
+                    }
+                    this.cropper = new Cropper(img, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 0.9,
+                        cropBoxResizable: true,
+                        cropBoxMovable: true,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        background: false,
+                    });
+                });
+            };
+            reader.readAsDataURL(file);
+            // Reset so same file can be re-selected
+            e.target.value = '';
+        },
+
+        rotateCrop(deg) {
+            if (this.cropper) this.cropper.rotate(deg);
+        },
+
+        resetCrop() {
+            if (this.cropper) this.cropper.reset();
+        },
+
+        cancelCrop() {
+            this.showCropper = false;
+            if (this.cropper) {
+                this.cropper.destroy();
+                this.cropper = null;
+            }
+            this.cropImageSrc = '';
+        },
+
+        async applyCrop() {
+            if (!this.cropper) return;
+
+            const canvas = this.cropper.getCroppedCanvas({
+                width: 400,
+                height: 400,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            const base64 = canvas.toDataURL('image/jpeg', 0.9);
+
+            this.showCropper = false;
+            this.cropper.destroy();
+            this.cropper = null;
+            this.cropImageSrc = '';
+            this.uploading = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('_token', '{{ csrf_token('profile_photo') }}');
+                formData.append('cropped_image', base64);
+
+                const resp = await fetch('{{ path('app_profile_photo_upload') }}', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await resp.json();
+                if (data.success) {
+                    // Cache-bust the new photo URL
+                    this.currentPhoto = data.photoUrl + '?t=' + Date.now();
+                } else {
+                    alert(data.error || 'Upload failed.');
+                }
+            } catch (err) {
+                console.error('Photo upload error:', err);
+                alert('Upload failed. Please try again.');
+            } finally {
+                this.uploading = false;
+            }
+        },
+
+        async removePhoto() {
+            if (!confirm('Remove your profile photo?')) return;
+
+            this.uploading = true;
+            try {
+                const formData = new FormData();
+                formData.append('_token', '{{ csrf_token('profile_photo') }}');
+
+                const resp = await fetch('{{ path('app_profile_photo_delete') }}', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await resp.json();
+                if (data.success) {
+                    this.currentPhoto = null;
+                } else {
+                    alert(data.error || 'Failed to remove photo.');
+                }
+            } catch (err) {
+                console.error('Photo delete error:', err);
+                alert('Failed to remove photo.');
+            } finally {
+                this.uploading = false;
+            }
+        },
+    }));
+});
+</script>
 {% endblock %}

@@ -427,16 +427,195 @@
         </div>
 
         {# Tab: Preferences #}
-        <div x-show="tab === 'preferences'" x-cloak>
+        <div x-show="tab === 'preferences'" x-cloak class="space-y-6">
+
+            {# ── Hand Gesture Control ────────────────────────────── #}
+            <div x-data="{
+                    gestureEnabled: localStorage.getItem('skilora_gesture_enabled') === '1',
+                    sensitivity: 5,
+                    showPreview: true,
+                    init() {
+                        try {
+                            const p = JSON.parse(localStorage.getItem('skilora_gesture_prefs') || '{}');
+                            if (p.sensitivity) this.sensitivity = p.sensitivity;
+                            if (p.showPreview !== undefined) this.showPreview = p.showPreview;
+                        } catch (_) {}
+                    },
+                    toggleGesture() {
+                        this.gestureEnabled = !this.gestureEnabled;
+                        if (this.gestureEnabled) {
+                            localStorage.setItem('skilora_gesture_enabled', '1');
+                            if (window.SkiloraGestureUI) {
+                                window.SkiloraGestureUI.startStandby();
+                            }
+                        } else {
+                            localStorage.removeItem('skilora_gesture_enabled');
+                            localStorage.removeItem('skilora_gesture_active');
+                            if (window.SkiloraGesture) {
+                                window.SkiloraGesture.stop();
+                                window.SkiloraGesture.stopStandby();
+                            }
+                        }
+                    },
+                    save() {
+                        localStorage.setItem('skilora_gesture_prefs', JSON.stringify({
+                            sensitivity: this.sensitivity,
+                            showPreview: this.showPreview
+                        }));
+                    },
+                    reset() {
+                        localStorage.removeItem('skilora_gesture_prefs');
+                        localStorage.removeItem('skilora_gesture_tutorial_seen');
+                        localStorage.removeItem('skilora_gesture_enabled');
+                        localStorage.removeItem('skilora_gesture_active');
+                        this.gestureEnabled = false;
+                        this.sensitivity = 5;
+                        this.showPreview = true;
+                        if (window.SkiloraGesture) {
+                            window.SkiloraGesture.stop();
+                            window.SkiloraGesture.stopStandby();
+                        }
+                    }
+                }"
+                 class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <div class="flex items-center gap-2">
+                        <svg class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.05 4.575a1.575 1.575 0 10-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 013.15 0v1.5m-3.15 0l.075 5.925m3.075-7.425a1.575 1.575 0 10-3.15 0v4.5m3.15-4.5a1.575 1.575 0 013.15 0v3.075M13.2 9.15v1.275a1.575 1.575 0 003.15 0V7.5m0 0a1.575 1.575 0 013.15 0v5.325a7.125 7.125 0 01-7.125 7.125H9.7a4.875 4.875 0 01-4.55-3.12 4.994 4.994 0 01-.237-.975l-.467-5.14a1.232 1.232 0 012.403-.516l.694 2.606"/>
+                        </svg>
+                        <h3 class="font-semibold leading-none tracking-tight">Hand Gesture Control</h3>
+                        <span class="ml-auto inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">ADVANCED</span>
+                    </div>
+                    <p class="text-sm text-muted-foreground">Control Skilora with hand gestures using your webcam. Point to move, pinch to click, palm to scroll.</p>
+                </div>
+                <div class="p-6 pt-0 space-y-5">
+
+                    {# Master enable/disable toggle #}
+                    <div class="flex items-center justify-between rounded-lg border p-4" :class="gestureEnabled ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/30'">
+                        <div>
+                            <p class="text-sm font-semibold" x-text="gestureEnabled ? 'Gesture Control is ON' : 'Gesture Control is OFF'"></p>
+                            <p class="text-xs text-muted-foreground" x-text="gestureEnabled ? 'Camera will start in standby mode on every page' : 'Camera is not used — enable to use hand gestures'"></p>
+                        </div>
+                        <button @click="toggleGesture()"
+                                :class="gestureEnabled ? 'bg-primary' : 'bg-muted'"
+                                class="relative h-7 w-12 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                            <span :class="gestureEnabled ? 'translate-x-5.5' : 'translate-x-0.5'"
+                                  class="inline-block h-6 w-6 rounded-full bg-white shadow-md transition-transform"></span>
+                        </button>
+                    </div>
+
+                    {# Info banner #}
+                    <div class="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                        <svg class="h-5 w-5 text-primary shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium">How it works</p>
+                            <p class="text-xs text-muted-foreground mt-1">Uses Google MediaPipe AI to track your hand in real-time through your camera. All processing happens locally in your browser — no video is sent to any server.</p>
+                        </div>
+                    </div>
+
+                    {# Gesture reference #}
+                    <div class="space-y-2">
+                        <p class="text-sm font-medium">Available Gestures</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+                                <span class="text-lg">☝️</span>
+                                <div>
+                                    <p class="text-xs font-semibold">Point</p>
+                                    <p class="text-[10px] text-muted-foreground">Move cursor</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+                                <span class="text-lg">🤏</span>
+                                <div>
+                                    <p class="text-xs font-semibold">Pinch</p>
+                                    <p class="text-[10px] text-muted-foreground">Click</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+                                <span class="text-lg">✋</span>
+                                <div>
+                                    <p class="text-xs font-semibold">Open Palm</p>
+                                    <p class="text-[10px] text-muted-foreground">Scroll page</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+                                <span class="text-lg">✌️</span>
+                                <div>
+                                    <p class="text-xs font-semibold">Peace Sign</p>
+                                    <p class="text-[10px] text-muted-foreground">Zoom in/out</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+                                <span class="text-lg">✊</span>
+                                <div>
+                                    <p class="text-xs font-semibold">Fist</p>
+                                    <p class="text-[10px] text-muted-foreground">Pause tracking</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+                                <span class="text-lg">👋</span>
+                                <div>
+                                    <p class="text-xs font-semibold">Swipe</p>
+                                    <p class="text-[10px] text-muted-foreground">Navigate back/forward</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Sensitivity slider #}
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm font-medium">Sensitivity</label>
+                            <span class="text-xs text-muted-foreground" x-text="sensitivity + '/10'"></span>
+                        </div>
+                        <input type="range" min="1" max="10" step="1"
+                               x-model.number="sensitivity"
+                               @change="save()"
+                               class="w-full h-2 rounded-full appearance-none cursor-pointer bg-muted accent-primary">
+                        <div class="flex justify-between text-[10px] text-muted-foreground px-1">
+                            <span>Smooth</span>
+                            <span>Responsive</span>
+                        </div>
+                    </div>
+
+                    {# Camera preview toggle #}
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium">Show Camera Preview</p>
+                            <p class="text-xs text-muted-foreground">Small camera feed overlay while gesture mode is active</p>
+                        </div>
+                        <button @click="showPreview = !showPreview; save()"
+                                :class="showPreview ? 'bg-primary' : 'bg-muted'"
+                                class="relative h-6 w-11 rounded-full transition-colors">
+                            <span :class="showPreview ? 'translate-x-5' : 'translate-x-0.5'"
+                                  class="inline-block h-5 w-5 rounded-full bg-white shadow transition-transform"></span>
+                        </button>
+                    </div>
+
+                    {# Action buttons #}
+                    <div class="flex items-center gap-3 pt-2">
+                        <p class="text-xs text-muted-foreground flex-1">
+                            Look for the <span class="inline-flex items-center gap-1"><svg class="h-3 w-3 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.05 4.575a1.575 1.575 0 10-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 013.15 0v1.5"/></svg> hand icon</span> in the bottom-right corner of any page to activate.
+                        </p>
+                        <button @click="reset()"
+                                class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                            Reset to Defaults
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {# ── Display Preferences ────────────────────────────── #}
             <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
                 <div class="flex flex-col space-y-1.5 p-6">
-                    <h3 class="font-semibold leading-none tracking-tight">Preferences</h3>
-                    <p class="text-sm text-muted-foreground">Manage your notification and display preferences.</p>
+                    <h3 class="font-semibold leading-none tracking-tight">Display</h3>
+                    <p class="text-sm text-muted-foreground">Manage your display preferences.</p>
                 </div>
                 <div class="p-6 pt-0 space-y-4">
                     <div class="rounded-lg border border-dashed border-border p-6 text-center text-muted-foreground">
-                        <p class="text-sm">Notification preferences coming soon.</p>
-                        <p class="mt-2 text-xs">Use the theme toggle in the top bar to switch between light and dark mode.</p>
+                        <p class="text-sm">Use the theme toggle in the top bar to switch between light and dark mode.</p>
                     </div>
                 </div>
             </div>
