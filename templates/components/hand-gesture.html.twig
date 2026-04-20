@@ -368,6 +368,77 @@
      Requires: public/js/hand-gesture.js loaded before this component
    ─────────────────────────────────────────────────────────────────────── #}
 
+<script>
+function gestureControl() {
+    return {
+        active: false,
+        loading: false,
+        handDetected: false,
+        showPreview: false,
+        showTutorial: false,
+        cameraError: null,
+        gestureIcon: '',
+        gestureLabel: '',
+        gestureColor: '#888',
+        tutorialGestures: [
+            { icon: '☝️', name: 'Point', desc: 'Extend index finger to move cursor' },
+            { icon: '🤏', name: 'Pinch', desc: 'Thumb meets index finger to click' },
+            { icon: '✋', name: 'Open Palm', desc: 'All fingers open to scroll page' },
+            { icon: '✊', name: 'Fist', desc: 'Close hand to pause tracking' },
+            { icon: '✌️', name: 'Peace Sign', desc: 'V-sign to zoom in/out' },
+            { icon: '👋', name: 'Swipe', desc: 'Fast palm movement to navigate back/forward' }
+        ],
+
+        async toggle() {
+            if (this.loading) return;
+            if (this.active) { this.stop(); return; }
+            this.loading = true;
+            this.cameraError = null;
+            try {
+                const G = window.SkiloraGesture;
+                if (!G) throw new Error('Gesture engine not loaded');
+                const video = this.$refs.gestureVideo;
+                const canvas = this.$refs.gestureCanvas;
+                const cursor = this.$refs.gestureCursor;
+                await G.start(video, canvas, cursor, (gesture) => {
+                    this.handDetected = true;
+                    const meta = G.META[gesture];
+                    if (meta) {
+                        this.gestureIcon = meta.icon || '';
+                        this.gestureLabel = meta.label || '';
+                        this.gestureColor = meta.color || '#888';
+                    }
+                });
+                this.active = true;
+                if (!localStorage.getItem('gesture_tutorial_seen')) {
+                    this.showTutorial = true;
+                }
+            } catch (e) {
+                this.cameraError = e.message || 'Failed to start camera';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        stop() {
+            const G = window.SkiloraGesture;
+            if (G) G.stop();
+            this.active = false;
+            this.handDetected = false;
+        },
+
+        togglePreview() {
+            this.showPreview = !this.showPreview;
+        },
+
+        dismissTutorial() {
+            this.showTutorial = false;
+            localStorage.setItem('gesture_tutorial_seen', '1');
+        }
+    };
+}
+</script>
+
 <div x-data="gestureControl()" class="gesture-control">
 
     {# ═══ Virtual Cursor ═══ #}
