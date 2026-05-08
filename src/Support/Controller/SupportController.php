@@ -40,8 +40,22 @@ class SupportController extends AppController
             return $this->redirectToRoute('app_admin_support');
         }
 
+        $query = $request->query->getString('q');
+        $status = $request->query->getString('status');
+        $category = $request->query->getString('category');
+        $priority = $request->query->getString('priority');
+
         return $this->render('support/client/index.html.twig', [
-            'tickets' => $this->ticketRepository->findForUser($user, $request->query->getString('q') ?: null),
+            'tickets' => $this->ticketRepository->findForUser($user, $query ?: null, $status ?: null, $category ?: null, $priority ?: null),
+            'filters' => [
+                'q' => $query,
+                'status' => $status ?: 'all',
+                'category' => $category ?: 'all',
+                'priority' => $priority ?: 'all',
+            ],
+            'statuses' => TicketStatus::cases(),
+            'categories' => TicketCategory::cases(),
+            'priorities' => TicketPriority::cases(),
         ]);
     }
 
@@ -130,10 +144,50 @@ class SupportController extends AppController
     #[IsGranted('ROLE_ADMIN')]
     public function adminIndex(Request $request): Response
     {
+        $filters = $this->adminFilters($request);
+        $statusStats = $this->ticketRepository->countByStatus();
+
         return $this->render('support/admin/index.html.twig', [
-            'tickets' => $this->ticketRepository->findForAdmin($request->query->getString('status') ?: null, $request->query->getString('q') ?: null),
-            'current_status' => $request->query->getString('status') ?: 'all',
+            'tickets' => $this->ticketRepository->findForAdmin($filters['status'], $filters['q'], $filters['category'], $filters['priority'], $filters['sort']),
+            'filters' => $filters,
+            'current_status' => $filters['status'] ?? 'all',
+            'statuses' => TicketStatus::cases(),
+            'categories' => TicketCategory::cases(),
+            'priorities' => TicketPriority::cases(),
+            'status_stats' => $statusStats,
+            'priority_stats' => $this->ticketRepository->countByPriority(),
+            'category_stats' => $this->ticketRepository->countByCategory(),
+            'daily_stats' => $this->ticketRepository->countLast7DaysVolume(),
+            'active_count' => $statusStats[TicketStatus::IN_PROGRESS->value] ?? 0,
         ]);
+    }
+
+    #[Route('/admin/support/export.csv', name: 'app_admin_support_export_csv', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function exportCsv(Request $request): Response
+    {
+        $filters = $this->adminFilters($request);
+        $tickets = $this->ticketRepository->findForAdmin($filters['status'], $filters['q'], $filters['category'], $filters['priority'], $filters['sort']);
+        $response = new Response($this->ticketsCsv($tickets));
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="support_tickets_' . date('Y-m-d') . '.csv"');
+
+        return $response;
+    }
+
+    #[Route('/support/{id}/export.pdf', name: 'app_support_export_pdf', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function exportPdf(SupportTicket $ticket): Response
+    {
+        $this->assertTicketAccess($ticket, false);
+
+        return $this->ticketPdfResponse($ticket, false);
+    }
+
+    #[Route('/admin/support/{id}/export.pdf', name: 'app_admin_support_export_pdf', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function adminExportPdf(SupportTicket $ticket): Response
+    {
+        return $this->ticketPdfResponse($ticket, true);
     }
 
     #[Route('/admin/support/{id}/status', name: 'app_admin_support_status', methods: ['POST'], requirements: ['id' => '\d+'])]
@@ -174,5 +228,89 @@ class SupportController extends AppController
             'createdAt' => $message->getCreatedAt()->format('M d, H:i'),
             'mine' => $message->getSender()->getId() === $this->getAppUser()->getId(),
         ];
+    }
+
+    /** @return array{q: ?string, status: ?string, category: ?string, priority: ?string, sort: string} */
+    private function adminFilters(Request $request): array
+    {
+        $query = $request->query->getString('q');
+        $status = $request->query->getString('status');
+        $category = $request->query->getString('category');
+        $priority = $request->query->getString('priority');
+
+        return [
+            'q' => $query ?: null,
+            'status' => $status !== '' && $status !== 'all' ? $status : null,
+            'category' => $category !== '' && $category !== 'all' ? $category : null,
+            'priority' => $priority !== '' && $priority !== 'all' ? $priority : null,
+            'sort' => $request->query->getString('sort') ?: 'updated',
+        ];
+    }
+
+    /** @param list<SupportTicket> $tickets */
+    private function ticketsCsv(array $tickets): string
+    {
+        $rows = [[
+            'id',
+            'subject',
+            'requester',
+            'status',
+            'priority',
+            'category',
+            'createdAt',
+            'updatedAt',
+        ]];
+
+        foreach ($tickets as $ticket) {
+            $rows[] = [
+                (string) $ticket->getId(),
+                $ticket->getSubject(),
+                $ticket->getRequester()->getDisplayName(),
+                $ticket->getStatus()->label(),
+                $ticket->getPriority()->label(),
+                $ticket->getCategory()->label(),
+                $ticket->getCreatedAt()->format(DATE_ATOM),
+                $ticket->getUpdatedAt()->format(DATE_ATOM),
+            ];
+        }
+
+        return implode('', array_map(fn (array $row): string => $this->csvLine($row), $rows));
+    }
+
+    /** @param list<string> $row */
+    private function csvLine(array $row): string
+    {
+        return implode(',', array_map(function (string $value): string {
+            if ($value !== '' && preg_match('/^[=+\-@]/', $value) === 1) {
+                $value = "'" . $value;
+            }
+
+            return '"' . str_replace('"', '""', $value) . '"';
+        }, $row)) . "\n";
+    }
+
+    private function ticketPdfResponse(SupportTicket $ticket, bool $admin): Response
+    {
+        $messages = $this->messageRepository->findVisibleForTicket($ticket, $admin);
+        $html = $this->renderView('support/pdf/ticket.html.twig', [
+            'ticket' => $ticket,
+            'messages' => $messages,
+            'admin' => $admin,
+        ]);
+
+        if (!class_exists(\Dompdf\Dompdf::class)) {
+            return new Response($html);
+        }
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $response = new Response($dompdf->output());
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', 'attachment; filename="support_ticket_' . $ticket->getId() . '.pdf"');
+
+        return $response;
     }
 }
