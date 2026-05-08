@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Messaging\Controller;
 
+use App\Community\Repository\MemberInvitationRepository;
 use App\Controller\AppController;
 use App\Entity\User;
 use App\Messaging\Entity\DmConversation;
@@ -27,6 +28,7 @@ class MessagingController extends AppController
         private readonly DmParticipantRepository $participantRepository,
         private readonly DmMessageRepository $messageRepository,
         private readonly UserRepository $userRepository,
+        private readonly MemberInvitationRepository $invitationRepository,
         private readonly MessagingNotifier $notifier,
         private readonly EntityManagerInterface $entityManager,
     ) {
@@ -48,6 +50,7 @@ class MessagingController extends AppController
             'active_conversation' => $active,
             'messages' => $active !== null ? $this->messageRepository->findForConversation($active) : [],
             'contacts' => $this->availableContacts($user),
+            'can_send' => $active !== null && $this->canMessage($user, $active),
         ]);
     }
 
@@ -64,6 +67,7 @@ class MessagingController extends AppController
             'active_conversation' => $conversation,
             'messages' => $this->messageRepository->findForConversation($conversation),
             'contacts' => $this->availableContacts($user),
+            'can_send' => $this->canMessage($user, $conversation),
         ]);
     }
 
@@ -76,8 +80,11 @@ class MessagingController extends AppController
             throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
         $recipient = $this->userRepository->find($userId);
-        if (!$recipient instanceof User || $recipient->getId() === $user->getId() || !$recipient->isActive()) {
+        if (!$recipient instanceof User || $recipient->getId() === $user->getId() || !$recipient->isActive() || $recipient->isAdmin()) {
             throw $this->createNotFoundException('Recipient not found.');
+        }
+        if (!$this->invitationRepository->areFriends($user, $recipient)) {
+            throw $this->createAccessDeniedException('Direct messages are limited to accepted network connections.');
         }
 
         $conversation = $this->conversationRepository->findOneDirectConversation($user, $recipient);
@@ -111,6 +118,9 @@ class MessagingController extends AppController
     {
         $user = $this->getAppUser();
         $this->assertParticipant($user, $conversation);
+        if (!$this->canMessage($user, $conversation)) {
+            throw $this->createAccessDeniedException('Direct messages are limited to accepted network connections.');
+        }
         if (!$this->isCsrfTokenValid('inbox_send_' . $conversation->getId(), $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
@@ -162,7 +172,14 @@ class MessagingController extends AppController
     /** @return list<User> */
     private function availableContacts(User $user): array
     {
-        return array_values(array_filter($this->userRepository->findAllOrderedByName(), fn (User $candidate) => $candidate->isActive() && $candidate->getId() !== $user->getId() && !$candidate->isAdmin()));
+        return $this->invitationRepository->findFriendsFor($user);
+    }
+
+    private function canMessage(User $user, DmConversation $conversation): bool
+    {
+        $other = $conversation->otherParticipant($user);
+
+        return $other instanceof User && $this->invitationRepository->areFriends($user, $other);
     }
 
     /** @return array{id: int|null, body: string, sender: string, mine: bool, created_at: string} */
