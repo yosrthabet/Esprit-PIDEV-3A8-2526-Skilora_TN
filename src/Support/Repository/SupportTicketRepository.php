@@ -176,9 +176,10 @@ class SupportTicketRepository extends ServiceEntityRepository
      */
     private function countByEnumField(string $field, array $cases): array
     {
+        /** @var array<string, int> $counts */
         $counts = [];
         foreach ($cases as $case) {
-            $counts[$case->value] = 0;
+            $counts[(string) $case->value] = 0;
         }
 
         /** @var list<array{bucket: \BackedEnum|string, total: int|string}> $rows */
