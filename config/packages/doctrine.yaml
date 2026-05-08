@@ -1,7 +1,14 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
+        schema_filter: ~^(?!achievements|audit_logs|auto_responses|bank_accounts|biometric_data|bonuses|certificates|chatbot_conversations|chatbot_messages|connections|contracts|conversations|email_verifications|employment_contracts|enrollments|escrow_accounts|events|faq_articles|finance_companies|formation_ratings|group_messages|group_message_reactions|group_message_reads|interview_proposals|interviews|login_attempts|mentorships|messages|message_reactions|notifications|password_reset_tokens|payslips|posts|reports|reviews|role_upgrade_requests|salary_history|security_alerts|tax_configurations|two_factor_verifications|typing_status|user_activity_logs|user_blocks|user_feedback|user_online_status|user_preferences|user_sessions)~
         profiling_collect_backtrace: '%kernel.debug%'
+        options:
+            1002: "SET time_zone='+00:00', sql_mode='STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'"
+        default_table_options:
+            charset: utf8mb4
+            collate: utf8mb4_unicode_ci
+            engine: InnoDB
     orm:
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         auto_mapping: true
@@ -18,6 +25,36 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Recruitment/Entity'
                 prefix: 'App\Recruitment\Entity'
                 alias: Recruitment
+            Finance:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Finance/Entity'
+                prefix: 'App\Finance\Entity'
+                alias: Finance
+            Support:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Support/Entity'
+                prefix: 'App\Support\Entity'
+                alias: Support
+            Formation:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Formation/Entity'
+                prefix: 'App\Formation\Entity'
+                alias: Formation
+            Community:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Community/Entity'
+                prefix: 'App\Community\Entity'
+                alias: Community
+            Messaging:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Messaging/Entity'
+                prefix: 'App\Messaging\Entity'
+                alias: Messaging
 
 when@test:
     doctrine:
@@ -28,6 +65,9 @@ when@test:
 when@prod:
     doctrine:
         orm:
+            metadata_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
             query_cache_driver:
                 type: pool
                 pool: doctrine.system_cache_pool

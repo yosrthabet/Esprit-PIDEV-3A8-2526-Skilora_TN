@@ -1,0 +1,74 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Application{% endblock %}
+{% block content %}
+{% set is_employer = app.user.role == 'EMPLOYER' %}
+<div class="mx-auto grid max-w-[90rem] gap-6 px-4 py-6 lg:grid-cols-[1fr_24rem] sm:px-6 lg:px-8">
+    <article class="glass-panel p-8">
+        <a href="{{ path('app_applications') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"><i data-lucide="arrow-left" class="h-4 w-4"></i>Back to applications</a>
+        <div class="mt-6 flex flex-wrap items-center gap-2"><span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{{ application.status.label }}</span><span class="text-xs text-muted-foreground">{{ application.appliedAt|date('M d, Y H:i') }}</span></div>
+        <h1 class="mt-4 text-4xl font-light tracking-holographic">{{ application.candidate.displayName }}</h1>
+        <p class="mt-2 text-muted-foreground">Applied to <a href="{{ path('app_job_show', {id: application.jobOffer.id}) }}" class="font-semibold text-foreground hover:text-primary">{{ application.jobOffer.title }}</a></p>
+
+        <section class="mt-8 grid gap-4 md:grid-cols-3">
+            <div class="rounded-2xl border border-border/50 bg-background/60 p-4"><p class="text-2xl font-light">{{ application.matchScore }}%</p><p class="text-xs text-muted-foreground">match score</p></div>
+            <div class="rounded-2xl border border-border/50 bg-background/60 p-4"><p class="text-2xl font-light">{{ interview ? 'Yes' : 'No' }}</p><p class="text-xs text-muted-foreground">interview planned</p></div>
+            <div class="rounded-2xl border border-border/50 bg-background/60 p-4"><p class="text-2xl font-light">{{ hire_offer ? hire_offer.status.value|title : 'None' }}</p><p class="text-xs text-muted-foreground">hire offer</p></div>
+        </section>
+
+        <section class="mt-8 space-y-3">
+            <h2 class="text-xl font-semibold">Cover letter</h2>
+            <p class="whitespace-pre-line rounded-2xl border border-border/50 bg-background/60 p-5 text-muted-foreground">{{ application.coverLetter ?: 'No cover note.' }}</p>
+        </section>
+        <section class="mt-8 space-y-3">
+            <h2 class="text-xl font-semibold">Candidate CV</h2>
+            {% if application.cvPath %}
+                <div class="flex flex-wrap gap-2"><a href="{{ path('app_application_cv', {id: application.id, inline: 1}) }}" target="_blank" class="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Open CV</a><a href="{{ path('app_application_cv', {id: application.id}) }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Download CV</a></div>
+            {% else %}
+                <p class="rounded-2xl border border-border/50 bg-background/60 p-5 text-sm text-muted-foreground">No CV attached to this application.</p>
+            {% endif %}
+        </section>
+
+        {% if interview %}
+            <section class="mt-8 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                <h2 class="font-semibold">Interview</h2>
+                <p class="mt-2 text-sm text-muted-foreground">{{ interview.scheduledAt|date('M d, Y H:i') }} · {{ interview.format.value|title }} · {{ interview.durationMinutes }} minutes</p>
+                {% if interview.notes %}<p class="mt-3 whitespace-pre-line text-sm text-muted-foreground">{{ interview.notes }}</p>{% endif %}
+                {% if interview.location %}<p class="mt-2 text-sm text-muted-foreground">Location: {{ interview.location }}</p>{% endif %}
+                {% if interview.meetingUrl %}<a href="{{ interview.meetingUrl }}" target="_blank" rel="noopener noreferrer" class="mt-3 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Open meeting link</a>{% endif %}
+            </section>
+        {% endif %}
+
+        {% if hire_offer %}
+            <section class="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+                <h2 class="font-semibold">Hire offer</h2>
+                <p class="mt-2 text-sm text-muted-foreground">{{ hire_offer.salaryOffered ?: 'Negotiable' }} {{ hire_offer.currency.value }} · {{ hire_offer.contractType ?: 'Contract' }} · {{ hire_offer.status.value|title }}</p>
+                {% if not is_employer and hire_offer.status.value == 'pending' %}
+                    <div class="mt-4 flex gap-2">
+                        <form method="post" action="{{ path('app_hire_offer_accept', {id: hire_offer.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('accept_offer_' ~ hire_offer.id) }}"><button class="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Accept offer</button></form>
+                        <form method="post" action="{{ path('app_hire_offer_reject', {id: hire_offer.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('reject_offer_' ~ hire_offer.id) }}"><button class="rounded-xl border border-border px-4 py-2 text-sm font-semibold">Reject</button></form>
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+    </article>
+
+    {% if is_employer %}
+        <aside class="space-y-4 lg:sticky lg:top-24 lg:self-start">
+            <div class="glass-panel p-5">
+                <h2 class="font-semibold">Review actions</h2>
+                <div class="mt-4 grid gap-2">
+                    {% for status in ['viewed', 'interview', 'rejected'] %}
+                        <form method="post" action="{{ path('app_application_status', {id: application.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('application_status_' ~ application.id) }}">
+                            <input type="hidden" name="status" value="{{ status }}">
+                            <button class="w-full rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">Mark {{ status|title }}</button>
+                        </form>
+                    {% endfor %}
+                </div>
+            </div>
+            <a href="{{ path('app_application_interview', {id: application.id}) }}" class="block rounded-xl bg-primary px-4 py-3 text-center text-sm font-bold text-primary-foreground">Plan interview</a>
+            <a href="{{ path('app_application_offer', {id: application.id}) }}" class="block rounded-xl border border-border px-4 py-3 text-center text-sm font-semibold hover:bg-muted">Send hire offer</a>
+        </aside>
+    {% endif %}
+</div>
+{% endblock %}

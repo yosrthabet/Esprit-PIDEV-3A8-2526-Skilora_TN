@@ -5,14 +5,28 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}Skilora{% endblock %}</title>
         <link rel="icon" href="{{ asset('favicon.svg') }}">
+        <link rel="manifest" href="{{ asset('manifest.json') }}">
+        <meta name="theme-color" content="#6366f1">
+        <meta name="mobile-web-app-capable" content="yes">
+
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+        <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 
         {% block stylesheets %}
-        <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ 'now'|date('U') }}">
+        <link rel="stylesheet" href="{{ asset('css/app.css') }}?v=202605040003">
         {% endblock %}
 
+        <style>
+            [x-cloak] { display: none !important; }
+        </style>
         {% block head %}{% endblock %}
     </head>
-    <body data-page="{% block body_page %}default{% endblock %}" class="min-h-screen bg-background text-foreground antialiased" x-data x-cloak>
+    <body data-page="{% block body_page %}default{% endblock %}" class="min-h-screen bg-background text-foreground antialiased" x-data>
+        {# Skip-to-content for keyboard / screen-reader users (B20 accessibility) #}
+        <a href="#main-content"
+           class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[99999] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:outline-none focus:shadow-lg">
+            Skip to content
+        </a>
         {% block body %}{% endblock %}
 
         {# --- Toast container --- #}
@@ -57,14 +71,87 @@
             {% endfor %}
         {% endfor %}
 
+        {# ── DEV ROLE SWITCHER ─────────────────────────────────────────────────
+           Visible ONLY in dev (app.debug = true). Never renders in production.
+           One-click login as any role without touching the login form.
+        #}
+        {% if app.debug %}
+        <div x-data="{ open: true }"
+             style="position:fixed;bottom:20px;left:20px;z-index:99999;font-family:monospace;font-size:11px;">
+
+            {# Collapsed pill — shown when closed #}
+            <button x-show="!open" x-cloak @click="open = true"
+                style="display:flex;align-items:center;gap:6px;border-radius:999px;background:#18181b;border:1px solid #3f3f46;padding:5px 12px;color:#d4d4d8;cursor:pointer;box-shadow:0 4px 24px #0008;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>
+                DEV
+            </button>
+
+            {# Expanded panel #}
+            <div x-show="open"
+                 style="border-radius:12px;border:1px solid #3f3f46;background:rgba(9,9,11,0.97);backdrop-filter:blur(16px);box-shadow:0 8px 40px #0009;overflow:hidden;min-width:200px;">
+
+                {# Header #}
+                <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #27272a;padding:7px 12px;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="width:6px;height:6px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>
+                        <span style="font-weight:700;color:#d4d4d8;letter-spacing:.08em;">DEV SWITCHER</span>
+                    </div>
+                    <button @click="open = false" style="color:#71717a;background:none;border:none;cursor:pointer;font-size:13px;line-height:1;">✕</button>
+                </div>
+
+                {# Current session #}
+                <div style="border-bottom:1px solid #27272a;padding:6px 12px;color:#71717a;">
+                    {% if app.user %}
+                        As <strong style="color:#fff;">{{ app.user.username }}</strong>
+                        <span style="margin-left:4px;border-radius:999px;background:rgba(99,102,241,.15);padding:1px 6px;color:#818cf8;font-weight:700;">{{ app.user.role }}</span>
+                    {% else %}
+                        <span style="color:#52525b;">Not logged in</span>
+                    {% endif %}
+                </div>
+
+                {# Role buttons #}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px;">
+                    {% set devRoles = [
+                        { username: 'admin',    label: 'Admin',    active: '#7c3aed', dim: 'rgba(124,58,237,.15)' },
+                        { username: 'user',     label: 'User',     active: '#4f46e5', dim: 'rgba(79,70,229,.15)' },
+                        { username: 'employer', label: 'Employer', active: '#059669', dim: 'rgba(5,150,105,.15)' },
+                        { username: 'trainer',  label: 'Trainer',  active: '#d97706', dim: 'rgba(217,119,6,.15)' },
+                    ] %}
+                    {% for u in devRoles %}
+                        {% set isActive = app.user and app.user.username == u.username %}
+                        <a href="{{ path('dev_login', { username: u.username }) }}"
+                           style="display:flex;align-items:center;justify-content:center;gap:5px;border-radius:8px;padding:6px 10px;font-weight:600;text-decoration:none;border:1px solid {{ isActive ? u.active : '#27272a' }};background:{{ isActive ? u.dim : '#18181b' }};color:{{ isActive ? '#fff' : '#a1a1aa' }};transition:opacity .15s;">
+                            {% if isActive %}<span style="width:5px;height:5px;border-radius:50%;background:{{ u.active }};display:inline-block;"></span>{% endif %}
+                            {{ u.label }}
+                        </a>
+                    {% endfor %}
+                </div>
+
+                {# Logout #}
+                {% if app.user %}
+                <div style="border-top:1px solid #27272a;padding:0 10px 10px;">
+                    <a href="{{ path('dev_logout') }}"
+                       style="display:flex;align-items:center;justify-content:center;gap:6px;border-radius:8px;border:1px solid #27272a;background:#18181b;padding:6px 10px;color:#f87171;text-decoration:none;font-weight:600;">
+                        ⏏ Sign Out
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
         {% block javascripts %}
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-        <script src="https://unpkg.com/lucide@latest" defer></script>
-        <script src="{{ asset('assets/app.js') }}?v={{ 'now'|date('U') }}" defer></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3/dist/cdn.min.js"></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3/dist/cdn.min.js"></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+        <script src="{{ asset('assets/app.js') }}?v=202605040003" defer></script>
+        {% block page_scripts %}{% endblock %}
+        <script src="https://cdn.jsdelivr.net/combine/npm/@alpinejs/intersect@3/dist/cdn.min.js,npm/@alpinejs/collapse@3/dist/cdn.min.js,npm/alpinejs@3/dist/cdn.min.js" defer></script>
+        <script>
+            document.addEventListener('DOMContentLoaded',function(){
+                var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/lucide@0.309.0/dist/umd/lucide.min.js';
+                s.onload=function(){lucide.createIcons();};
+                document.head.appendChild(s);
+            });
+            if('requestIdleCallback' in window){requestIdleCallback(function(){if('serviceWorker' in navigator)navigator.serviceWorker.register('/service-worker.js').catch(function(){});});}else{window.addEventListener('load',function(){if('serviceWorker' in navigator)navigator.serviceWorker.register('/service-worker.js').catch(function(){});});}
+        </script>
         {% endblock %}
     </body>
 </html>

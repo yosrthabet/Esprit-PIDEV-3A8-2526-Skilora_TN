@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'passkey_credentials')]
 class PasskeyCredential
 {
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -37,7 +38,11 @@ class PasskeyCredential
     #[ORM\Column(name: 'attestation_type', length: 32, options: ['default' => 'none'])]
     private string $attestationType = 'none';
 
-    /** Transports supported by the authenticator (json array) */
+    /**
+     * Transports supported by the authenticator.
+     *
+     * @var list<string>|null
+     */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $transports = null;
 
@@ -72,11 +77,13 @@ class PasskeyCredential
     public function getAttestationType(): string { return $this->attestationType; }
     public function setAttestationType(string $attestationType): static { $this->attestationType = $attestationType; return $this; }
 
+    /** @return list<string>|null */
     public function getTransports(): ?array { return $this->transports; }
+    /** @param list<string>|null $transports */
     public function setTransports(?array $transports): static { $this->transports = $transports; return $this; }
 
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
 
     public function getLastUsedAt(): ?\DateTimeImmutable { return $this->lastUsedAt; }
-    public function setLastUsedAt(?\DateTimeImmutable $lastUsedAt): static { $this->lastUsedAt = $lastUsedAt; return $this; }
+    public function recordLastUsed(?\DateTimeImmutable $at = null): static { $this->lastUsedAt = $at ?? new \DateTimeImmutable(); return $this; }
 }

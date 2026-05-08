@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+{% block title %}Certificate Verification · Skilora{% endblock %}
+{% block body %}
+<div class="min-h-screen bg-background px-4 py-12 text-foreground sm:px-6 lg:px-8">
+    <main class="mx-auto max-w-3xl rounded-3xl border border-border bg-card p-8 text-center shadow-sm">
+        <p class="text-xs font-bold uppercase tracking-label text-primary">Certificate verification</p>
+        {% if certificate %}
+            <h1 class="mt-4 text-4xl font-light tracking-holographic">Valid Skilora certificate</h1>
+            <p class="mt-5 text-muted-foreground">Awarded to</p>
+            <p class="mt-2 text-2xl font-semibold">{{ certificate.enrollment.user.displayName }}</p>
+            <p class="mt-5 text-muted-foreground">For completing</p>
+            <p class="mt-2 text-xl font-semibold">{{ certificate.enrollment.formation.title }}</p>
+            <p class="mt-5 text-sm text-muted-foreground">Trainer: {{ certificate.enrollment.formation.trainer.displayName }} · Issued {{ certificate.issuedAt|date('M d, Y') }}</p>
+            <p class="mt-6 rounded-xl bg-muted p-3 text-xs font-mono text-muted-foreground">{{ certificate.verificationId }}</p>
+        {% else %}
+            <h1 class="mt-4 text-4xl font-light tracking-holographic">Certificate not found</h1>
+            <p class="mt-4 text-muted-foreground">No issued certificate matches verification ID <span class="font-mono">{{ verification_id }}</span>.</p>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

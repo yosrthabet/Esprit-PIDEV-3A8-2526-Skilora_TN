@@ -89,8 +89,9 @@ class ProfileTest extends TestCase
     public function testBirthDate(): void
     {
         $p = new Profile();
-        $date = new \DateTime('1990-01-15');
+        $date = new \DateTimeImmutable('1990-01-15');
         $p->setBirthDate($date);
-        $this->assertSame($date, $p->getBirthDate());
+        // setBirthDate always stores a DateTimeImmutable clone, so use assertEquals
+        $this->assertEquals($date, $p->getBirthDate());
     }
 }

@@ -40,15 +40,23 @@ class PublicSmokeTest extends WebTestCase
         yield 'register' => ['/register', 200];
         yield 'forgot-password' => ['/forgot-password', 200];
 
-        // Public listings
+        // Public marketing pages
+        yield 'about' => ['/about', 200];
+        yield 'pricing' => ['/pricing', 200];
+        yield 'careers' => ['/careers', 200];
+        yield 'health' => ['/health', 200];
+        yield 'certificate-verify-invalid' => ['/certificate/verify/not-a-real-certificate', 200];
         yield 'formations' => ['/formations', 200];
-        yield 'offres' => ['/offres', 302];
 
-        // Redirect/placeholder pages
+        // Redirect/placeholder pages (redirect when unauthenticated)
         yield 'recruitment' => ['/recruitment', 302];
         yield 'finance' => ['/finance', 302];
-        yield 'community' => ['/community', 302];
+        yield 'admin-finance' => ['/admin/finance', 302];
         yield 'jobs' => ['/jobs', 302];
+        yield 'community' => ['/community', 302];
+        yield 'community-groups' => ['/community/groups', 302];
+        yield 'community-events' => ['/community/events', 302];
+        yield 'community-blog' => ['/community/blog', 302];
 
         // OAuth complete-registration (no session → should redirect to /register)
         yield 'oauth-complete-no-session' => ['/oauth/complete-registration', 302];
@@ -74,40 +82,18 @@ class PublicSmokeTest extends WebTestCase
 
     public static function protectedGetRoutes(): iterable
     {
-        // Dashboard
         yield 'dashboard' => ['/dashboard'];
         yield 'workspace' => ['/workspace'];
-
-        // Settings
         yield 'settings' => ['/settings'];
-
-        // Profile
         yield 'profile' => ['/profile'];
-
-        // User formations
-        yield 'my-formations' => ['/my-formations'];
-        yield 'my-certificates' => ['/my-certificates'];
-
-        // Support
-        yield 'support' => ['/support'];
-        yield 'support-new' => ['/support/new'];
-
-        // Community (authenticated)
-        yield 'community-posts' => ['/community/posts'];
-        yield 'community-network' => ['/community/reseau'];
-
-        // Candidate area
-        yield 'candidate-applications' => ['/mon-espace/candidatures'];
-        yield 'candidate-interviews' => ['/mon-espace/entretiens'];
-        yield 'candidate-cv' => ['/mon-espace/cv/generateur'];
-
-        // Admin pages
-        yield 'admin-users' => ['/admin/users'];
-        yield 'admin-formations' => ['/admin/formations'];
-        yield 'admin-certificates' => ['/admin/certificates'];
-        yield 'admin-community' => ['/admin/community'];
-        yield 'admin-support' => ['/admin/support'];
-        yield 'admin-finance' => ['/admin/finance'];
-        yield 'admin-recruitment' => ['/admin/recruitment'];
+        yield 'support' => ['/support-space'];
+        yield 'notifications' => ['/notifications'];
+        yield 'inbox' => ['/inbox'];
+        yield 'inbox-unread-count' => ['/api/inbox/unread-count'];
+        yield 'applications' => ['/applications'];
+        yield 'job-preferences' => ['/job-preferences'];
+        yield 'interviews' => ['/interviews'];
+        yield 'learning' => ['/learning'];
+        yield 'certificates' => ['/certificates'];
     }
 }

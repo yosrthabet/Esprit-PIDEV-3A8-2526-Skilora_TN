@@ -35,8 +35,8 @@ class ExperienceTest extends TestCase
         $e->setProfile($this->makeProfile());
         $e->setCompany('Sofrecom');
         $e->setPosition('Developer');
-        $start = new \DateTime('2020-01-01');
-        $end = new \DateTime('2023-12-31');
+        $start = new \DateTimeImmutable('2020-01-01');
+        $end = new \DateTimeImmutable('2023-12-31');
         $e->setStartDate($start);
         $e->setEndDate($end);
         $e->setDescription('Built stuff');

@@ -1,16 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Recruitment\Repository;
 
+use App\Entity\User;
+use App\Enum\FeedSource;
+use App\Enum\JobOfferStatus;
 use App\Recruitment\Entity\Company;
 use App\Recruitment\Entity\JobOffer;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<JobOffer>
- */
+/** @extends ServiceEntityRepository<JobOffer> */
 class JobOfferRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -18,425 +21,187 @@ class JobOfferRepository extends ServiceEntityRepository
         parent::__construct($registry, JobOffer::class);
     }
 
-    /**
-     * Offres gérées par l’employeur : même périmètre que {@see CompanyRepository::employerOwnsJobOfferDisplay}
-     * (company_id ∈ entreprises possédées OU libellé company_name qui correspond).
-     *
-     * @param list<int>                $ownedCompanyIds
-     * @param list<string>             $ownedCompanyNamesLower noms d’entreprise (minuscules)
-     * @param 'all'|'open'|'closed'|'draft' $filter
-     *
-     * @return JobOffer[]
-     */
-    public function findAccessibleToEmployerFiltered(
-        array $ownedCompanyIds,
-        array $ownedCompanyNamesLower,
-        string $filter = 'all',
-        ?string $search = null,
-        ?string $workType = null,
-        int $page = 1,
-        int $perPage = 20,
-    ): array {
-        $qb = $this->createEmployerScopedQueryBuilder($ownedCompanyIds, $ownedCompanyNamesLower);
-        if ($qb === null) {
-            return [];
-        }
-
-        $qb->orderBy('j.postedDate', 'DESC')->addOrderBy('j.id', 'DESC');
-
-        if ($filter === 'open') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'open');
-        } elseif ($filter === 'closed') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'closed');
-        } elseif ($filter === 'draft') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'draft');
-        }
-
-        if ($workType !== null && $workType !== '') {
-            $qb->andWhere('j.workType = :wt')->setParameter('wt', $workType);
-        }
-
-        if ($search !== null && $search !== '') {
-            $q = '%'.mb_strtolower($search).'%';
-            $qb->andWhere($qb->expr()->orX(
-                'LOWER(j.title) LIKE :q',
-                'LOWER(COALESCE(j.location, \'\')) LIKE :q',
-                'LOWER(COALESCE(j.companyName, \'\')) LIKE :q',
-                'LOWER(COALESCE(c.name, \'\')) LIKE :q',
-            ))->setParameter('q', $q);
-        }
-
-        return $qb->setFirstResult(($page - 1) * $perPage)
-            ->setMaxResults($perPage)
-            ->getQuery()
-            ->getResult();
-    }
-
-    public function countAccessibleToEmployerFiltered(
-        array $ownedCompanyIds,
-        array $ownedCompanyNamesLower,
-        string $filter = 'all',
-        ?string $search = null,
-        ?string $workType = null,
-    ): int {
-        $qb = $this->createEmployerScopedQueryBuilder($ownedCompanyIds, $ownedCompanyNamesLower);
-        if ($qb === null) {
-            return 0;
-        }
-
-        $qb->select('COUNT(j.id)');
-
-        if ($filter === 'open') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'open');
-        } elseif ($filter === 'closed') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'closed');
-        } elseif ($filter === 'draft') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'draft');
-        }
-
-        if ($workType !== null && $workType !== '') {
-            $qb->andWhere('j.workType = :wt')->setParameter('wt', $workType);
-        }
-
-        if ($search !== null && $search !== '') {
-            $q = '%'.mb_strtolower($search).'%';
-            $qb->andWhere($qb->expr()->orX(
-                'LOWER(j.title) LIKE :q',
-                'LOWER(COALESCE(j.location, \'\')) LIKE :q',
-                'LOWER(COALESCE(j.companyName, \'\')) LIKE :q',
-                'LOWER(COALESCE(c.name, \'\')) LIKE :q',
-            ))->setParameter('q', $q);
-        }
-
-        return (int) $qb->getQuery()->getSingleScalarResult();
-    }
-
-    /**
-     * @param list<int>    $ownedCompanyIds
-     * @param list<string> $ownedCompanyNamesLower
-     */
-    public function countOpenAccessibleToEmployer(array $ownedCompanyIds, array $ownedCompanyNamesLower): int
+    /** @return list<JobOffer> */
+    public function findOpenForDiscovery(?string $query, ?string $workType, ?string $source, string $sort, int $limit, int $offset = 0): array
     {
-        $qb = $this->createEmployerScopedQueryBuilder($ownedCompanyIds, $ownedCompanyNamesLower);
-        if ($qb === null) {
-            return 0;
+        $qb = $this->openDiscoveryQuery($query, $workType, $source);
+
+        if ($sort === 'match') {
+            $qb->orderBy('j.featured', 'DESC')->addOrderBy('j.sourceQuality', 'DESC')->addOrderBy('j.postedAt', 'DESC');
+        } elseif ($sort === 'salary') {
+            $qb->orderBy('j.maxSalary', 'DESC')->addOrderBy('j.postedAt', 'DESC');
+        } else {
+            $qb->orderBy('j.postedAt', 'DESC')->addOrderBy('j.id', 'DESC');
         }
 
-        return (int) $qb->select('COUNT(j.id)')
-            ->andWhere('LOWER(TRIM(j.status)) = :open')
-            ->setParameter('open', 'open')
+        /** @var list<JobOffer> $jobs */
+        $jobs = $qb->setFirstResult($offset)->setMaxResults($limit)->getQuery()->getResult();
+
+        return $jobs;
+    }
+
+    public function countOpenForDiscovery(?string $query, ?string $workType, ?string $source = null): int
+    {
+        return (int) $this->openDiscoveryQuery($query, $workType, $source)
+            ->select('COUNT(j.id)')
             ->getQuery()
             ->getSingleScalarResult();
     }
 
-    /**
-     * @param list<int>    $ownedCompanyIds
-     * @param list<string> $ownedCompanyNamesLower
-     *
-     * @return JobOffer[]
-     */
-    public function findAccessibleToEmployerOrdered(array $ownedCompanyIds, array $ownedCompanyNamesLower): array
+    /** @return array{all: int, platform: int, aneti: int, reddit: int, rss: int, linkedin_rss: int} */
+    public function countOpenBySource(?string $query, ?string $workType): array
     {
-        $qb = $this->createEmployerScopedQueryBuilder($ownedCompanyIds, $ownedCompanyNamesLower);
-        if ($qb === null) {
-            return [];
+        $qb = $this->openDiscoveryQuery($query, $workType)
+            ->select('j.feedSource AS source, COUNT(j.id) AS total')
+            ->groupBy('j.feedSource');
+
+        $counts = [
+            'all' => 0,
+            'platform' => 0,
+            'aneti' => 0,
+            'reddit' => 0,
+            'rss' => 0,
+            'linkedin_rss' => 0,
+        ];
+
+        foreach ($qb->getQuery()->getScalarResult() as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $sourceValue = $row['source'] ?? null;
+            $source = $sourceValue instanceof FeedSource ? $sourceValue->value : (is_string($sourceValue) ? $sourceValue : 'platform');
+            $total = is_numeric($row['total'] ?? null) ? (int) $row['total'] : 0;
+            if (!array_key_exists($source, $counts)) {
+                $source = 'platform';
+            }
+
+            $counts[$source] += $total;
+            $counts['all'] += $total;
         }
 
-        return $qb->orderBy('j.postedDate', 'DESC')
-            ->addOrderBy('j.id', 'DESC')
-            ->getQuery()
-            ->getResult();
+        return $counts;
     }
 
     /**
-     * @param list<int>    $ownedCompanyIds
-     * @param list<string> $ownedCompanyNamesLower
+     * @param list<string> $skillNames
+     * @return list<JobOffer>
      */
-    private function createEmployerScopedQueryBuilder(array $ownedCompanyIds, array $ownedCompanyNamesLower): ?QueryBuilder
+    public function findRecommendedForUser(User $user, array $skillNames, int $limit = 5): array
     {
-        if ($ownedCompanyIds === [] && $ownedCompanyNamesLower === []) {
-            return null;
-        }
-
         $qb = $this->createQueryBuilder('j')
-            ->leftJoin('j.company', 'c')
-            ->addSelect('c');
+            ->where('j.status = :open')
+            ->setParameter('open', JobOfferStatus::OPEN)
+            ->setMaxResults($limit * 4)
+            ->orderBy('j.featured', 'DESC')
+            ->addOrderBy('j.postedAt', 'DESC');
 
-        $or = $qb->expr()->orX();
-        if ($ownedCompanyIds !== []) {
-            $or->add($qb->expr()->in('j.company', ':_scopeCompanyIds'));
-            $qb->setParameter('_scopeCompanyIds', $ownedCompanyIds);
+        if ($skillNames !== []) {
+            $or = $qb->expr()->orX();
+            foreach (array_slice($skillNames, 0, 6) as $idx => $skill) {
+                $param = 'skill' . $idx;
+                $or->add('LOWER(j.title) LIKE :' . $param);
+                $or->add('LOWER(COALESCE(j.skillsRequired, \'\')) LIKE :' . $param);
+                $qb->setParameter($param, '%' . mb_strtolower($skill) . '%');
+            }
+            $qb->andWhere($or);
         }
-        if ($ownedCompanyNamesLower !== []) {
-            $or->add($qb->expr()->in('LOWER(TRIM(COALESCE(j.companyName, \'\')))', ':_scopeCompanyNames'));
-            $qb->setParameter('_scopeCompanyNames', $ownedCompanyNamesLower);
-        }
 
-        $qb->where($or);
+        /** @var list<JobOffer> $jobs */
+        $jobs = $qb->getQuery()->getResult();
 
-        return $qb;
+        return array_slice($jobs, 0, $limit);
     }
 
-    /**
-     * @return JobOffer[]
-     */
-    public function findByCompanyOrdered(Company $company): array
+    /** @return list<JobOffer> */
+    public function findSearchSuggestions(string $query, int $limit = 8): array
     {
-        return $this->createQueryBuilder('j')
+        return $this->findOpenForDiscovery($query, null, null, 'match', $limit);
+    }
+
+    /** @return list<JobOffer> */
+    public function findRecentForCompany(Company $company, int $limit = 8): array
+    {
+        /** @var list<JobOffer> $jobs */
+        $jobs = $this->createQueryBuilder('j')
             ->where('j.company = :company')
             ->setParameter('company', $company)
-            ->orderBy('j.postedDate', 'DESC')
-            ->addOrderBy('j.id', 'DESC')
+            ->orderBy('j.postedAt', 'DESC')
+            ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
+
+        return $jobs;
     }
 
-    public function countOpenByCompany(Company $company): int
+    public function countOpenForCompany(Company $company): int
     {
         return (int) $this->createQueryBuilder('j')
             ->select('COUNT(j.id)')
             ->where('j.company = :company')
             ->andWhere('j.status = :open')
             ->setParameter('company', $company)
-            ->setParameter('open', 'OPEN')
+            ->setParameter('open', JobOfferStatus::OPEN)
             ->getQuery()
             ->getSingleScalarResult();
     }
 
-    /**
-     * @param 'all'|'open'|'closed'|'draft' $filter
-     *
-     * @return JobOffer[]
-     */
-    public function findByCompanyFiltered(
-        Company $company,
-        string $filter = 'all',
-        ?string $search = null,
-        ?string $workType = null,
-    ): array {
-        $qb = $this->createQueryBuilder('j')
-            ->leftJoin('j.company', 'c')
-            ->where('j.company = :company')
-            ->setParameter('company', $company)
-            ->orderBy('j.postedDate', 'DESC')
-            ->addOrderBy('j.id', 'DESC');
-
-        if ($filter === 'open') {
-            $qb->andWhere('j.status = :st')->setParameter('st', 'OPEN');
-        } elseif ($filter === 'closed') {
-            $qb->andWhere('j.status = :st')->setParameter('st', 'CLOSED');
-        } elseif ($filter === 'draft') {
-            $qb->andWhere('j.status = :st')->setParameter('st', 'DRAFT');
-        }
-
-        if ($workType !== null && $workType !== '') {
-            $qb->andWhere('j.workType = :wt')->setParameter('wt', $workType);
-        }
-
-        if ($search !== null && $search !== '') {
-            $q = '%'.mb_strtolower($search).'%';
-            $qb->andWhere($qb->expr()->orX(
-                'LOWER(j.title) LIKE :q',
-                'LOWER(COALESCE(j.location, \'\')) LIKE :q',
-                'LOWER(COALESCE(j.companyName, \'\')) LIKE :q',
-                'LOWER(COALESCE(c.name, \'\')) LIKE :q',
-            ))->setParameter('q', $q);
-        }
-
-        return $qb->getQuery()->getResult();
-    }
-
-    /**
-     * Offres ouvertes visibles par les candidats (toutes, y compris récentes).
-     *
-     * @return JobOffer[]
-     */
-    public function findOpenOffersForCandidates(): array
+    /** @return array<string, true> */
+    public function findExistingFeedIds(FeedSource $source): array
     {
-        return $this->createQueryBuilder('j')
-            ->where('LOWER(TRIM(j.status)) = :open')
-            ->setParameter('open', 'open')
-            ->orderBy('j.postedDate', 'DESC')
-            ->addOrderBy('j.id', 'DESC')
+        $rows = $this->createQueryBuilder('j')
+            ->select('j.feedSourceId')
+            ->where('j.feedSource = :source')
+            ->andWhere('j.feedSourceId IS NOT NULL')
+            ->setParameter('source', $source)
             ->getQuery()
-            ->getResult();
+            ->getScalarResult();
+
+        $ids = [];
+        foreach ($rows as $row) {
+            if (is_array($row) && is_string($row['feedSourceId'] ?? null)) {
+                $ids[$row['feedSourceId']] = true;
+            }
+        }
+
+        return $ids;
     }
 
-    /**
-     * Vue globale employeur: toutes les offres (pas uniquement l'entreprise connectée).
-     *
-     * @param 'all'|'open'|'closed'|'draft' $filter
-     *
-     * @return JobOffer[]
-     */
-    public function findAllForEmployerViewFiltered(
-        string $filter = 'all',
-        ?string $search = null,
-        ?string $workType = null,
-        int $page = 1,
-        int $perPage = 20,
-    ): array {
+    private function openDiscoveryQuery(?string $query, ?string $workType, ?string $source = null): QueryBuilder
+    {
         $qb = $this->createQueryBuilder('j')
-            ->leftJoin('j.company', 'c')
-            ->addSelect('c')
-            ->orderBy('j.postedDate', 'DESC')
-            ->addOrderBy('j.id', 'DESC');
-
-        if ($filter === 'open') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'open');
-        } elseif ($filter === 'closed') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'closed');
-        } elseif ($filter === 'draft') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'draft');
-        }
+            ->where('j.status = :open')
+            ->setParameter('open', JobOfferStatus::OPEN);
 
         if ($workType !== null && $workType !== '') {
-            $qb->andWhere('UPPER(TRIM(COALESCE(j.workType, \'\'))) = :wt')
-                ->setParameter('wt', strtoupper($workType));
+            $qb->andWhere('j.workType = :workType')->setParameter('workType', $workType);
         }
 
-        if ($search !== null && $search !== '') {
-            $q = '%'.mb_strtolower($search).'%';
+        if ($source !== null && $source !== '') {
+            if ($source === 'platform') {
+                $qb->andWhere('j.feedSource IS NULL OR j.feedSource = :platformSource')
+                    ->setParameter('platformSource', FeedSource::PLATFORM);
+            } else {
+                $feedSource = FeedSource::tryFrom($source);
+                if ($feedSource !== null) {
+                    $qb->andWhere('j.feedSource = :feedSource')->setParameter('feedSource', $feedSource);
+                }
+            }
+        }
+
+        if ($query !== null && trim($query) !== '') {
+            $q = '%' . mb_strtolower(trim($query)) . '%';
+            $qb->leftJoin('j.company', 'c');
             $qb->andWhere($qb->expr()->orX(
                 'LOWER(j.title) LIKE :q',
-                'LOWER(COALESCE(j.location, \'\')) LIKE :q',
                 'LOWER(COALESCE(j.companyName, \'\')) LIKE :q',
-                'LOWER(COALESCE(c.name, \'\')) LIKE :q',
-            ))->setParameter('q', $q);
-        }
-
-        return $qb->setFirstResult(($page - 1) * $perPage)
-            ->setMaxResults($perPage)
-            ->getQuery()
-            ->getResult();
-    }
-
-    public function countAllForEmployerViewFiltered(
-        string $filter = 'all',
-        ?string $search = null,
-        ?string $workType = null,
-    ): int {
-        $qb = $this->createQueryBuilder('j')
-            ->select('COUNT(j.id)')
-            ->leftJoin('j.company', 'c');
-
-        if ($filter === 'open') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'open');
-        } elseif ($filter === 'closed') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'closed');
-        } elseif ($filter === 'draft') {
-            $qb->andWhere('LOWER(TRIM(j.status)) = :st')->setParameter('st', 'draft');
-        }
-
-        if ($workType !== null && $workType !== '') {
-            $qb->andWhere('UPPER(TRIM(COALESCE(j.workType, \'\'))) = :wt')
-                ->setParameter('wt', strtoupper($workType));
-        }
-
-        if ($search !== null && $search !== '') {
-            $q = '%'.mb_strtolower($search).'%';
-            $qb->andWhere($qb->expr()->orX(
-                'LOWER(j.title) LIKE :q',
                 'LOWER(COALESCE(j.location, \'\')) LIKE :q',
-                'LOWER(COALESCE(j.companyName, \'\')) LIKE :q',
-                'LOWER(COALESCE(c.name, \'\')) LIKE :q',
-            ))->setParameter('q', $q);
-        }
-
-        return (int) $qb->getQuery()->getSingleScalarResult();
-    }
-
-    /**
-     * Offres ouvertes avec recherche texte + filtre optionnel sur `work_type`.
-     *
-     * @return JobOffer[]
-     */
-    public function findOpenOffersForCandidatesFiltered(
-        ?string $search = null,
-        ?string $workType = null,
-        int $page = 1,
-        int $perPage = 12,
-        string $sort = 'posted',
-    ): array {
-        $qb = $this->createQueryBuilder('j')
-            ->leftJoin('j.company', 'c')
-            ->where('LOWER(TRIM(j.status)) = :open')
-            ->setParameter('open', 'open')
-            ->setFirstResult(($page - 1) * $perPage)
-            ->setMaxResults($perPage);
-
-        if ($sort === 'salary') {
-            $qb->orderBy('j.maxSalary', 'DESC')
-                ->addOrderBy('j.postedDate', 'DESC')
-                ->addOrderBy('j.id', 'DESC');
-        } else {
-            $qb->orderBy('j.postedDate', 'DESC')
-                ->addOrderBy('j.id', 'DESC');
-        }
-
-        if ($workType !== null && $workType !== '') {
-            $qb->andWhere('UPPER(TRIM(COALESCE(j.workType, \'\'))) = :wt')
-                ->setParameter('wt', strtoupper($workType));
-        }
-
-        if ($search !== null && $search !== '') {
-            $q = '%'.mb_strtolower($search).'%';
-            $qb->andWhere($qb->expr()->orX(
-                'LOWER(j.title) LIKE :q',
-                'LOWER(COALESCE(j.location, \'\')) LIKE :q',
-                'LOWER(COALESCE(j.companyName, \'\')) LIKE :q',
-                'LOWER(COALESCE(c.name, \'\')) LIKE :q',
-                'LOWER(COALESCE(j.description, \'\')) LIKE :q',
-                'LOWER(COALESCE(j.requirements, \'\')) LIKE :q',
                 'LOWER(COALESCE(j.skillsRequired, \'\')) LIKE :q',
-            ))->setParameter('q', $q);
-        }
-
-        return $qb->getQuery()->getResult();
-    }
-
-    /**
-     * Count open offers matching filters (for pagination).
-     */
-    public function countOpenOffersForCandidatesFiltered(?string $search = null, ?string $workType = null): int
-    {
-        $qb = $this->createQueryBuilder('j')
-            ->select('COUNT(j.id)')
-            ->leftJoin('j.company', 'c')
-            ->where('LOWER(TRIM(j.status)) = :open')
-            ->setParameter('open', 'open');
-
-        if ($workType !== null && $workType !== '') {
-            $qb->andWhere('UPPER(TRIM(COALESCE(j.workType, \'\'))) = :wt')
-                ->setParameter('wt', strtoupper($workType));
-        }
-
-        if ($search !== null && $search !== '') {
-            $q = '%'.mb_strtolower($search).'%';
-            $qb->andWhere($qb->expr()->orX(
-                'LOWER(j.title) LIKE :q',
-                'LOWER(COALESCE(j.location, \'\')) LIKE :q',
-                'LOWER(COALESCE(j.companyName, \'\')) LIKE :q',
-                'LOWER(COALESCE(c.name, \'\')) LIKE :q',
                 'LOWER(COALESCE(j.description, \'\')) LIKE :q',
-                'LOWER(COALESCE(j.requirements, \'\')) LIKE :q',
-                'LOWER(COALESCE(j.skillsRequired, \'\')) LIKE :q',
+                'LOWER(COALESCE(c.name, \'\')) LIKE :q',
             ))->setParameter('q', $q);
         }
 
-        return (int) $qb->getQuery()->getSingleScalarResult();
-    }
-
-    /**
-     * Offre ouverte pour la fiche candidat — joint l’entreprise en une requête.
-     */
-    public function findOpenForCandidateById(int $id): ?JobOffer
-    {
-        return $this->createQueryBuilder('j')
-            ->leftJoin('j.company', 'c')->addSelect('c')
-            ->andWhere('j.id = :id')->setParameter('id', $id)
-            ->andWhere('LOWER(TRIM(j.status)) = :open')->setParameter('open', 'open')
-            ->getQuery()
-            ->getOneOrNullResult();
+        return $qb;
     }
 }

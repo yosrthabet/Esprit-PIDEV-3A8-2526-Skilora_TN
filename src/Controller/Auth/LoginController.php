@@ -17,10 +17,9 @@ class LoginController extends AbstractController
             /** @var \App\Entity\User $user */
             $user = $this->getUser();
             $route = match (strtoupper($user->getRole() ?? '')) {
-                'ADMIN' => 'app_dashboard',
-                'EMPLOYER' => 'app_employer_dashboard',
+                'ADMIN'   => 'app_dashboard',
                 'TRAINER' => 'app_trainer_dashboard',
-                default => 'app_workspace',
+                default   => 'app_workspace',
             };
             return $this->redirectToRoute($route);
         }

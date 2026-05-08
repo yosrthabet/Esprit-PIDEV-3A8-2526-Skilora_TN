@@ -1,0 +1,14 @@
+{# templates/components/ui/stat_card.html.twig #}
+{% set color = color|default('sky') %}
+{% set icon = icon|default('layout-grid') %}
+{% set value = value|default('0') %}
+{% set label = label|default('Stat') %}
+
+<div class="group relative overflow-hidden rounded-3xl border border-border/50 bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:hover:border-{{ color }}-500/50">
+    <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-{{ color }}-500/10 blur-2xl group-hover:bg-{{ color }}-500/20 transition-colors"></div>
+    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-{{ color }}-500/10 text-{{ color }}-500 mb-4 shadow-inner ring-1 ring-{{ color }}-500/20">
+        <i data-lucide="{{ icon }}" class="h-6 w-6"></i>
+    </div>
+    <p class="text-4xl font-extrabold text-foreground">{{ value }}</p>
+    <p class="mt-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground">{{ label }}</p>
+</div>

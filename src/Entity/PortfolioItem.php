@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Embeddable\DateRange;
 use App\Repository\PortfolioItemRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -19,7 +20,7 @@ class PortfolioItem
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
     private ?User $user = null;
 
-    #[ORM\Column(length: 200)]
+    #[ORM\Column(length: 200, nullable: true)]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -34,17 +35,20 @@ class PortfolioItem
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $technologies = null;
 
-    #[ORM\Column(name: 'start_date', type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $startDate = null;
-
-    #[ORM\Column(name: 'end_date', type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $endDate = null;
+    #[ORM\Embedded(class: DateRange::class, columnPrefix: false)]
+    private DateRange $period;
 
     #[ORM\Column(name: 'is_featured', type: 'boolean', nullable: true, options: ['default' => false])]
     private ?bool $isFeatured = false;
 
-    #[ORM\Column(name: 'created_date', type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $createdDate = null;
+    #[ORM\Column(name: 'created_date', type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $createdDate;
+
+    public function __construct()
+    {
+        $this->period = new DateRange();
+        $this->createdDate = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
@@ -117,25 +121,36 @@ class PortfolioItem
         return $this;
     }
 
-    public function getStartDate(): ?\DateTimeInterface
+    public function getPeriod(): DateRange
     {
-        return $this->startDate;
+        return $this->period;
     }
 
-    public function setStartDate(?\DateTimeInterface $startDate): static
+    public function setPeriod(DateRange $period): static
     {
-        $this->startDate = $startDate;
+        $this->period = $period;
         return $this;
     }
 
-    public function getEndDate(): ?\DateTimeInterface
+    public function getStartDate(): ?\DateTimeImmutable
     {
-        return $this->endDate;
+        return $this->period->getStartDate();
     }
 
-    public function setEndDate(?\DateTimeInterface $endDate): static
+    public function setStartDate(?\DateTimeImmutable $startDate): static
     {
-        $this->endDate = $endDate;
+        $this->period->setStartDate($startDate);
+        return $this;
+    }
+
+    public function getEndDate(): ?\DateTimeImmutable
+    {
+        return $this->period->getEndDate();
+    }
+
+    public function setEndDate(?\DateTimeImmutable $endDate): static
+    {
+        $this->period->setEndDate($endDate);
         return $this;
     }
 
@@ -150,12 +165,12 @@ class PortfolioItem
         return $this;
     }
 
-    public function getCreatedDate(): ?\DateTimeInterface
+    public function getCreatedDate(): \DateTimeImmutable
     {
         return $this->createdDate;
     }
 
-    public function setCreatedDate(?\DateTimeInterface $createdDate): static
+    protected function setCreatedDate(\DateTimeImmutable $createdDate): static
     {
         $this->createdDate = $createdDate;
         return $this;

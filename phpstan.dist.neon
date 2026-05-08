@@ -1,0 +1,11 @@
+parameters:
+    level: 9
+    paths:
+        - src/
+    treatPhpDocTypesAsCertain: false
+    symfony:
+        containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
+    ignoreErrors:
+        - identifier: doctrine.associationType
+        - identifier: nullCoalesce.expr
+        - identifier: nullCoalesce.offset

@@ -1,0 +1,149 @@
+{% extends 'layouts/adaptive.html.twig' %}
+
+{% block title %}{{ target_user.fullName ?? target_user.username }} · Profil{% endblock %}
+{% block page_title %}Profil{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl space-y-6">
+
+    {# Hero section #}
+    <div class="rounded-xl border border-border bg-card shadow-sm p-6">
+        <div class="flex items-start gap-5">
+            <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-bold uppercase">
+                {% set initials = (target_user.fullName ?? target_user.username)|slice(0,2)|upper %}
+                {{ initials }}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <h1 class="text-xl font-semibold tracking-tight">{{ target_user.fullName ?? target_user.username }}</h1>
+                    {% if average_rating %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                            ★ {{ average_rating }} <span class="text-muted-foreground font-normal">({{ review_count }} avis)</span>
+                        </span>
+                    {% endif %}
+                </div>
+                {% if profile and profile.headline %}
+                    <p class="text-sm text-muted-foreground mt-1">{{ profile.headline }}</p>
+                {% endif %}
+                <div class="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                    {% if profile and profile.location %}
+                        <span class="flex items-center gap-1"><i data-lucide="map-pin" class="h-3.5 w-3.5"></i> {{ profile.location }}</span>
+                    {% endif %}
+                    <span class="flex items-center gap-1"><i data-lucide="calendar" class="h-3.5 w-3.5"></i> Membre depuis {{ target_user.createdAt ? target_user.createdAt|date('m/Y') : '—' }}</span>
+                    <span class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium">{{ target_user.roleDisplayName }}</span>
+                </div>
+            </div>
+        </div>
+        {% if profile and profile.bio %}
+            <div class="mt-4 pt-4 border-t border-border">
+                <p class="text-sm text-foreground/80 leading-relaxed">{{ profile.bio }}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+
+            {# Portfolio #}
+            {% if portfolio_items|length > 0 %}
+            <div class="rounded-xl border border-border bg-card shadow-sm p-6">
+                <h2 class="text-base font-semibold mb-4">Portfolio</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {% for item in portfolio_items %}
+                        <div class="rounded-lg border border-border bg-background p-4 space-y-2">
+                            {% if item.imageUrl %}
+                                <img src="{{ item.imageUrl }}" alt="{{ item.title }}" class="w-full h-32 object-cover rounded-md" loading="lazy">
+                            {% endif %}
+                            <h3 class="text-sm font-semibold">{{ item.title }}</h3>
+                            {% if item.description %}
+                                <p class="text-xs text-muted-foreground line-clamp-2">{{ item.description }}</p>
+                            {% endif %}
+                            {% if item.technologies %}
+                                <div class="flex flex-wrap gap-1">
+                                    {% for tech in item.technologies|split(',') %}
+                                        <span class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{{ tech|trim }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if item.projectUrl %}
+                                <a href="{{ item.projectUrl }}" target="_blank" rel="noopener" class="text-xs text-primary hover:underline">Voir le projet →</a>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# Reviews #}
+            {% if reviews|length > 0 %}
+            <div class="rounded-xl border border-border bg-card shadow-sm p-6">
+                <h2 class="text-base font-semibold mb-4">Avis reçus</h2>
+                <div class="space-y-3">
+                    {% for review in reviews %}
+                        <div class="{% if not loop.first %}border-t border-border pt-3{% endif %}">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-amber-400 text-sm">{% for i in 1..review.rating %}★{% endfor %}{% for i in review.rating+1..5 %}☆{% endfor %}</span>
+                                <span class="text-xs text-muted-foreground">par {{ review.author.fullName ?? 'Anonyme' }} · {{ review.createdAt|date('d/m/Y') }}</span>
+                            </div>
+                            {% if review.comment %}
+                                <p class="text-sm text-foreground/80">{{ review.comment }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Sidebar: Skills #}
+        <div class="space-y-6">
+            {% if skills|length > 0 %}
+            <div class="rounded-xl border border-border bg-card shadow-sm p-6">
+                <h2 class="text-base font-semibold mb-4">Compétences</h2>
+                <div class="space-y-2.5">
+                    {% for skill in skills %}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium">{{ skill.skillName }}</span>
+                                {% if skill.verified %}
+                                    <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">Vérifié</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-muted-foreground">
+                                {% if skill.proficiencyLevel %}{{ skill.proficiencyLevel }}{% endif %}
+                                {% if skill.yearsExperience %} · {{ skill.yearsExperience }} an{{ skill.yearsExperience > 1 ? 's' : '' }}{% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# Quick stats #}
+            <div class="rounded-xl border border-border bg-card shadow-sm p-6">
+                <h2 class="text-base font-semibold mb-4">Statistiques</h2>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-muted-foreground">Avis reçus</span>
+                        <span class="font-semibold">{{ review_count }}</span>
+                    </div>
+                    {% if average_rating %}
+                    <div class="flex justify-between">
+                        <span class="text-muted-foreground">Note moyenne</span>
+                        <span class="font-semibold">★ {{ average_rating }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex justify-between">
+                        <span class="text-muted-foreground">Compétences</span>
+                        <span class="font-semibold">{{ skills|length }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-muted-foreground">Projets</span>
+                        <span class="font-semibold">{{ portfolio_items|length }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

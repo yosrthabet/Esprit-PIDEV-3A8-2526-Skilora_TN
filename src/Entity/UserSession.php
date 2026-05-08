@@ -9,6 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(columns: ['user_id'], name: 'idx_user_sessions_user')]
 class UserSession
 {
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -18,7 +19,7 @@ class UserSession
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?User $user = null;
 
-    #[ORM\Column(length: 128, unique: true)]
+    #[ORM\Column(length: 128, unique: true, nullable: true)]
     private ?string $sessionId = null;
 
     #[ORM\Column(length: 45, nullable: true)]
@@ -54,7 +55,7 @@ class UserSession
     public function setUserAgent(?string $userAgent): static { $this->userAgent = $userAgent; return $this; }
 
     public function getLastActivity(): \DateTimeImmutable { return $this->lastActivity; }
-    public function setLastActivity(\DateTimeImmutable $lastActivity): static { $this->lastActivity = $lastActivity; return $this; }
+    protected function setLastActivity(\DateTimeImmutable $lastActivity): static { $this->lastActivity = $lastActivity; return $this; }
 
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
 

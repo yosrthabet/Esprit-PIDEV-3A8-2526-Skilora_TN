@@ -1,0 +1,57 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Contract{% endblock %}
+{% block content %}
+{% set offer = contract.hireOffer %}
+{% set application = offer.application %}
+{% set is_employer = app.user.id == contract.employer.id|default(null) %}
+{% set is_freelancer = app.user.id == contract.freelancer.id %}
+<div class="mx-auto grid max-w-[90rem] gap-6 px-4 py-6 lg:grid-cols-[1fr_24rem] sm:px-6 lg:px-8">
+    <article class="glass-panel p-8">
+        <a href="{{ path('app_contracts') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"><i data-lucide="arrow-left" class="h-4 w-4"></i>Back to contracts</a>
+        <div class="mt-6 flex flex-wrap items-center gap-2"><span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{{ contract.status.label }}</span>{% if contract.escrowFundedAt %}<span class="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600">Escrow funded</span>{% endif %}</div>
+        <h1 class="mt-4 text-4xl font-light tracking-holographic">{{ application.jobOffer.title }}</h1>
+        <p class="mt-2 text-muted-foreground">{{ application.jobOffer.companyLabel }} · {{ contract.amount ?: 'Negotiable' }} {{ contract.currency.value }}</p>
+        <section class="mt-8 grid gap-4 md:grid-cols-3">
+            <div class="rounded-2xl border border-border/50 bg-background/60 p-4"><p class="text-2xl font-light">{{ contract.status.label }}</p><p class="text-xs text-muted-foreground">contract state</p></div>
+            <div class="rounded-2xl border border-border/50 bg-background/60 p-4"><p class="text-2xl font-light">{{ contract.amount ?: '—' }}</p><p class="text-xs text-muted-foreground">amount</p></div>
+            <div class="rounded-2xl border border-border/50 bg-background/60 p-4"><p class="text-2xl font-light">{{ offer.contractType ?: 'Contract' }}</p><p class="text-xs text-muted-foreground">type</p></div>
+        </section>
+        {% if offer.benefits %}<section class="mt-8"><h2 class="text-xl font-semibold">Terms / benefits</h2><p class="mt-4 whitespace-pre-line text-muted-foreground">{{ offer.benefits }}</p></section>{% endif %}
+        <section class="mt-8">
+            <h2 class="text-xl font-semibold">Deliveries</h2>
+            <div class="mt-4 space-y-3">
+                {% for delivery in contract.deliveries %}
+                    <article class="rounded-2xl border border-border bg-background/60 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3"><h3 class="font-semibold">{{ delivery.title }}</h3><span class="text-xs text-muted-foreground">{{ delivery.createdAt|date('M d, Y H:i') }}</span></div>
+                        <p class="mt-2 whitespace-pre-line text-sm text-muted-foreground">{{ delivery.message }}</p>
+                        {% if delivery.attachmentUrl %}<a href="{{ delivery.attachmentUrl }}" target="_blank" rel="noopener noreferrer" class="mt-3 inline-flex text-sm font-bold text-primary">Open attachment</a>{% endif %}
+                    </article>
+                {% else %}
+                    <p class="text-sm text-muted-foreground">No delivery submitted yet.</p>
+                {% endfor %}
+            </div>
+        </section>
+        <section class="mt-8 grid gap-4 lg:grid-cols-2">
+            <div class="rounded-2xl border border-border bg-background/60 p-4">
+                <h2 class="font-semibold">Escrow ledger</h2>
+                <div class="mt-3 space-y-2 text-sm text-muted-foreground">
+                    {% for transaction in contract.transactions %}<p>{{ transaction.type.label }} · {{ transaction.amount ?: '—' }} {{ transaction.currency.value }} · {{ transaction.status }}</p>{% else %}<p>No escrow ledger entries yet.</p>{% endfor %}
+                </div>
+            </div>
+            <div class="rounded-2xl border border-border bg-background/60 p-4">
+                <h2 class="font-semibold">Invoices</h2>
+                <div class="mt-3 space-y-2 text-sm text-muted-foreground">
+                    {% for invoice in contract.invoices %}<p>{{ invoice.number }} · {{ invoice.status.label }} · {{ invoice.amount ?: '—' }} {{ invoice.currency.value }}</p>{% else %}<p>No invoice generated yet.</p>{% endfor %}
+                </div>
+            </div>
+        </section>
+    </article>
+    <aside class="space-y-4 lg:sticky lg:top-24 lg:self-start">
+        <div class="glass-panel p-5"><h2 class="font-semibold">Escrow</h2><p class="mt-2 text-sm text-muted-foreground">Internal escrow state. Payment gateway wiring remains separate.</p>{% if is_employer and contract.status.value == 'pending_funding' %}<form method="post" action="{{ path('app_contract_fund', {id: contract.id}) }}" class="mt-4"><input type="hidden" name="_token" value="{{ csrf_token('fund_contract_' ~ contract.id) }}"><button class="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">Mark escrow funded</button></form>{% endif %}</div>
+        {% if is_freelancer and contract.status.value == 'active' %}<form method="post" action="{{ path('app_contract_delivery_submit', {id: contract.id}) }}" class="glass-panel space-y-3 p-5"><h2 class="font-semibold">Submit delivery</h2><input type="hidden" name="_token" value="{{ csrf_token('submit_delivery_' ~ contract.id) }}"><input name="title" required placeholder="Delivery title" class="h-10 w-full rounded-xl border border-border bg-background/70 px-3 text-sm"><textarea name="message" required rows="4" placeholder="What did you deliver?" class="w-full rounded-xl border border-border bg-background/70 px-3 py-2 text-sm"></textarea><input name="attachment_url" placeholder="Attachment URL" class="h-10 w-full rounded-xl border border-border bg-background/70 px-3 text-sm"><button class="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">Submit</button></form>{% endif %}
+        {% if is_employer and contract.status.value == 'submitted' %}<form method="post" action="{{ path('app_contract_approve', {id: contract.id}) }}" class="glass-panel p-5"><input type="hidden" name="_token" value="{{ csrf_token('approve_contract_' ~ contract.id) }}"><button class="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">Approve delivery</button></form>{% endif %}
+        {% if is_employer and contract.status.value == 'approved' %}<form method="post" action="{{ path('app_contract_release', {id: contract.id}) }}" class="glass-panel p-5"><input type="hidden" name="_token" value="{{ csrf_token('release_contract_' ~ contract.id) }}"><button class="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">Release escrow</button></form>{% endif %}
+        {% if contract.status.value in ['active', 'submitted', 'approved'] %}<form method="post" action="{{ path('app_contract_dispute', {id: contract.id}) }}" class="glass-panel space-y-3 p-5"><h2 class="font-semibold">Open dispute</h2><input type="hidden" name="_token" value="{{ csrf_token('dispute_contract_' ~ contract.id) }}"><input name="reason" required placeholder="Reason" class="h-10 w-full rounded-xl border border-border bg-background/70 px-3 text-sm"><textarea name="details" rows="3" placeholder="Details" class="w-full rounded-xl border border-border bg-background/70 px-3 py-2 text-sm"></textarea><button class="w-full rounded-xl border border-border px-4 py-3 text-sm font-bold">Open dispute</button></form>{% endif %}
+    </aside>
+</div>
+{% endblock %}

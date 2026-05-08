@@ -1,0 +1,10 @@
+<nav class="flex flex-wrap gap-2">
+    {% for item in [
+        {label: 'Feed', route: 'app_community'},
+        {label: 'Groups', route: 'app_community_groups'},
+        {label: 'Events', route: 'app_community_events'},
+        {label: 'Blog', route: 'app_community_blog'}
+    ] %}
+        <a href="{{ path(item.route) }}" class="rounded-full border border-border px-3 py-1.5 text-xs font-bold transition {{ app.request.attributes.get('_route') starts with item.route ? 'bg-primary text-primary-foreground' : 'bg-background/60 text-muted-foreground hover:text-foreground' }}">{{ item.label }}</a>
+    {% endfor %}
+</nav>

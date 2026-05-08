@@ -5,9 +5,10 @@ namespace App\EventSubscriber;
 use App\Entity\LoginHistory;
 use App\Entity\User;
 use App\Entity\UserSession;
+use App\Enum\LoginMethod;
+use App\Enum\LoginStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Http\Event\LoginFailureEvent;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 use Symfony\Component\Security\Http\Event\LogoutEvent;
@@ -16,7 +17,6 @@ class SecurityEventSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private EntityManagerInterface $em,
-        private RequestStack $requestStack,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -44,7 +44,7 @@ class SecurityEventSubscriber implements EventSubscriberInterface
         $history->setUser($user);
         $history->setIp($ip);
         $history->setUserAgent($ua);
-        $history->setStatus('success');
+        $history->setStatus(LoginStatus::SUCCESS);
         $history->setMethod($this->resolveMethod($event));
         $this->em->persist($history);
 
@@ -88,8 +88,8 @@ class SecurityEventSubscriber implements EventSubscriberInterface
         $history->setUser($user);
         $history->setIp($request->getClientIp());
         $history->setUserAgent($request->headers->get('User-Agent', ''));
-        $history->setStatus('failure');
-        $history->setMethod('password');
+        $history->setStatus(LoginStatus::FAILURE);
+        $history->setMethod(LoginMethod::PASSWORD);
         $this->em->persist($history);
         $this->em->flush();
     }
@@ -110,15 +110,15 @@ class SecurityEventSubscriber implements EventSubscriberInterface
         }
     }
 
-    private function resolveMethod(LoginSuccessEvent $event): string
+    private function resolveMethod(LoginSuccessEvent $event): LoginMethod
     {
-        $firewallName = $event->getFirewallName();
         $authenticator = $event->getAuthenticator();
         $class = get_class($authenticator);
 
-        if (str_contains($class, 'Google')) return 'google';
-        if (str_contains($class, 'GitHub') || str_contains($class, 'Github')) return 'github';
+        if (str_contains($class, 'Google')) return LoginMethod::GOOGLE;
+        if (str_contains($class, 'GitHub') || str_contains($class, 'Github')) return LoginMethod::GITHUB;
+        if (str_contains($class, 'Passkey') || str_contains($class, 'Webauthn')) return LoginMethod::PASSKEY;
 
-        return 'password';
+        return LoginMethod::PASSWORD;
     }
 }

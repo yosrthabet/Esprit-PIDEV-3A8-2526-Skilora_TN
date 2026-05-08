@@ -217,15 +217,16 @@
                     var statusDot  = document.getElementById('gesture-status-dot');
                     var statusText = document.getElementById('gesture-status-text');
 
-                    var detected = r.gesture !== 0;
+                    var detected = r.gesture !== SkiloraGesture.G.NONE;
                     badge.style.setProperty('display', detected ? 'flex' : 'none', 'important');
                     statusDot.style.background = detected ? '#22c55e' : '#f59e0b';
                     statusText.textContent     = detected ? 'Hand detected' : 'Show hand\u2026';
 
-                    if (r.meta) {
-                        badgeIcon.textContent  = r.meta.icon  || '\u2014';
-                        badgeLabel.textContent = r.meta.label || 'Gesture Control';
-                        badgeLabel.style.color = r.meta.color || '#64748b';
+                    var meta = SkiloraGesture.META[r.gesture];
+                    if (meta) {
+                        badgeIcon.textContent  = meta.icon  || '\u2014';
+                        badgeLabel.textContent = meta.label || 'Gesture Control';
+                        badgeLabel.style.color = meta.color || '#64748b';
                     }
 
                     /* Fist-to-deactivate watcher (uses MAIN camera, no second camera needed) */
@@ -305,6 +306,9 @@
         startStandby: async function(retryCount) {
             if (standbyActive) return;
             retryCount = retryCount || 0;
+            /* Suppress MediaPipe Camera alert() on camera errors */
+            var origAlert = window.alert;
+            window.alert = function(msg) { console.warn('[Gesture]', msg); };
             try {
                 await SkiloraGesture.startStandby({
                     onActivate: function() {
@@ -321,7 +325,6 @@
                         if (status === 'activating') {
                             updateStandbyIndicator(progress);
                         } else if (status === 'deactivating') {
-                            /* Deactivating uses the active button's ring */
                             updateStandbyIndicator(0);
                         } else {
                             updateStandbyIndicator(0);
@@ -331,8 +334,10 @@
                 standbyActive = true;
 
             } catch(e) {
-                /* Retry up to 3 times with increasing delay (camera may still be releasing from previous page) */
-                if (retryCount < 3) {
+                /* Don't retry on permission denied — user must grant camera access */
+                if (e.name === 'NotAllowedError' || e.name === 'NotFoundError') {
+                    console.log('Gesture standby: camera not available (' + e.name + ')');
+                } else if (retryCount < 3) {
                     var delay = (retryCount + 1) * 1000;
                     console.log('Gesture standby retry ' + (retryCount + 1) + ' in ' + delay + 'ms:', e.message);
                     setTimeout(function() {
@@ -341,6 +346,8 @@
                 } else {
                     console.log('Gesture standby unavailable after retries:', e.message);
                 }
+            } finally {
+                window.alert = origAlert;
             }
         }
     };
@@ -351,15 +358,46 @@
         if (e.target === tutEl) window.SkiloraGestureUI.dismissTutorial();
     });
 
-    /* Only start gesture system if user has enabled it in Settings > Preferences */
-    if (localStorage.getItem('skilora_gesture_enabled') === '1') {
-        setTimeout(function() {
-            if (localStorage.getItem('skilora_gesture_active') === '1') {
-                window.SkiloraGestureUI.activate();
-            } else {
-                window.SkiloraGestureUI.startStandby();
-            }
-        }, 500);
+    /* Gesture is always OFF on page load — camera must never auto-open.
+       Reset both state keys so _autoStartGesture always bails out immediately. */
+    localStorage.setItem('skilora_gesture_enabled', '0');
+    localStorage.setItem('skilora_gesture_active', '0');
+
+    /* Only start gesture system if user has enabled it this session.
+       Wait for hand-gesture.js to finish loading (fires 'skilora:gesture:ready')
+       because hand-gesture.js may load via defer or dynamic injection AFTER
+       this inline script runs. */
+    function _autoStartGesture() {
+        if (localStorage.getItem('skilora_gesture_enabled') !== '1') return;
+        if (!window.SkiloraGesture) { console.log('Gesture: SkiloraGesture not loaded'); return; }
+        /* Check camera permission first — don't block page load with permission prompts */
+        if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'camera' }).then(function(result) {
+                if (result.state === 'granted') {
+                    setTimeout(function() {
+                        if (localStorage.getItem('skilora_gesture_active') === '1') {
+                            window.SkiloraGestureUI.activate();
+                        } else {
+                            window.SkiloraGestureUI.startStandby();
+                        }
+                    }, 500);
+                } else {
+                    console.log('Gesture: camera not pre-granted (' + result.state + '), standby skipped until explicit enable');
+                }
+            }).catch(function() {
+                /* Permissions API unavailable (Firefox) — attempt standby optimistically */
+                setTimeout(function() { window.SkiloraGestureUI.startStandby(); }, 500);
+            });
+        } else {
+            setTimeout(function() { window.SkiloraGestureUI.startStandby(); }, 500);
+        }
+    }
+
+    if (window.SkiloraGesture) {
+        /* Script already loaded (e.g. cached) */
+        _autoStartGesture();
+    } else {
+        window.addEventListener('skilora:gesture:ready', _autoStartGesture, { once: true });
     }
 })();
 </script>

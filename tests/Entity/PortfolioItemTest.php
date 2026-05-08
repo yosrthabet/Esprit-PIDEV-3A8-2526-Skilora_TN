@@ -34,7 +34,7 @@ class PortfolioItemTest extends TestCase
         $p->setProjectUrl('https://github.com/test');
         $p->setImageUrl('https://img.test/pic.jpg');
         $p->setTechnologies('PHP, Symfony, MySQL');
-        $start = new \DateTime('2023-01-01');
+        $start = new \DateTimeImmutable('2023-01-01');
         $p->setStartDate($start);
         $p->setIsFeatured(true);
 

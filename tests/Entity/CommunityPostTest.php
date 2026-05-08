@@ -1,88 +1,52 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Entity;
 
-use App\Entity\CommunityPost;
+use App\Community\CommunityPostStatus;
+use App\Community\Entity\CommunityComment;
+use App\Community\Entity\CommunityLike;
+use App\Community\Entity\CommunityPost;
 use App\Entity\User;
 use PHPUnit\Framework\TestCase;
 
-class CommunityPostTest extends TestCase
+final class CommunityPostTest extends TestCase
 {
-    private function makeUser(): User
+    public function testPostDefaultsAndCounters(): void
     {
-        $u = new User();
-        $u->setUsername('poster');
-        $u->setEmail('post@test.com');
-        $u->setFullName('Poster');
-        $u->setRole('USER');
-        $u->setPassword('p');
+        $author = (new User())->setUsername('learner')->setRole('USER');
+        $post = (new CommunityPost())
+            ->setAuthor($author)
+            ->setContent('  Hello community  ');
 
-        return $u;
+        self::assertSame($author, $post->getAuthor());
+        self::assertSame('Hello community', $post->getContent());
+        self::assertSame(CommunityPostStatus::PUBLISHED, $post->getStatus());
+        self::assertTrue($post->isVisible());
+
+        $post->incrementLikes();
+        $post->decrementLikes();
+        $post->decrementLikes();
+        $post->incrementComments();
+
+        self::assertSame(0, $post->getLikesCount());
+        self::assertSame(1, $post->getCommentsCount());
     }
 
-    public function testNewIdIsNull(): void
+    public function testCommentAndLikeLinking(): void
     {
-        $this->assertNull((new CommunityPost())->getId());
-    }
+        $author = (new User())->setUsername('learner')->setRole('USER');
+        $post = (new CommunityPost())->setAuthor($author)->setContent('Thread');
+        $comment = (new CommunityComment())
+            ->setPost($post)
+            ->setAuthor($author)
+            ->setContent('  Reply  ');
+        $like = (new CommunityLike())->setPost($post)->setUser($author);
 
-    public function testGettersAndSetters(): void
-    {
-        $p = new CommunityPost();
-        $author = $this->makeUser();
-        $p->setAuthor($author);
-        $p->setContent('Hello World!');
-        $p->setImageUrl('https://img.test/post.jpg');
-
-        $this->assertSame($author, $p->getAuthor());
-        $this->assertSame('Hello World!', $p->getContent());
-        $this->assertSame('https://img.test/post.jpg', $p->getImageUrl());
-    }
-
-    public function testTimestampsSetInConstructor(): void
-    {
-        $p = new CommunityPost();
-        $this->assertInstanceOf(\DateTimeImmutable::class, $p->getCreatedAt());
-        $this->assertInstanceOf(\DateTimeImmutable::class, $p->getUpdatedAt());
-    }
-
-    public function testNullImageUrl(): void
-    {
-        $p = new CommunityPost();
-        $this->assertNull($p->getImageUrl());
-    }
-
-    public function testNewFieldsFromMerge(): void
-    {
-        $p = new CommunityPost();
-        $this->assertSame(CommunityPost::TYPE_STATUS, $p->getPostType());
-        $this->assertSame(0, $p->getLikesCount());
-        $this->assertSame(0, $p->getCommentsCount());
-        $this->assertSame(0, $p->getSharesCount());
-    }
-
-    public function testPostTypeSetterGetter(): void
-    {
-        $p = new CommunityPost();
-        $p->setPostType('ARTICLE');
-        $this->assertSame('ARTICLE', $p->getPostType());
-    }
-
-    public function testCounterSetters(): void
-    {
-        $p = new CommunityPost();
-        $p->setLikesCount(5);
-        $p->setCommentsCount(3);
-        $p->setSharesCount(1);
-
-        $this->assertSame(5, $p->getLikesCount());
-        $this->assertSame(3, $p->getCommentsCount());
-        $this->assertSame(1, $p->getSharesCount());
-    }
-
-    public function testCommentsAndLikesCollections(): void
-    {
-        $p = new CommunityPost();
-        $this->assertCount(0, $p->getComments());
-        $this->assertCount(0, $p->getLikes());
+        self::assertSame($post, $comment->getPost());
+        self::assertSame('Reply', $comment->getContent());
+        self::assertSame($post, $like->getPost());
+        self::assertSame($author, $like->getUser());
     }
 }

@@ -1,13 +1,13 @@
 {# templates/profile/public.html.twig — Public profile view #}
-{% extends 'layouts/app.html.twig' %}
+{% extends 'layouts/adaptive.html.twig' %}
 
 {% block page_title %}{{ profile ? profile.fullName : profileUser.displayName }}{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-4xl space-y-6">
+<div class="mx-auto max-w-4xl space-y-6 relative z-10 font-spatial">
 
     {# ===== Hero Header ===== #}
-    <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+    <div class="glass-panel overflow-hidden">
         <div class="p-6">
             <div class="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
                 {# Avatar #}
@@ -23,7 +23,7 @@
                 }) }}
 
                 <div class="flex-1 text-center sm:text-left space-y-1">
-                    <h2 class="text-xl font-bold">{{ profile ? profile.fullName : profileUser.displayName }}</h2>
+                    <h2 class="text-2xl font-light tracking-holographic text-foreground">{{ profile ? profile.fullName : profileUser.displayName }}</h2>
                     {% if profile and profile.headline %}
                         <p class="text-sm text-muted-foreground">{{ profile.headline }}</p>
                     {% endif %}
@@ -54,9 +54,9 @@
 
     {# ===== About Section ===== #}
     {% if profile and profile.bio %}
-    <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+    <div class="glass-panel overflow-hidden">
         <div class="flex flex-col space-y-1.5 p-6">
-            <h3 class="font-semibold leading-none tracking-tight">About</h3>
+            <h3 class="font-semibold leading-none tracking-label">About</h3>
         </div>
         <div class="p-6 pt-0">
             <p class="text-sm text-muted-foreground whitespace-pre-line">{{ profile.bio }}</p>
@@ -66,9 +66,9 @@
 
     {# ===== Skills Section ===== #}
     {% if skills|length > 0 %}
-    <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+    <div class="glass-panel overflow-hidden">
         <div class="flex flex-col space-y-1.5 p-6">
-            <h3 class="font-semibold leading-none tracking-tight">Skills</h3>
+            <h3 class="font-semibold leading-none tracking-label">Skills</h3>
         </div>
         <div class="p-6 pt-0">
             <div class="flex flex-wrap gap-2">
@@ -90,9 +90,9 @@
 
     {# ===== Experience Section (Timeline) ===== #}
     {% if experiences|length > 0 %}
-    <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+    <div class="glass-panel overflow-hidden">
         <div class="flex flex-col space-y-1.5 p-6">
-            <h3 class="font-semibold leading-none tracking-tight">Experience</h3>
+            <h3 class="font-semibold leading-none tracking-label">Experience</h3>
         </div>
         <div class="p-6 pt-0">
             <div class="relative space-y-0">
@@ -122,14 +122,14 @@
 
     {# ===== Portfolio Section ===== #}
     {% if portfolioItems|length > 0 %}
-    <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+    <div class="glass-panel overflow-hidden">
         <div class="flex flex-col space-y-1.5 p-6">
-            <h3 class="font-semibold leading-none tracking-tight">Portfolio</h3>
+            <h3 class="font-semibold leading-none tracking-label">Portfolio</h3>
         </div>
         <div class="p-6 pt-0">
             <div class="grid gap-4 sm:grid-cols-2">
                 {% for item in portfolioItems %}
-                <div class="rounded-lg border border-border overflow-hidden">
+                <div class="rounded-xl border border-border/40 bg-background/50 dark:bg-black/20 overflow-hidden">
                     {% if item.imageUrl %}
                     <div class="aspect-video bg-muted overflow-hidden">
                         <img src="{{ item.imageUrl }}" alt="{{ item.title }}" class="h-full w-full object-cover">
@@ -163,7 +163,7 @@
 
     {# Empty state if nothing at all #}
     {% if (not profile or not profile.bio) and skills|length == 0 and experiences|length == 0 and portfolioItems|length == 0 %}
-    <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm p-12 text-center">
+    <div class="glass-panel p-12 text-center">
         <p class="text-muted-foreground">This user hasn't set up their profile yet.</p>
     </div>
     {% endif %}

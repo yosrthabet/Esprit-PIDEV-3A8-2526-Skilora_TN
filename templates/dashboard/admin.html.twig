@@ -1,21 +1,22 @@
 {# dashboard/admin.html.twig — Admin Dashboard #}
-{% extends 'layouts/app.html.twig' %}
+{% extends 'layouts/adaptive.html.twig' %}
 
 {% block page_title %}Overview{% endblock %}
 
 {% block content %}
-<div class="space-y-6 animate-fade-in pb-6">
+<div class="space-y-6 animate-fade-in pb-6 relative z-10 font-spatial">
 
     {# ── Header ── #}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h2 class="text-xl font-semibold tracking-tight text-foreground">
-                Welcome back, {{ app.user.displayName }}
+            <p class="text-xs font-semibold uppercase tracking-label text-primary mb-1">Vue d'ensemble</p>
+            <h2 class="text-3xl sm:text-4xl font-light tracking-holographic text-foreground leading-[1.1]">
+                Bon retour, {{ app.user.displayName }}
             </h2>
-            <p class="text-sm text-muted-foreground mt-0.5">Here's what's happening on your platform today.</p>
+            <p class="text-sm text-muted-foreground mt-1">Voici ce qui se passe sur votre plateforme aujourd'hui.</p>
         </div>
         <div class="flex items-center gap-2">
-            <span class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/50 backdrop-blur-md px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 {{ "now"|date("M d, Y") }}
             </span>
@@ -35,14 +36,14 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {% for stat in stats %}
-        <div class="rounded-xl border border-border bg-card p-4 sm:p-5 shadow-sm">
+        <div class="glass-panel p-4 sm:p-5">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ stat.label }}</span>
+                <span class="text-[11px] font-semibold uppercase tracking-label text-muted-foreground">{{ stat.label }}</span>
                 <div class="flex h-8 w-8 items-center justify-center rounded-lg {{ statColors[loop.index0] }} text-white shadow-sm">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">{{ statIcons[loop.index0] | raw }}</svg>
                 </div>
             </div>
-            <p class="text-2xl font-bold tracking-tight text-foreground">{{ stat.value }}</p>
+            <p class="text-3xl font-light tracking-holographic text-foreground">{{ stat.value }}</p>
             <div class="mt-1 flex items-center gap-1.5">
                 {% if stat.trend == 'up' %}
                     <span class="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
@@ -55,7 +56,7 @@
                         {{ stat.change }}
                     </span>
                 {% endif %}
-                <span class="text-xs text-muted-foreground">vs last month</span>
+                <span class="text-xs text-muted-foreground">vs mois dernier</span>
             </div>
         </div>
         {% endfor %}
@@ -64,13 +65,13 @@
     {# ── Charts ── #}
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
         {# Line Chart #}
-        <div class="lg:col-span-3 rounded-xl border border-border bg-card shadow-sm">
-            <div class="flex items-center justify-between border-b border-border px-5 py-4">
+        <div class="lg:col-span-3 glass-panel overflow-hidden">
+            <div class="flex items-center justify-between border-b border-border/40 px-5 py-4">
                 <div>
                     <h3 class="text-sm font-semibold text-foreground">Growth Overview</h3>
                     <p class="text-xs text-muted-foreground mt-0.5">Monthly registrations trend</p>
                 </div>
-                <select class="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                <select class="h-8 rounded-xl border border-input bg-background/60 px-2.5 text-xs text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
                     <option>Last 7 months</option>
                     <option>This Year</option>
                 </select>
@@ -81,8 +82,8 @@
         </div>
 
         {# Donut Chart #}
-        <div class="lg:col-span-2 rounded-xl border border-border bg-card shadow-sm">
-            <div class="border-b border-border px-5 py-4">
+        <div class="lg:col-span-2 glass-panel overflow-hidden">
+            <div class="border-b border-border/40 px-5 py-4">
                 <h3 class="text-sm font-semibold text-foreground">User Demographics</h3>
                 <p class="text-xs text-muted-foreground mt-0.5">Breakdown by role</p>
             </div>
@@ -100,13 +101,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
 
         {# Recent Users #}
-        <div class="lg:col-span-3 rounded-xl border border-border bg-card shadow-sm">
-            <div class="flex items-center justify-between border-b border-border px-5 py-4">
+        <div class="lg:col-span-3 glass-panel overflow-hidden">
+            <div class="flex items-center justify-between border-b border-border/40 px-5 py-4">
                 <div>
                     <h3 class="text-sm font-semibold text-foreground">Recent Signups</h3>
                     <p class="text-xs text-muted-foreground mt-0.5">Latest platform registrations</p>
                 </div>
-                <a href="{{ path('app_admin_user_index') }}" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                <a href="{{ path('app_dashboard') }}" class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
                     View all
                     <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
                 </a>
@@ -124,7 +125,7 @@
                             <p class="text-xs text-muted-foreground truncate">{{ u.email }}</p>
                         </div>
                     </div>
-                    <span class="ml-4 shrink-0 inline-flex items-center rounded-md border border-border bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    <span class="ml-4 shrink-0 inline-flex items-center rounded-full border border-border bg-background/50 backdrop-blur-md px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                         {{ u.role }}
                     </span>
                 </div>
@@ -138,18 +139,18 @@
         <div class="lg:col-span-2 flex flex-col gap-4">
 
             {# Quick Actions #}
-            <div class="rounded-xl border border-border bg-card shadow-sm">
-                <div class="border-b border-border px-5 py-4">
+            <div class="glass-panel overflow-hidden">
+                <div class="border-b border-border/40 px-5 py-4">
                     <h3 class="text-sm font-semibold text-foreground">Quick Actions</h3>
                 </div>
-                <div class="grid grid-cols-2 divide-x divide-y divide-border">
-                    <a href="{{ path('app_admin_user_index') }}" class="group flex items-center gap-3 px-4 py-3.5 hover:bg-muted/40 transition-colors">
+                <div class="grid grid-cols-2 divide-x divide-y divide-border/40">
+                    <a href="{{ path('app_dashboard') }}" class="group flex items-center gap-3 px-4 py-3.5 hover:bg-muted/40 transition-colors">
                         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-500">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                         </div>
                         <div>
-                            <p class="text-xs font-medium text-foreground">Users</p>
-                            <p class="text-[10px] text-muted-foreground">Manage users</p>
+                            <p class="text-xs font-medium text-foreground">Tableau de bord</p>
+                            <p class="text-[10px] text-muted-foreground">Vue d'ensemble</p>
                         </div>
                     </a>
                     <a href="#" class="group flex items-center gap-3 px-4 py-3.5 hover:bg-muted/40 transition-colors">
@@ -161,7 +162,7 @@
                             <p class="text-[10px] text-muted-foreground">Recruitment</p>
                         </div>
                     </a>
-                    <a href="{{ path('app_admin_formation_index') }}" class="group flex items-center gap-3 px-4 py-3.5 hover:bg-muted/40 transition-colors">
+                    <a href="{{ path('app_workspace') }}" class="group flex items-center gap-3 px-4 py-3.5 hover:bg-muted/40 transition-colors">
                         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347" /></svg>
                         </div>
@@ -182,10 +183,10 @@
                 </div>
             </div>
 
-            {# System Health #}
-            <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+            {# Platform Health #}
+            <div class="glass-panel p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-semibold text-foreground">System Status</h3>
+                    <h3 class="text-sm font-semibold text-foreground">Platform Health</h3>
                     <span class="relative flex h-2.5 w-2.5">
                         <span class="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
                         <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
@@ -194,29 +195,29 @@
                 <div class="space-y-4">
                     <div>
                         <div class="flex items-center justify-between text-xs mb-1.5">
-                            <span class="font-medium text-foreground">API Response</span>
-                            <span class="font-semibold text-emerald-500">98%</span>
+                            <span class="font-medium text-foreground">Users Active</span>
+                            <span class="font-semibold text-emerald-500">{{ stats[0].value }}</span>
                         </div>
-                        <div class="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-                            <div class="h-full rounded-full bg-emerald-500" style="width:98%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex items-center justify-between text-xs mb-1.5">
-                            <span class="font-medium text-foreground">Storage</span>
-                            <span class="font-semibold text-amber-500">64%</span>
-                        </div>
-                        <div class="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-                            <div class="h-full rounded-full bg-amber-500" style="width:64%"></div>
+                        <div class="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                            <div class="h-full rounded-full bg-emerald-500 transition-all duration-700" style="width:{{ min(100, stats[0].value|default(0) * 2) }}%"></div>
                         </div>
                     </div>
                     <div>
                         <div class="flex items-center justify-between text-xs mb-1.5">
-                            <span class="font-medium text-foreground">Uptime</span>
-                            <span class="font-semibold text-emerald-500">99.9%</span>
+                            <span class="font-medium text-foreground">Formations</span>
+                            <span class="font-semibold text-sky-500">{{ stats[2].value }}</span>
                         </div>
-                        <div class="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-                            <div class="h-full rounded-full bg-emerald-500" style="width:99.9%"></div>
+                        <div class="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                            <div class="h-full rounded-full bg-sky-500 transition-all duration-700" style="width:{{ min(100, stats[2].value|default(0) * 5) }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between text-xs mb-1.5">
+                            <span class="font-medium text-foreground">Job Offers</span>
+                            <span class="font-semibold text-amber-500">{{ stats[1].value }}</span>
+                        </div>
+                        <div class="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                            <div class="h-full rounded-full bg-amber-500 transition-all duration-700" style="width:{{ min(100, stats[1].value|default(0) * 5) }}%"></div>
                         </div>
                     </div>
                 </div>

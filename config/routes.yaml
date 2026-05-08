@@ -9,3 +9,33 @@ recruitment_controllers:
         path: ../src/Recruitment/Controller/
         namespace: App\Recruitment\Controller
     type: attribute
+
+finance_controllers:
+    resource:
+        path: ../src/Finance/Controller/
+        namespace: App\Finance\Controller
+    type: attribute
+
+support_controllers:
+    resource:
+        path: ../src/Support/Controller/
+        namespace: App\Support\Controller
+    type: attribute
+
+formation_controllers:
+    resource:
+        path: ../src/Formation/Controller/
+        namespace: App\Formation\Controller
+    type: attribute
+
+community_controllers:
+    resource:
+        path: ../src/Community/Controller/
+        namespace: App\Community\Controller
+    type: attribute
+
+messaging_controllers:
+    resource:
+        path: ../src/Messaging/Controller/
+        namespace: App\Messaging\Controller
+    type: attribute

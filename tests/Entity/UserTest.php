@@ -53,7 +53,7 @@ class UserTest extends TestCase
         $this->assertSame($user, $user->setPhotoUrl('http://example.com'));
         $this->assertSame($user, $user->setVerified(true));
         $this->assertSame($user, $user->setResetToken('tok'));
-        $this->assertSame($user, $user->setResetTokenExpiresAt(new \DateTimeImmutable()));
+        $this->assertSame($user, $user->setResetTokenExpiry(new \DateTimeImmutable()));
     }
 
     // --- Display name ---
@@ -74,7 +74,8 @@ class UserTest extends TestCase
     public function testDisplayNameFallsBackToUserString(): void
     {
         $user = new User();
-        $this->assertSame('User', $user->getDisplayName());
+        // No fullName, username defaults to '' (empty string)
+        $this->assertSame('', $user->getDisplayName());
     }
 
     // --- Role display names ---
@@ -89,12 +90,12 @@ class UserTest extends TestCase
     public static function roleDisplayNameProvider(): array
     {
         return [
-            'admin'    => ['ADMIN', 'Administrator'],
+            'admin'    => ['ADMIN', 'Administrateur'],
             'user'     => ['USER', 'Freelancer'],
-            'employer' => ['EMPLOYER', 'Client'],
-            'trainer'  => ['TRAINER', 'Trainer'],
-            'unknown'  => ['SOMETHING', 'User'],
-            'null-ish' => ['', 'User'],
+            'employer' => ['EMPLOYER', 'Employeur'],
+            'trainer'  => ['TRAINER', 'Formateur'],
+            'unknown'  => ['SOMETHING', 'Utilisateur'],
+            'null-ish' => ['', 'Utilisateur'],
         ];
     }
 
@@ -120,10 +121,10 @@ class UserTest extends TestCase
 
     // --- UserIdentifier ---
 
-    public function testUserIdentifierReturnsEmail(): void
+    public function testUserIdentifierReturnsUsername(): void
     {
         $user = $this->createUser(['email' => 'a@b.com', 'username' => 'ab']);
-        $this->assertSame('a@b.com', $user->getUserIdentifier());
+        $this->assertSame('ab', $user->getUserIdentifier());
     }
 
     public function testUserIdentifierFallsBackToUsername(): void
@@ -169,20 +170,23 @@ class UserTest extends TestCase
         $this->assertSame('http://img.test/photo.jpg', $user->getPhotoUrl());
     }
 
-    public function testResetToken(): void
+    public function testResetTokenSetAndExpire(): void
     {
         $user = $this->createUser();
-        $this->assertNull($user->getResetToken());
         $user->setResetToken('abc123');
-        $this->assertSame('abc123', $user->getResetToken());
+        $expiry = new \DateTimeImmutable('2099-01-01');
+        $user->setResetTokenExpiry($expiry);
+        $this->assertSame($expiry, $user->getResetTokenExpiresAt());
+        $user->expireResetToken();
+        $this->assertNull($user->getResetTokenExpiresAt());
     }
 
-    public function testResetTokenExpiresAt(): void
+    public function testResetTokenExpiry(): void
     {
         $user = $this->createUser();
         $this->assertNull($user->getResetTokenExpiresAt());
         $dt = new \DateTimeImmutable('2026-01-01 12:00:00');
-        $user->setResetTokenExpiresAt($dt);
+        $user->setResetTokenExpiry($dt);
         $this->assertSame($dt, $user->getResetTokenExpiresAt());
     }
 

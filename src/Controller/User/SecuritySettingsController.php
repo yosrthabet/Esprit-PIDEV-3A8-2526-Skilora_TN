@@ -2,10 +2,10 @@
 
 namespace App\Controller\User;
 
-use App\Entity\LoginHistory;
 use App\Entity\UserSession;
 use Doctrine\ORM\EntityManagerInterface;
 use Scheb\TwoFactorBundle\Security\TwoFactor\Provider\Totp\TotpAuthenticatorInterface;
+use App\Controller\AppController;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,7 +14,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 #[Route('/settings')]
-class SecuritySettingsController extends AbstractController
+class SecuritySettingsController extends AppController
 {
     public function __construct(private EntityManagerInterface $em) {}
 
@@ -25,18 +25,18 @@ class SecuritySettingsController extends AbstractController
         Request $request,
         TotpAuthenticatorInterface $totpAuthenticator,
     ): Response {
-        if (!$this->isCsrfTokenValid('2fa_enable', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('2fa_enable', $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException();
         }
 
-        $user = $this->getUser();
+        $user = $this->getAppUser();
 
-        if (!$user->getTotpSecret()) {
-            $user->setTotpSecret($totpAuthenticator->generateSecret());
+        if (!$user->hasTotpSecret()) {
+            $user->ensureTotpSecret($totpAuthenticator->generateSecret());
         }
 
         // Store secret temporarily — user must verify before it's activated
-        $request->getSession()->set('2fa_setup_secret', $user->getTotpSecret());
+        $request->getSession()->set('2fa_setup_secret', $user->getTotpSetupSecret());
         $this->em->flush();
 
         return $this->redirectToRoute('app_settings', ['tab' => 'security', '_fragment' => '2fa-verify']);
@@ -47,16 +47,16 @@ class SecuritySettingsController extends AbstractController
         Request $request,
         TotpAuthenticatorInterface $totpAuthenticator,
     ): Response {
-        if (!$this->isCsrfTokenValid('2fa_verify', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('2fa_verify', $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException();
         }
 
-        $user = $this->getUser();
-        $code = $request->request->get('code', '');
+        $user = $this->getAppUser();
+        $code = $request->request->getString('code');
 
         if ($totpAuthenticator->checkCode($user, $code)) {
             $user->setTwoFactorEnabled(true);
-            $user->setTwoFactorEnabledAt(new \DateTimeImmutable());
+            $user->enableTwoFactor();
             $this->em->flush();
             $request->getSession()->remove('2fa_setup_secret');
             $this->addFlash('success', 'Two-factor authentication has been enabled.');
@@ -70,14 +70,14 @@ class SecuritySettingsController extends AbstractController
     #[Route('/2fa/disable', name: 'app_settings_2fa_disable', methods: ['POST'])]
     public function disable2fa(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('2fa_disable', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('2fa_disable', $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException();
         }
 
-        $user = $this->getUser();
+        $user = $this->getAppUser();
         $user->setTwoFactorEnabled(false);
         $user->setTotpSecret(null);
-        $user->setTwoFactorEnabledAt(null);
+        $user->disableTwoFactor();
         $this->em->flush();
 
         $this->addFlash('success', 'Two-factor authentication has been disabled.');
@@ -89,11 +89,11 @@ class SecuritySettingsController extends AbstractController
     #[Route('/sessions/revoke-all', name: 'app_settings_sessions_revoke', methods: ['POST'])]
     public function revokeAllSessions(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('revoke_sessions', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('revoke_sessions', $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException();
         }
 
-        $user = $this->getUser();
+        $user = $this->getAppUser();
         $currentSessionId = $request->getSession()->getId();
 
         // Delete all sessions except the current one
@@ -112,13 +112,13 @@ class SecuritySettingsController extends AbstractController
     #[Route('/sessions/{id}/revoke', name: 'app_settings_session_revoke_one', methods: ['POST'])]
     public function revokeOneSession(int $id, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('revoke_session_' . $id, $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('revoke_session_' . $id, $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException();
         }
 
         $session = $this->em->getRepository(UserSession::class)->find($id);
 
-        if ($session && $session->getUser() === $this->getUser()) {
+        if ($session && $session->getUser() === $this->getAppUser()) {
             $this->em->remove($session);
             $this->em->flush();
             $this->addFlash('success', 'Session revoked.');
@@ -132,11 +132,11 @@ class SecuritySettingsController extends AbstractController
     #[Route('/oauth/{provider}/unlink', name: 'app_settings_oauth_unlink', methods: ['POST'])]
     public function unlinkOAuth(string $provider, Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('unlink_' . $provider, $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('unlink_' . $provider, $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException();
         }
 
-        $user = $this->getUser();
+        $user = $this->getAppUser();
 
         // Must keep at least one login method (password or another provider)
         $hasPassword = $user->getPassword() !== null;

@@ -1,0 +1,40 @@
+{# templates/components/ui/data_list.html.twig #}
+<div class="space-y-6">
+    <div class="flex items-end justify-between border-b border-border/40 pb-4">
+        <div>
+            <h2 class="text-xl font-bold tracking-tight text-foreground">{{ title }}</h2>
+            <p class="text-sm text-muted-foreground mt-1">{{ subtitle|default('Your latest updates and activity.') }}</p>
+        </div>
+        {% if items|length > 0 and actionUrl is defined %}
+        <a href="{{ actionUrl }}" class="group flex items-center text-sm font-semibold {{ color_class|default('text-primary') }} hover:opacity-80 transition-colors mb-1">
+            {{ actionText|default('View All') }} <i data-lucide="arrow-right" class="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"></i>
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="space-y-4">
+        {% for item in items %}
+            {% include itemTemplate with { item: item, loop_index: loop.index0 } %}
+        {% else %}
+            {% if emptyUrl is defined %}
+            <button 
+                @click.prevent="$dispatch('open-edit-dialog', { title: '{{ emptyActionTitle|default('New') }}', url: '{{ emptyUrl }}', size: 'lg'})"
+                class="group relative flex w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed border-border/60 bg-muted/10 hover:bg-muted/30 py-16 px-6 transition-all duration-300 hover:border-primary/50 text-center">
+            {% else %}
+            <div class="group relative flex w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed border-border/60 bg-muted/10 py-16 px-6 transition-all duration-300 text-center">
+            {% endif %}
+                <div class="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-foreground/5 text-foreground shadow-sm mb-4">
+                    <i data-lucide="{{ emptyIcon|default('inbox') }}" class="h-8 w-8"></i>
+                </div>
+                <h3 class="text-xl font-bold text-foreground mb-2">{{ emptyTitle|default('No items yet') }}</h3>
+                <p class="mx-auto max-w-sm text-sm text-muted-foreground">
+                    {{ emptyDesc|default('Get started by creating your first entry.') }}
+                </p>
+            {% if emptyUrl is defined %}
+            </button>
+            {% else %}
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>

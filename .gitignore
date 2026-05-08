@@ -31,4 +31,12 @@ push_modules*.sh
 page.html
 /python/
 *.bak
+# Agent QA tooling
+/tools/skilora-agents/.env
+/tools/skilora-agents/memory.json
+/tools/skilora-agents/findings/
 ###< project ###
+
+###> phpstan/phpstan ###
+phpstan.neon
+###< phpstan/phpstan ###

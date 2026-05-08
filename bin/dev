@@ -1,26 +1,45 @@
-#!/bin/bash
-# bin/dev — Start Symfony dev server + Tailwind CSS watcher
-# Usage: ./bin/dev
+#!/usr/bin/env bash
+set -euo pipefail
 
-trap 'kill 0; exit 0' SIGINT SIGTERM
+PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$PROJECT_DIR"
+
+PORT="${PORT:-8000}"
+HOST="${HOST:-127.0.0.1}"
+
+find_available_port() {
+    local candidate="$1"
+    while lsof -i :"$candidate" -sTCP:LISTEN >/dev/null 2>&1; do
+        echo "Port $candidate is busy, trying $((candidate + 1))..."
+        candidate=$((candidate + 1))
+    done
+    printf '%s' "$candidate"
+}
+
+PORT="$(find_available_port "$PORT")"
+
+cleanup() {
+    kill 0 2>/dev/null || true
+}
+trap cleanup INT TERM
 
 echo "Starting Skilora dev environment..."
-echo "  Symfony  → http://127.0.0.1:8000"
-echo "  Tailwind → watching for changes"
+echo "  App  -> http://${HOST}:${PORT}"
+echo "  Vite -> http://${HOST}:5173"
 echo ""
 echo "Press Ctrl+C to stop."
 echo ""
 
-# Start Tailwind CSS watcher in background
-npx @tailwindcss/cli -i assets/app.css -o public/css/app.css --watch &
-TW_PID=$!
+npm run dev -- --host "$HOST" &
+VITE_PID=$!
 
-sleep 1
+if command -v symfony >/dev/null 2>&1; then
+    symfony server:start --no-tls --listen-ip="$HOST" --port="$PORT" --allow-http &
+    SERVER_PID=$!
+else
+    php -S "${HOST}:${PORT}" -t public/ &
+    SERVER_PID=$!
+fi
 
-# Start Symfony server
-symfony server:start --no-tls &
-SYMFONY_PID=$!
-
-wait -n $TW_PID $SYMFONY_PID 2>/dev/null
-kill $TW_PID $SYMFONY_PID 2>/dev/null
-wait 2>/dev/null
+wait -n "$VITE_PID" "$SERVER_PID" 2>/dev/null || true
+cleanup

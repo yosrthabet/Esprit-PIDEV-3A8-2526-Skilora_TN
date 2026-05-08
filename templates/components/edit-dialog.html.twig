@@ -62,13 +62,22 @@
                         if (window.lucide) {
                             lucide.createIcons({ nodes: this.$refs.dialogBody.querySelectorAll('[data-lucide]') });
                         }
-                        if (this._pendingScripts && this._pendingScripts.length) {
-                            this._pendingScripts.forEach(code => {
-                                const s = document.createElement('script');
-                                s.textContent = code;
-                                document.body.appendChild(s);
-                            });
-                            this._pendingScripts = [];
+                        // Scripts must run in a macrotask (setTimeout) — NOT $nextTick.
+                        // Alpine's x-if → x-html chain produces multiple microtask-level
+                        // reactive effects. $nextTick is also a microtask, so it can fire
+                        // before x-html has flushed innerHTML. setTimeout(fn, 0) creates a
+                        // macrotask that runs only after ALL microtasks have drained,
+                        // guaranteeing the DOM elements exist when getElementById() runs.
+                        const pendingScripts = this._pendingScripts;
+                        this._pendingScripts = [];
+                        if (pendingScripts && pendingScripts.length) {
+                            setTimeout(() => {
+                                pendingScripts.forEach(code => {
+                                    const s = document.createElement('script');
+                                    s.textContent = code;
+                                    document.body.appendChild(s);
+                                });
+                            }, 0);
                         }
                     });
                 });

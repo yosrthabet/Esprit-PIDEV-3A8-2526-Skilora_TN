@@ -1,0 +1,16 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Certificate QR{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl px-4 py-8 text-center sm:px-6 lg:px-8">
+    <section class="glass-panel p-8">
+        <p class="text-xs font-bold uppercase tracking-label text-primary">Certificate QR</p>
+        <h1 class="mt-2 text-3xl font-light tracking-holographic">{{ certificate.enrollment.formation.title }}</h1>
+        {% if qr_data_uri %}
+            <img src="{{ qr_data_uri }}" alt="Certificate verification QR" class="mx-auto mt-6 h-80 w-80 rounded-2xl bg-white p-4">
+        {% else %}
+            <div class="mx-auto mt-6 rounded-2xl border border-border bg-muted p-6 text-sm text-muted-foreground">QR generator unavailable. Use the verification link below.</div>
+        {% endif %}
+        <a href="{{ verification_url }}" class="mt-6 block break-all text-sm font-semibold text-primary">{{ verification_url }}</a>
+    </section>
+</div>
+{% endblock %}

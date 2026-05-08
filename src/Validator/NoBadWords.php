@@ -9,10 +9,16 @@ class NoBadWords extends Constraint
 {
     public string $message = 'The content contains forbidden words: "{{ words }}".';
 
+    /** @var list<string> */
     public array $badWords = [
         'badword1', 'badword2', 'offensive', 'spam', 'scam', 'hate', 'stupid', 'idiot'
     ];
 
+    /**
+     * @param array<string, mixed>|null $options
+     * @param list<string>|null $badWords
+     * @param list<string>|null $groups
+     */
     public function __construct(
         ?array $options = null,
         ?array $badWords = null,

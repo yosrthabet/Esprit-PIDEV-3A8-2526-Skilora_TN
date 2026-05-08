@@ -1,0 +1,16 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}New Event{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+    <form method="post" class="glass-panel space-y-5 p-8">
+        <p class="text-xs font-bold uppercase tracking-label text-primary">Events</p><h1 class="text-3xl font-light tracking-holographic">Create an event</h1>
+        <input type="hidden" name="_token" value="{{ csrf_token('community_event_new') }}">
+        <input name="title" required placeholder="Event title" class="h-11 w-full rounded-xl border border-border bg-background/70 px-4 text-sm">
+        <input name="starts_at" type="datetime-local" class="h-11 w-full rounded-xl border border-border bg-background/70 px-4 text-sm">
+        <input name="location" placeholder="Location" class="h-11 w-full rounded-xl border border-border bg-background/70 px-4 text-sm">
+        <input name="online_url" placeholder="Online URL" class="h-11 w-full rounded-xl border border-border bg-background/70 px-4 text-sm">
+        <textarea name="description" rows="5" placeholder="Event details" class="w-full rounded-xl border border-border bg-background/70 px-4 py-3 text-sm"></textarea>
+        <button class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Create event</button>
+    </form>
+</div>
+{% endblock %}

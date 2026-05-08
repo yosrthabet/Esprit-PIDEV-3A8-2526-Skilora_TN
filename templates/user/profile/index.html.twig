@@ -1,5 +1,5 @@
 {# templates/profile/index.html.twig — Own profile edit page #}
-{% extends 'layouts/app.html.twig' %}
+{% extends 'layouts/adaptive.html.twig' %}
 
 {% block page_title %}My Profile{% endblock %}
 
@@ -10,9 +10,9 @@
     <div class="lg:col-span-2 space-y-6">
 
         {# --- Profile Info Card --- #}
-        <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <div class="glass-panel overflow-hidden">
             <div class="flex flex-col space-y-1.5 p-6">
-                <h3 class="font-semibold leading-none tracking-tight">Profile Information</h3>
+                <h3 class="font-semibold leading-none tracking-label">Profile Information</h3>
                 <p class="text-sm text-muted-foreground">Update your personal details</p>
             </div>
             <div class="p-6 pt-0">
@@ -74,10 +74,200 @@
             </div>
         </div>
 
+        {# ─── AI Profile Intelligence Panel ─────────────────────────────── #}
+        <div id="ai-profile-panel"
+             x-data="profileAI()"
+             x-init="init()"
+             class="relative overflow-hidden rounded-2xl border border-violet-200/60 dark:border-violet-800/40 bg-white dark:bg-zinc-900 shadow-lg shadow-violet-100/50 dark:shadow-violet-900/20">
+
+            {# Gradient accent top bar #}
+            <div class="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-violet-500 via-indigo-500 to-purple-500"></div>
+
+            {# Subtle background gradient blob #}
+            <div class="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-violet-400/10 blur-3xl"></div>
+            <div class="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-indigo-400/10 blur-3xl"></div>
+
+            {# ── Header ── #}
+            <div class="relative flex items-center justify-between px-6 py-5">
+                <div class="flex items-center gap-3.5">
+                    <div class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md shadow-violet-500/30">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                        </svg>
+                        {# Glow ring on streaming #}
+                        <span x-show="status === 'streaming'"
+                              class="absolute inset-0 rounded-xl animate-ping bg-violet-400/40"></span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">AI Profile Intelligence</h3>
+                        <p class="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">Auto-analyzes as you edit • GPT-4o powered</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    {# Status pill #}
+                    <div class="hidden sm:flex">
+                        <span x-show="status === 'idle'" class="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-1 text-[11px] font-medium text-zinc-400">
+                            <span class="h-1.5 w-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600"></span>Waiting
+                        </span>
+                        <span x-show="status === 'debouncing'" class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-600">
+                            <span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span>Detecting…
+                        </span>
+                        <span x-show="status === 'streaming'" class="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-medium text-violet-600">
+                            <span class="h-1.5 w-1.5 rounded-full bg-violet-500 animate-pulse"></span>Analyzing…
+                        </span>
+                        <span x-show="status === 'done'" class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-600">
+                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Analysis ready
+                        </span>
+                    </div>
+
+                    {# Analyze button #}
+                    <button @click="triggerNow()"
+                            :disabled="status === 'streaming'"
+                            class="group inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-violet-500/30 transition-all hover:shadow-md hover:shadow-violet-500/40 hover:-translate-y-px active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0">
+                        <svg class="h-3 w-3 transition-transform group-hover:rotate-180 duration-500" :class="{ 'animate-spin': status === 'streaming' }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                        </svg>
+                        <span x-text="status === 'streaming' ? 'Analyzing…' : 'Analyze now'"></span>
+                    </button>
+                </div>
+            </div>
+
+            {# Divider #}
+            <div class="mx-6 h-px bg-gradient-to-r from-transparent via-violet-100 dark:via-violet-900/50 to-transparent"></div>
+
+            {# ── Empty state ── #}
+            <div x-show="status === 'idle' && !result" class="px-6 py-10">
+                <div class="flex flex-col items-center gap-3 text-center">
+                    <div class="flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-100 dark:border-violet-900/50 bg-violet-50 dark:bg-violet-950/30 text-2xl shadow-inner">🧠</div>
+                    <div>
+                        <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Edit your profile to trigger an analysis</p>
+                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1 max-w-xs mx-auto">The AI re-analyzes automatically 2 seconds after you stop typing — or hit <strong>Analyze now</strong> at any time.</p>
+                    </div>
+                </div>
+            </div>
+
+            {# ── Streaming skeleton ── #}
+            <div x-show="status === 'streaming' && !result" class="px-6 py-5">
+                <div class="rounded-xl border border-violet-100 dark:border-violet-900/40 bg-violet-50/50 dark:bg-violet-950/20 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="flex gap-1">
+                            <span class="h-2 w-2 rounded-full bg-violet-400 animate-bounce [animation-delay:0ms]"></span>
+                            <span class="h-2 w-2 rounded-full bg-violet-400 animate-bounce [animation-delay:150ms]"></span>
+                            <span class="h-2 w-2 rounded-full bg-violet-400 animate-bounce [animation-delay:300ms]"></span>
+                        </div>
+                        <span class="text-[11px] font-medium text-violet-500 uppercase tracking-widest">GPT is thinking</span>
+                    </div>
+                    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap break-words min-h-[3rem]"
+                       x-text="streamBuffer || ' '"></p>
+                </div>
+            </div>
+
+            {# ── Structured result ── #}
+            <template x-if="result">
+                <div class="px-6 pb-6 space-y-3 mt-1">
+
+                    {# Row 1: Roast + Archetype #}
+                    <div class="grid gap-3 sm:grid-cols-2">
+
+                        {# Roast card #}
+                        <div class="group relative overflow-hidden rounded-xl border border-orange-100 dark:border-orange-900/30 bg-gradient-to-br from-orange-50 to-amber-50/60 dark:from-orange-950/20 dark:to-amber-950/10 p-4 transition-shadow hover:shadow-sm">
+                            <div class="absolute top-0 right-0 h-16 w-16 translate-x-4 -translate-y-4 rounded-full bg-orange-200/40 dark:bg-orange-800/20 blur-xl"></div>
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-md bg-orange-100 dark:bg-orange-900/40 text-sm">🔥</span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-orange-500 dark:text-orange-400">Honest Take</span>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300" x-text="result.roast"></p>
+                        </div>
+
+                        {# Archetype card #}
+                        <div class="group relative overflow-hidden rounded-xl border border-violet-100 dark:border-violet-900/30 bg-gradient-to-br from-violet-50 to-purple-50/60 dark:from-violet-950/20 dark:to-purple-950/10 p-4 transition-shadow hover:shadow-sm">
+                            <div class="absolute top-0 right-0 h-16 w-16 translate-x-4 -translate-y-4 rounded-full bg-violet-200/40 dark:bg-violet-800/20 blur-xl"></div>
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <span class="flex h-6 w-6 items-center justify-center rounded-md bg-violet-100 dark:bg-violet-900/40 text-sm">🎭</span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-violet-500 dark:text-violet-400">Your Archetype</span>
+                            </div>
+                            <p class="text-sm font-bold text-zinc-900 dark:text-zinc-100" x-text="result.archetype"></p>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 leading-relaxed" x-text="result.archetype_reason"></p>
+                        </div>
+                    </div>
+
+                    {# Competitive Edge #}
+                    <div class="relative overflow-hidden rounded-xl border border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-br from-emerald-50 to-teal-50/60 dark:from-emerald-950/20 dark:to-teal-950/10 p-4">
+                        <div class="absolute top-0 right-0 h-20 w-20 translate-x-6 -translate-y-6 rounded-full bg-emerald-200/40 dark:bg-emerald-800/20 blur-2xl"></div>
+                        <div class="flex items-center gap-2 mb-2.5">
+                            <span class="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-100 dark:bg-emerald-900/40 text-sm">⚡</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Competitive Edge</span>
+                        </div>
+                        <p class="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300" x-text="result.competitive_edge"></p>
+                    </div>
+
+                    {# AI Rewrite #}
+                    <div class="rounded-xl border border-blue-100 dark:border-blue-900/30 bg-gradient-to-br from-blue-50 to-sky-50/60 dark:from-blue-950/20 dark:to-sky-950/10 p-4 space-y-4">
+                        <div class="flex items-center gap-2">
+                            <span class="flex h-6 w-6 items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/40 text-sm">✍️</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">AI Rewrite</span>
+                        </div>
+
+                        {# Headline #}
+                        <div class="rounded-lg bg-white/70 dark:bg-zinc-800/50 border border-blue-100/80 dark:border-blue-900/30 p-3">
+                            <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400 dark:text-blue-500 mb-1.5">Headline</p>
+                            <div class="flex items-start justify-between gap-3">
+                                <p class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 leading-snug" x-text="result.rewritten_headline"></p>
+                                <button @click="copyToField('headline', result.rewritten_headline)"
+                                        class="shrink-0 inline-flex items-center gap-1 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400 transition hover:bg-blue-100 dark:hover:bg-blue-900/50">
+                                    Use this ↗
+                                </button>
+                            </div>
+                        </div>
+
+                        {# Bio #}
+                        <div class="rounded-lg bg-white/70 dark:bg-zinc-800/50 border border-blue-100/80 dark:border-blue-900/30 p-3">
+                            <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400 dark:text-blue-500 mb-1.5">Bio</p>
+                            <div class="flex items-start justify-between gap-3">
+                                <p class="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed" x-text="result.rewritten_bio"></p>
+                                <button @click="copyToField('bio', result.rewritten_bio)"
+                                        class="shrink-0 inline-flex items-center gap-1 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400 transition hover:bg-blue-100 dark:hover:bg-blue-900/50">
+                                    Use this ↗
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Top 3 Actions #}
+                    <div class="rounded-xl border border-zinc-200/80 dark:border-zinc-700/50 bg-zinc-50/80 dark:bg-zinc-800/30 p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="flex h-6 w-6 items-center justify-center rounded-md bg-zinc-200 dark:bg-zinc-700 text-sm">🎯</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Top 3 Actions</span>
+                        </div>
+                        <ol class="space-y-2">
+                            <template x-for="(action, idx) in result.top_3_actions" :key="idx">
+                                <li class="flex items-start gap-3 rounded-lg border border-zinc-200/60 dark:border-zinc-700/40 bg-white dark:bg-zinc-800/50 px-3 py-2.5">
+                                    <span class="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-[10px] font-bold text-white shadow-sm" x-text="idx + 1"></span>
+                                    <span class="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed" x-text="action"></span>
+                                </li>
+                            </template>
+                        </ol>
+                    </div>
+
+                </div>
+            </template>
+
+            {# Error #}
+            <div x-show="error" class="mx-6 mb-6 flex items-start gap-2 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 p-4">
+                <svg class="mt-0.5 h-4 w-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/>
+                </svg>
+                <p class="text-sm text-red-700 dark:text-red-400" x-text="error"></p>
+            </div>
+
+        </div>
+        {# ─────────────────────────────────────────────────────────────────── #}
+
         {# --- Skills Section --- #}
-        <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <div class="glass-panel overflow-hidden">
             <div class="flex flex-col space-y-1.5 p-6">
-                <h3 class="font-semibold leading-none tracking-tight">Skills</h3>
+                <h3 class="font-semibold leading-none tracking-label">Skills</h3>
                 <p class="text-sm text-muted-foreground">Manage your technical and professional skills</p>
             </div>
             <div class="p-6 pt-0 space-y-4">
@@ -108,7 +298,7 @@
                 {% endif %}
 
                 {# Add skill form #}
-                <div class="shrink-0 bg-border h-[1px] w-full"></div>
+                <div class="shrink-0 bg-border/50 h-[1px] w-full"></div>
                 <form action="{{ path('app_profile_skill_add') }}" method="post" class="space-y-3">
                     <p class="text-sm font-medium">Add a Skill</p>
                     <div class="grid gap-3 sm:grid-cols-3">
@@ -139,9 +329,9 @@
         </div>
 
         {# --- Experience Section --- #}
-        <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <div class="glass-panel overflow-hidden">
             <div class="flex flex-col space-y-1.5 p-6">
-                <h3 class="font-semibold leading-none tracking-tight">Experience</h3>
+                <h3 class="font-semibold leading-none tracking-label">Experience</h3>
                 <p class="text-sm text-muted-foreground">Your work history and professional experience</p>
             </div>
             <div class="p-6 pt-0 space-y-4">
@@ -173,7 +363,7 @@
                 {% endif %}
 
                 {# Add experience form #}
-                <div class="shrink-0 bg-border h-[1px] w-full"></div>
+                <div class="shrink-0 bg-border/50 h-[1px] w-full"></div>
                 <form action="{{ path('app_profile_experience_add') }}" method="post" class="space-y-3">
                     <p class="text-sm font-medium">Add Experience</p>
                     <div class="grid gap-3 sm:grid-cols-2">
@@ -210,9 +400,9 @@
         </div>
 
         {# --- Portfolio Section --- #}
-        <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <div class="glass-panel overflow-hidden">
             <div class="flex flex-col space-y-1.5 p-6">
-                <h3 class="font-semibold leading-none tracking-tight">Portfolio</h3>
+                <h3 class="font-semibold leading-none tracking-label">Portfolio</h3>
                 <p class="text-sm text-muted-foreground">Showcase your best work</p>
             </div>
             <div class="p-6 pt-0 space-y-4">
@@ -264,7 +454,7 @@
                 {% endif %}
 
                 {# Add portfolio form #}
-                <div class="shrink-0 bg-border h-[1px] w-full"></div>
+                <div class="shrink-0 bg-border/50 h-[1px] w-full"></div>
                 <form action="{{ path('app_profile_portfolio_add') }}" method="post" class="space-y-3">
                     <p class="text-sm font-medium">Add Portfolio Item</p>
                     <div class="grid gap-3 sm:grid-cols-2">
@@ -304,7 +494,7 @@
 
     {# ===== RIGHT COLUMN (1/3) — Profile Preview ===== #}
     <div class="space-y-6">
-        <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm sticky top-6">
+        <div class="glass-panel overflow-hidden sticky top-6">
             <div class="p-6 space-y-4">
                 {# Avatar + photo upload #}
                 <div class="flex flex-col items-center space-y-3" x-data="profilePhoto()">
@@ -366,7 +556,7 @@
                     </template>
 
                     <div class="text-center">
-                        <p class="font-semibold">{{ profile.fullName ?: app.user.displayName }}</p>
+                        <p class="font-semibold text-lg">{{ profile.fullName ?: app.user.displayName }}</p>
                         {% if profile.headline %}
                             <p class="text-sm text-muted-foreground">{{ profile.headline }}</p>
                         {% endif %}
@@ -414,20 +604,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="shrink-0 bg-border h-[1px] w-full"></div>
-
-                {# Location #}
-                {% if profile.location %}
-                <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z"/>
-                    </svg>
-                    {{ profile.location }}
-                </div>
-                {% endif %}
 
                 {# Bio preview #}
                 {% if profile.bio %}
@@ -448,7 +624,7 @@
 
                 {# View public profile link #}
                 <a href="{{ path('app_profile_public', { username: app.user.username }) }}"
-                   class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full">
+                   class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-colors border border-input bg-background/50 backdrop-blur-md shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full">
                     View Public Profile
                 </a>
             </div>
@@ -468,7 +644,7 @@
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('profilePhoto', () => ({
-        currentPhoto: {{ profile.photoUrl ? ("'" ~ profile.photoUrl ~ "'")|raw : 'null' }},
+        currentPhoto: {{ profile.photoUrl ? profile.photoUrl|json_encode|raw : 'null' }},
         showCropper: false,
         cropImageSrc: '',
         cropper: null,
@@ -555,10 +731,10 @@ document.addEventListener('alpine:init', () => {
 
             try {
                 const formData = new FormData();
-                formData.append('_token', '{{ csrf_token('profile_photo') }}');
+                formData.append('_token', '{{ csrf_token('profile_photo')|e('js') }}');
                 formData.append('cropped_image', base64);
 
-                const resp = await fetch('{{ path('app_profile_photo_upload') }}', {
+                const resp = await fetch('{{ path('app_profile_photo_upload')|e('js') }}', {
                     method: 'POST',
                     body: formData,
                 });
@@ -584,9 +760,9 @@ document.addEventListener('alpine:init', () => {
             this.uploading = true;
             try {
                 const formData = new FormData();
-                formData.append('_token', '{{ csrf_token('profile_photo') }}');
+                formData.append('_token', '{{ csrf_token('profile_photo')|e('js') }}');
 
-                const resp = await fetch('{{ path('app_profile_photo_delete') }}', {
+                const resp = await fetch('{{ path('app_profile_photo_delete')|e('js') }}', {
                     method: 'POST',
                     body: formData,
                 });
@@ -602,6 +778,127 @@ document.addEventListener('alpine:init', () => {
                 alert('Failed to remove photo.');
             } finally {
                 this.uploading = false;
+            }
+        },
+    }));
+});
+
+// ─── AI Profile Intelligence ──────────────────────────────────────────────
+document.addEventListener('alpine:init', () => {
+    Alpine.data('profileAI', () => ({
+        status: 'idle',   // idle | debouncing | streaming | done
+        streamBuffer: '',
+        result: null,
+        error: '',
+        _debounceTimer: null,
+        _csrfToken: '{{ csrf_token('profile_ai_analyze')|e('js') }}',
+        _analyzeUrl: '{{ path('app_profile_ai_analyze')|e('js') }}',
+
+        init() {
+            // Watch bio, headline, and any skill/experience inputs for changes
+            const watched = ['#bio', '[name="headline"]', '[name="first_name"]', '[name="last_name"]', '[name="location"]', '[name="website"]'];
+            watched.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                    el.addEventListener('input', () => this._schedule());
+                });
+            });
+
+            // Also watch dynamically-added skill inputs via event delegation
+            document.addEventListener('input', e => {
+                if (e.target.closest('#ai-profile-panel')) return; // ignore our own panel
+                this._schedule();
+            });
+        },
+
+        _schedule() {
+            this.status = 'debouncing';
+            clearTimeout(this._debounceTimer);
+            this._debounceTimer = setTimeout(() => this.runAnalysis(), 2000);
+        },
+
+        triggerNow() {
+            clearTimeout(this._debounceTimer);
+            this.runAnalysis();
+        },
+
+        async runAnalysis() {
+            this.status = 'streaming';
+            this.streamBuffer = '';
+            this.result = null;
+            this.error = '';
+
+            try {
+                const body = new URLSearchParams({ _token: this._csrfToken });
+                const resp = await fetch(this._analyzeUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body.toString(),
+                });
+
+                if (!resp.ok) {
+                    this.error = `Server error ${resp.status}`;
+                    this.status = 'done';
+                    return;
+                }
+
+                const reader = resp.body.getReader();
+                const decoder = new TextDecoder();
+                let rawJson = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const text = decoder.decode(value, { stream: true });
+                    // Parse SSE lines: "data: {...}\n\n"
+                    const lines = text.split('\n');
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        const payload = line.slice(6).trim();
+                        if (payload === '[DONE]') {
+                            // Parse accumulated JSON
+                            try {
+                                this.result = JSON.parse(rawJson.trim());
+                            } catch {
+                                this.error = 'Could not parse AI response.';
+                            }
+                            this.status = 'done';
+                            return;
+                        }
+                        try {
+                            const obj = JSON.parse(payload);
+                            if (obj.error) {
+                                this.error = obj.error;
+                                this.status = 'done';
+                                return;
+                            }
+                            if (obj.token !== undefined) {
+                                rawJson += obj.token;
+                                this.streamBuffer += obj.token;
+                            }
+                        } catch { /* partial chunk — ignore */ }
+                    }
+                }
+
+                // If stream ended without [DONE]
+                if (!this.result && rawJson.trim()) {
+                    try { this.result = JSON.parse(rawJson.trim()); } catch { /* */ }
+                }
+                this.status = 'done';
+
+            } catch (err) {
+                this.error = err.message || 'An unexpected error occurred.';
+                this.status = 'done';
+            }
+        },
+
+        copyToField(fieldName, value) {
+            if (fieldName === 'bio') {
+                const el = document.getElementById('bio');
+                if (el) { el.value = value; el.dispatchEvent(new Event('input')); }
+            } else if (fieldName === 'headline') {
+                const el = document.querySelector('[name="headline"]');
+                if (el) { el.value = value; el.dispatchEvent(new Event('input')); }
             }
         },
     }));

@@ -25,7 +25,7 @@ class OAuthRegisterController extends AbstractController
         $session = $request->getSession();
         $oauthData = $session->get('oauth_registration');
 
-        if (!$oauthData) {
+        if (!is_array($oauthData)) {
             return $this->redirectToRoute('app_register');
         }
 
@@ -55,8 +55,8 @@ class OAuthRegisterController extends AbstractController
                 $errors[] = 'Full name is required.';
             }
 
-            if (strlen($password) < 6) {
-                $errors[] = 'Password must be at least 6 characters.';
+            if (strlen($password) < 8) {
+                $errors[] = 'Password must be at least 8 characters.';
             }
 
             if ($password !== $confirmPassword) {
@@ -86,10 +86,13 @@ class OAuthRegisterController extends AbstractController
                 $user->setActive(true);
                 $user->setVerified(true);
                 $user->setPassword($passwordHasher->hashPassword($user, $password));
-                $user->setPhotoUrl($oauthData['avatar_url'] ?? null);
+                $avatarUrl = $oauthData['avatar_url'] ?? null;
+                $user->setPhotoUrl(is_string($avatarUrl) ? $avatarUrl : null);
 
-                if ($oauthData['provider'] === 'github') {
-                    $user->setGithubId($oauthData['github_id']);
+                $provider = $oauthData['provider'] ?? null;
+                $githubId = $oauthData['github_id'] ?? null;
+                if ($provider === 'github' && is_string($githubId)) {
+                    $user->setGithubId($githubId);
                 }
 
                 $em->persist($user);
@@ -97,16 +100,17 @@ class OAuthRegisterController extends AbstractController
 
                 $session->remove('oauth_registration');
 
-                return $userAuthenticator->authenticateUser($user, $authenticator, $request);
+                return $userAuthenticator->authenticateUser($user, $authenticator, $request)
+                    ?? $this->redirectToRoute('app_workspace');
             }
         }
 
         return $this->render('auth/oauth_complete.html.twig', [
             'oauth_data' => $oauthData,
             'errors' => $errors,
-            'last_username' => $username ?? ($oauthData['nickname'] ?? ''),
-            'last_email' => $email ?? ($oauthData['email'] ?? ''),
-            'last_full_name' => $fullName ?? ($oauthData['full_name'] ?? ''),
+            'last_username' => $username ?? (is_string($oauthData['nickname'] ?? null) ? $oauthData['nickname'] : ''),
+            'last_email' => $email ?? (is_string($oauthData['email'] ?? null) ? $oauthData['email'] : ''),
+            'last_full_name' => $fullName ?? (is_string($oauthData['full_name'] ?? null) ? $oauthData['full_name'] : ''),
             'last_role' => $role ?? 'USER',
         ]);
     }

@@ -1,0 +1,144 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}About Skilora — The Future of Work in Tunisia{% endblock %}
+
+{% block head %}
+{{ parent() }}
+<script>document.documentElement.classList.remove('dark');</script>
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-zinc-950 text-white">
+
+    {# Hero #}
+    <section class="relative pt-32 pb-20 px-6 overflow-hidden">
+        <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:80px_80px] pointer-events-none"></div>
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold mb-4">About Us</p>
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight leading-[0.95] mb-6">
+                Built for Tunisian<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">talent, by talent.</span>
+            </h1>
+            <p class="text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                Skilora is Tunisia's first AI-powered freelancing platform. We bridge the gap between world-class local talent and ambitious companies — locally and globally.
+            </p>
+        </div>
+    </section>
+
+    {# Mission + Stats #}
+    <section class="py-20 border-y border-zinc-800/40 bg-zinc-900/20">
+        <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+            <div class="space-y-6">
+                <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold">Our Mission</p>
+                <h2 class="text-3xl md:text-4xl font-black tracking-tight leading-tight">
+                    Democratize access to premium work
+                </h2>
+                <p class="text-zinc-400 leading-relaxed">
+                    We believe talent is equally distributed, but opportunity is not. Skilora was founded at ESPRIT with a simple mission: give every skilled Tunisian developer, designer, and creator a direct path to meaningful, well-paid work — without borders or gatekeepers.
+                </p>
+                <p class="text-zinc-400 leading-relaxed">
+                    Whether you're a freelancer in Sousse, a startup in Tunis, or an enterprise in Paris, Skilora brings you together with AI-powered matching, transparent pricing, and built-in trust.
+                </p>
+            </div>
+            <div class="grid grid-cols-2 gap-6">
+                <div class="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 text-center">
+                    <p class="text-3xl font-black text-white">10K+</p>
+                    <p class="text-xs text-zinc-500 mt-1 uppercase tracking-wider">Active Talent</p>
+                </div>
+                <div class="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 text-center">
+                    <p class="text-3xl font-black text-white">2,500</p>
+                    <p class="text-xs text-zinc-500 mt-1 uppercase tracking-wider">Companies</p>
+                </div>
+                <div class="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 text-center">
+                    <p class="text-3xl font-black text-white">500+</p>
+                    <p class="text-xs text-zinc-500 mt-1 uppercase tracking-wider">Courses</p>
+                </div>
+                <div class="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 text-center">
+                    <p class="text-3xl font-black text-white">$2M+</p>
+                    <p class="text-xs text-zinc-500 mt-1 uppercase tracking-wider">Paid Out</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# Team #}
+    <section class="py-24 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold mb-4">The Minds Behind</p>
+                <h2 class="text-3xl md:text-5xl font-black tracking-tight">Meet the team</h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                {% set founders = [
+                    { name: 'Founder One', role: 'CEO & Product Lead', bio: 'Built the first version of Skilora as a student project at ESPRIT. Former intern at Vermeg and Talan.' },
+                    { name: 'Founder Two', role: 'CTO & AI Lead', bio: 'Machine learning researcher with published papers on recommendation systems. Drives the AI matching engine.' },
+                    { name: 'Founder Three', role: 'Head of Design', bio: 'Award-winning UI/UX designer. Previously led design at a Tunisian fintech startup.' },
+                ] %}
+                {% for f in founders %}
+                <div class="p-8 rounded-2xl border border-zinc-800 bg-zinc-900/30 hover:border-indigo-500/30 transition-colors duration-300">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-xl font-bold mb-4">
+                        {{ f.name|first }}
+                    </div>
+                    <h3 class="text-lg font-bold">{{ f.name }}</h3>
+                    <p class="text-sm text-indigo-400 mb-3">{{ f.role }}</p>
+                    <p class="text-sm text-zinc-400 leading-relaxed">{{ f.bio }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {# Values #}
+    <section class="py-24 px-6 border-t border-zinc-800/40 bg-zinc-900/20">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold mb-4">Principles</p>
+                <h2 class="text-3xl md:text-5xl font-black tracking-tight">Our values</h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                {% set values = [
+                    { icon: 'shield-check', title: 'Trust First', desc: 'Every profile is verified. Every payment is escrow-protected. We build trust so you can focus on work.' },
+                    { icon: 'zap', title: 'Speed Matters', desc: 'Our AI matches projects to talent in under 60 seconds. No more scrolling through irrelevant listings.' },
+                    { icon: 'globe', title: 'Borderless', desc: 'Tunisian talent deserves global opportunities. We remove friction between local skills and international demand.' },
+                    { icon: 'heart-handshake', title: 'Fair Pay', desc: 'Transparent pricing, zero hidden fees. Freelancers keep what they earn. Clients pay what they see.' },
+                    { icon: 'graduation-cap', title: 'Always Learning', desc: 'Built-in formations and certificates ensure our community never stops growing their skill set.' },
+                    { icon: 'users', title: 'Community-Driven', desc: 'We are not a job board — we are a thriving ecosystem of mentors, learners, and collaborators.' },
+                ] %}
+                {% for v in values %}
+                <div class="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/30">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4">
+                        <i data-lucide="{{ v.icon }}" class="w-5 h-5 text-indigo-400"></i>
+                    </div>
+                    <h3 class="font-bold mb-2">{{ v.title }}</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">{{ v.desc }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {# CTA #}
+    <section class="py-24 px-6 text-center">
+        <div class="max-w-2xl mx-auto">
+            <h2 class="text-3xl md:text-5xl font-black tracking-tight mb-6">Join the movement.</h2>
+            <p class="text-zinc-400 mb-8">Be part of Tunisia's fastest-growing tech talent community.</p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="{{ path('app_register') }}" class="inline-flex items-center justify-center px-8 py-4 rounded-full bg-indigo-600 text-white font-bold hover:bg-indigo-500 transition-colors">
+                    Get Started Free
+                </a>
+                <a href="{{ path('app_community') }}" class="inline-flex items-center justify-center px-8 py-4 rounded-full border border-zinc-700 text-white font-semibold hover:border-zinc-500 transition-colors">
+                    Explore Community
+                </a>
+            </div>
+        </div>
+    </section>
+
+    {# Footer #}
+    <footer class="bg-zinc-950 text-white border-t border-zinc-800 py-12 px-6">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="font-black text-xl tracking-tight">SKILORA</p>
+            <p class="text-sm text-zinc-500">&copy; {{ 'now'|date('Y') }} Skilora. All rights reserved.</p>
+        </div>
+    </footer>
+</div>
+{% endblock %}

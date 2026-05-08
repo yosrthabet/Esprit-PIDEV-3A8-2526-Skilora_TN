@@ -1,0 +1,49 @@
+{# templates/components/ui/banner_hero.html.twig #}
+{% set badgeLabel = badge|default('') %}
+{% set primaryGradient = variant == 'trainer' ? 'from-primary to-blue-500' : (variant == 'user' ? 'from-indigo-500 to-sky-500' : 'from-sky-500 to-emerald-500') %}
+{% set glowColor1 = variant == 'trainer' ? 'bg-primary/20' : (variant == 'user' ? 'bg-indigo-500/20' : 'bg-sky-500/20') %}
+{% set glowColor2 = variant == 'trainer' ? 'bg-blue-500/20' : (variant == 'user' ? 'bg-sky-500/20' : 'bg-emerald-500/20') %}
+{% set buttonGradient = variant == 'trainer' ? 'bg-foreground' : (variant == 'user' ? 'bg-foreground' : 'bg-foreground') %}
+
+<div class="relative overflow-hidden glass-panel p-8 sm:p-10 shadow-xl">
+    <div class="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[radial-gradient(circle_at_center,rgba(var(--color-{{ glowColor1|replace({'bg-': '', '/10': '', '/20': ''}) }}),0.15),transparent_70%)] mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
+    <div class="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-[radial-gradient(circle_at_center,rgba(var(--color-{{ glowColor2|replace({'bg-': '', '/10': '', '/20': ''}) }}),0.15),transparent_70%)] mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
+    
+    <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="space-y-3 max-w-2xl">
+            {% if badgeLabel %}
+                <div class="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-semibold tracking-label uppercase text-primary mb-2 backdrop-blur-md">
+                    <span class="relative flex h-2 w-2 mr-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                    {{ badgeLabel }}
+                </div>
+            {% endif %}
+            <h1 class="text-4xl sm:text-6xl font-light tracking-holographic text-foreground">
+                {% if title_start is defined %}{{ title_start }}{% endif %}
+                <br class="hidden sm:block" />
+                <span class="bg-gradient-to-r {{ primaryGradient }} bg-clip-text text-transparent">{{ title_gradient }}</span>.
+            </h1>
+            <p class="text-[15px] text-muted-foreground leading-relaxed font-medium mt-4">
+                {{ description }}
+            </p>
+        </div>
+        
+        {% if actionUrl is defined %}
+        <div class="flex items-center gap-3 shrink-0 mt-6 md:mt-0">
+             <{{ actionIsButton|default(false) ? 'button' : 'a' }} 
+               {% if actionIsButton|default(false) %}
+                   @click.prevent="{{ actionClick }}"
+               {% else %}
+                   href="{{ actionUrl }}"
+               {% endif %}
+               class="group relative inline-flex items-center justify-center overflow-hidden rounded-full {{ buttonGradient }} px-8 py-3.5 text-[13px] font-bold text-background shadow-lg transition-transform hover:scale-105 hover:bg-foreground/90">
+                <span class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <i data-lucide="{{ actionIcon|default('plus-circle') }}" class="mr-2.5 h-4 w-4"></i>
+                {{ actionLabel }}
+            </{{ actionIsButton|default(false) ? 'button' : 'a' }}>
+        </div>
+        {% endif %}
+    </div>
+</div>

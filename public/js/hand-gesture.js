@@ -609,4 +609,7 @@
         }
     };
 
+    /* Notify any listeners that SkiloraGesture is ready */
+    window.dispatchEvent(new CustomEvent('skilora:gesture:ready'));
+
 })();

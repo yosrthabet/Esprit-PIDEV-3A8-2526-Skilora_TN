@@ -1,0 +1,39 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Formations{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="glass-panel p-8">
+        <p class="text-xs font-bold uppercase tracking-label text-primary">Learning marketplace</p>
+        <h1 class="mt-2 text-4xl font-light tracking-holographic">Build skills with trusted trainers.</h1>
+        <p class="mt-3 max-w-3xl text-muted-foreground">Browse published formations, enroll in one click, and track completion from your learning dashboard.</p>
+        <form class="mt-6 grid max-w-4xl gap-3 md:grid-cols-[1fr_220px_180px_auto]" method="get" action="{{ path('app_formations') }}">
+            <input name="q" value="{{ q }}" placeholder="Search Symfony, AI, design..." class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm outline-none focus:border-primary">
+            <input name="category" value="{{ category }}" placeholder="Category" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm outline-none focus:border-primary">
+            <select name="level" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+                <option value="">All levels</option>
+                {% for item in levels %}<option value="{{ item.value }}" {{ level == item.value ? 'selected' }}>{{ item.value|title }}</option>{% endfor %}
+            </select>
+            <button class="rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground">Filter</button>
+        </form>
+    </section>
+
+    <section class="grid gap-4 lg:grid-cols-3">
+        {% for formation in formations %}
+            <a href="{{ path('app_formation_show', {id: formation.id}) }}" class="glass-panel p-5 transition hover:border-primary/40">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ formation.category }}</span>
+                    <span class="text-xs text-muted-foreground">{{ formation.durationHours }}h</span>
+                </div>
+                <h2 class="mt-4 text-xl font-semibold">{{ formation.title }}</h2>
+                <p class="mt-2 line-clamp-3 text-sm text-muted-foreground">{{ formation.description ?: 'No description yet.' }}</p>
+                <div class="mt-5 flex items-center justify-between text-sm">
+                    <span>{{ formation.trainer.displayName }}</span>
+                    <span class="font-semibold">{{ formation.priceAmount ? formation.priceAmount ~ ' TND' : 'Free' }}</span>
+                </div>
+            </a>
+        {% else %}
+            <div class="glass-panel col-span-full p-12 text-center text-muted-foreground">No published formations match this filter yet.</div>
+        {% endfor %}
+    </section>
+</div>
+{% endblock %}

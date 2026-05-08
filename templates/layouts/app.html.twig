@@ -16,9 +16,13 @@
 </script>
 {% endblock %}
 
-{% set current_route = app.request.attributes.get('_route') %}
-
 {% block body %}
+{# ── Load centralized nav config from Twig extension ── #}
+{% set _nav = skilora_nav() %}
+{% set user_role = _nav.user_role %}
+{% set nav_items = _nav.nav_items %}
+{% set topnav_items = _nav.topnav_items %}
+{% set current_route = app.request.attributes.get('_route') %}
 <div class="flex h-screen overflow-hidden"
      x-data="{
          sidebarOpen: window.innerWidth >= 768,
@@ -70,91 +74,18 @@
         {# Navigation #}
         <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
             {% block sidebar_nav %}
-            {% set user_role = app.user ? app.user.role : '' %}
-
-            {# Dashboard route depends on role #}
-            {% if user_role == 'ADMIN' %}
-                {% set dashboard_route = 'app_dashboard' %}
-            {% elseif user_role == 'EMPLOYER' %}
-                {% set dashboard_route = 'app_employer_dashboard' %}
-            {% elseif user_role == 'TRAINER' %}
-                {% set dashboard_route = 'app_trainer_dashboard' %}
-            {% else %}
-                {% set dashboard_route = 'app_workspace' %}
-            {% endif %}
-
-            {# Common items for all authenticated users #}
-            {% set nav_items = [
-                { label: 'Dashboard', route: dashboard_route, icon: 'home', enabled: true },
-            ] %}
-
-            {# Role-specific items #}
-            {% if user_role == 'ADMIN' %}
-                {% set nav_items = nav_items|merge([
-                    { label: 'Users Management', route: 'app_admin_user_index', icon: 'users', enabled: true },
-                    { label: 'separator' },
-                    { label: 'Recruitment', route: 'admin_recruitment_index', icon: 'briefcase', enabled: true },
-                    { label: 'Formations', route: 'app_formation_index', icon: 'graduation-cap', enabled: true },
-                    { label: 'Manage Formations', route: 'app_admin_formation_index', icon: 'book-open', enabled: true },
-                    { label: 'separator' },
-                    { label: 'Finance', route: 'admin_finance_index', icon: 'wallet', enabled: true },
-                    { label: 'separator' },
-                    { label: 'Support Tickets', route: 'admin_support_index', icon: 'life-buoy', enabled: true },
-                    { label: 'Feedback', route: 'admin_support_avis_index', icon: 'message-square', enabled: true },
-                    { label: 'separator' },
-                    { label: 'Community', route: 'admin_community_index', icon: 'message-circle', enabled: true },
-                ]) %}
-            {% elseif user_role == 'EMPLOYER' %}
-                {% set nav_items = nav_items|merge([
-                    { label: 'separator' },
-                    { label: 'Job Offers', route: 'app_employer_job_offer_index', icon: 'briefcase', enabled: true },
-                    { label: 'Post a Job', route: 'app_employer_job_offer_new', icon: 'plus-circle', enabled: true },
-                    { label: 'Applications', route: 'app_employer_applications', icon: 'inbox', enabled: true },
-                    { label: 'Interviews', route: 'app_employer_interviews', icon: 'video', enabled: true },
-                    { label: 'Finance', route: 'app_employer_finance', icon: 'wallet', enabled: true },
-                    { label: 'separator' },
-                    { label: 'Community', route: 'app_community_posts', icon: 'message-circle', enabled: true },
-                    { label: 'Support', route: 'support_index', icon: 'life-buoy', enabled: true },
-                ]) %}
-            {% elseif user_role == 'TRAINER' %}
-                {% set nav_items = nav_items|merge([
-                    { label: 'My Formations', route: 'app_trainer_formations', icon: 'graduation-cap', enabled: true },
-                    { label: 'separator' },
-                    { label: 'Community', route: 'app_community_posts', icon: 'message-circle', enabled: true },
-                    { label: 'Support', route: 'support_index', icon: 'life-buoy', enabled: true },
-                ]) %}
-            {% else %}
-                {# USER / FREELANCER #}
-                {% set nav_items = nav_items|merge([
-                    { label: 'separator' },
-                    { label: 'Job Feed', route: 'app_candidate_offres_index', icon: 'search', enabled: true },
-                    { label: 'My Applications', route: 'app_candidate_area_applications', icon: 'file-text', enabled: true },
-                    { label: 'My Finance', route: 'app_user_finance', icon: 'wallet', enabled: true },
-                    { label: 'separator' },
-                    { label: 'Formations', route: 'app_formation_index', icon: 'graduation-cap', enabled: true },
-                    { label: 'My Formations', route: 'app_my_formations', icon: 'book-open', enabled: true },
-                    { label: 'My Certificates', route: 'app_my_certificates', icon: 'award', enabled: true },
-                    { label: 'separator' },
-                    { label: 'Community', route: 'app_community_posts', icon: 'message-circle', enabled: true },
-                    { label: 'Network', route: 'app_community_network', icon: 'users', enabled: true },
-                    { label: 'Support', route: 'support_index', icon: 'life-buoy', enabled: true },
-                ]) %}
-            {% endif %}
-
-
-
+            {# nav_items comes from layouts/_nav.html.twig (included above) #}
             {% for item in nav_items %}
                 {% if item.label == 'separator' %}
                     <div class="my-3 border-t border-sidebar-border"></div>
                 {% else %}
-                    <a href="{{ item.enabled|default(false) ? path(item.route) : '#' }}"
+                    {% set is_active = (current_route is defined and current_route == item.route) or (current_route is defined and current_route starts with item.route|split('_index')[0] ~ '_') %}
+                    <a href="{{ path(item.route) }}"
                        @click="if(isMobile) sidebarOpen = false"
                        class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-                              {% set is_active = (current_route is defined and current_route == item.route) or (current_route is defined and current_route starts with item.route|split('_index')[0] ~ '_') %}
                               {{ is_active
                                   ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground' }}
-                              {{ item.enabled|default(false) ? '' : 'opacity-50 pointer-events-none' }}">
+                                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground' }}">
                         <i data-lucide="{{ item.icon|default('circle') }}" class="h-4 w-4"></i>
                         {{ item.label }}
                     </a>
@@ -207,6 +138,13 @@
                             <i data-lucide="settings" class="h-4 w-4"></i>
                             Account Settings
                         </a>
+                        {% if app.user.role != 'ADMIN' %}
+                        <a href="{{ path('app_workspace') }}"
+                           class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors">
+                            <i data-lucide="wallet" class="h-4 w-4"></i>
+                            Wallet
+                        </a>
+                        {% endif %}
                         <button @click="window.toggleTheme()"
                                 class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors">
                             <i data-lucide="sun-moon" class="h-4 w-4"></i>
@@ -242,6 +180,19 @@
             <div class="ml-auto flex items-center gap-2">
                 {% block topbar_actions %}{% endblock %}
 
+                {# Notification Bell #}
+                {% if app.user %}
+                <div class="relative" x-data="{ count: 0 }"
+                     x-init="fetch('/notifications/unread-count').then(r=>r.json()).then(d=>count=d.count)">
+                    <a href="{{ path('app_notifications_index') }}"
+                       class="relative inline-flex items-center justify-center rounded-md h-9 w-9 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <i data-lucide="bell" class="h-5 w-5"></i>
+                        <span x-show="count > 0" x-text="count > 9 ? '9+' : count"
+                              class="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-0.5 ring-2 ring-background"></span>
+                    </a>
+                </div>
+                {% endif %}
+
                 {# Theme toggle #}
                 <button x-data
                         @click="window.toggleTheme()"
@@ -255,7 +206,7 @@
         </header>
 
         {# Page content #}
-        <main class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
+        <main id="main-content" class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
             {% block content %}{% endblock %}
         </main>
     </div>
@@ -264,7 +215,19 @@
 {# Global edit/update dialog — available on all dashboard pages #}
 {{ include('components/edit-dialog.html.twig') }}
 
-{# Hand Gesture Control — floating widget on all authenticated pages #}
-<script src="{{ asset('js/hand-gesture.js') }}"></script>
+{# Hand Gesture Control — lazy-loaded only when user explicitly enables it #}
 {{ include('components/hand-gesture.html.twig') }}
+<script>
+(function(){
+    var loaded=false;
+    function loadGesture(){
+        if(loaded)return;loaded=true;
+        var s=document.createElement('script');s.src='{{ asset('js/hand-gesture.js') }}';document.head.appendChild(s);
+    }
+    var btn=document.getElementById('gesture-toggle-btn');
+    if(btn)btn.addEventListener('click',loadGesture);
+    /* Never auto-load on page start — user must explicitly click the button */
+})();
+</script>
+
 {% endblock %}

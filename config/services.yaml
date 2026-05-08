@@ -4,13 +4,11 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    app.groq_api_key: '%env(GROQ_API_KEY)%'
-    app.gemini_api_key: '%env(GEMINI_API_KEY)%'
-    app.cloudinary_cloud_name: '%env(CLOUDINARY_CLOUD_NAME)%'
-    app.cloudinary_upload_preset: '%env(CLOUDINARY_UPLOAD_PRESET)%'
     app.passkey_rp_id: '%env(PASSKEY_RP_ID)%'
     app.passkey_rp_name: '%env(PASSKEY_RP_NAME)%'
     app.mailer_from: '%env(MAILER_FROM)%'
+    app.profile_openai_key: '%env(OPENAI_PROFILE_API_KEY)%'
+    app.profile_openai_model: '%env(OPENAI_PROFILE_MODEL)%'
 
 services:
     # default configuration for services in *this* file
@@ -18,11 +16,12 @@ services:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
         bind:
-            $groqApiKey: '%app.groq_api_key%'
-            $geminiApiKey: '%app.gemini_api_key%'
-            $cloudinaryCloudName: '%app.cloudinary_cloud_name%'
-            $cloudinaryUploadPreset: '%app.cloudinary_upload_preset%'
             $projectDir: '%kernel.project_dir%'
+            $profileOpenAiKey: '%app.profile_openai_key%'
+            $profileOpenAiModel: '%app.profile_openai_model%'
+            $rpId: '%app.passkey_rp_id%'
+            $rpName: '%app.passkey_rp_name%'
+            $cvUploadDir: '%kernel.project_dir%/var/uploads/cvs'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -31,120 +30,8 @@ services:
         exclude:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
-            - '../src/Recruitment/Entity/'
-            - '../src/Recruitment/Controller/'
             - '../src/Kernel.php'
 
-    # ── Recruitment module ──────────────────────────────────────────
-    App\Recruitment\Controller\:
-        resource: '../src/Recruitment/Controller/'
-        tags: ['controller.service_arguments']
-
-    App\Recruitment\Service\ApplicationSubmissionService:
-        arguments:
-            $cvUploadDir: '%kernel.project_dir%/var/uploads/cvs'
-
-    App\Recruitment\Service\CvPdfGeneratorService:
-        arguments:
-            $projectDir: '%kernel.project_dir%'
-
-    App\Recruitment\Service\AnetiService:
-        arguments:
-            $anetiApiUrl: '%env(ANETI_API_URL)%'
-            $anetiRssUrl: '%env(ANETI_RSS_URL)%'
-            $timeoutSeconds: 12
-
-    App\Recruitment\Service\OcrApiTextExtractor:
-        arguments:
-            $ocrApiUrl: '%env(OCR_API_URL)%'
-            $ocrApiKey: '%env(OCR_API_KEY)%'
-            $timeoutSeconds: 20
-
-    App\Recruitment\Controller\EmployerApplicationsController:
-        arguments:
-            $cvUploadDir: '%kernel.project_dir%/var/uploads/cvs'
-            $projectDir: '%kernel.project_dir%'
-
-    App\Recruitment\Controller\CandidateJobOfferController:
-        arguments:
-            $employerSeesAllCandidatures: true
-
-    App\Recruitment\Controller\JobOfferController:
-        arguments:
-            $employerSeesAllCandidatures: true
-
-    App\Recruitment\Controller\CandidateCvBuilderController:
-        arguments:
-            $cvUploadDir: '%kernel.project_dir%/var/uploads/cvs'
-
-    App\Recruitment\Controller\EmployerInterviewsController:
-        arguments:
-            $employerSeesAllCandidatures: true
-
-    App\Recruitment\Controller\EmployerDashboardController:
-        arguments:
-            $employerSeesAllCandidatures: true
-
-    App\Recruitment\Command\SeedEmployerApplicationsCommand:
-        arguments:
-            $cvUploadDir: '%kernel.project_dir%/var/uploads/cvs'
-
-    App\Recruitment\Command\SpreadEmployerDemoApplicationsCommand:
-        arguments:
-            $cvUploadDir: '%kernel.project_dir%/var/uploads/cvs'
-
-    App\Recruitment\Repository\ApplicationsTableGateway:
-        arguments:
-            $employerSeesAllCandidatures: true
-
-    App\Recruitment\Repository\ApplicationRepository:
-        arguments:
-            $employerSeesAllCandidatures: true
-
-    # ── Formation / certificates (signature storage + branding) ─────
-    App\Certificate\Branding\FormationSignatureStorage:
-        arguments:
-            $signaturesRoot: '%kernel.project_dir%/var/private/formations/signatures'
-
-    App\Certificate\Branding\FormationSignatureStorageInterface: '@App\Certificate\Branding\FormationSignatureStorage'
-
-    App\Certificate\Branding\CertificateBrandingAssetResolverInterface: '@App\Certificate\Branding\CertificateBrandingAssetResolver'
-
-    # ── Formations catalogue chatbot (rule-based + optional OpenAI-compatible LLM e.g. Groq) ──
-    App\Service\ChatbotServiceInterface: '@App\Service\ChatbotService'
-
-    App\Contract\Chatbot\ExternalAiClientInterface: '@App\Service\Chatbot\OpenAiCompatibleChatbotClient'
-
-    App\Service\Chatbot\OpenAiCompatibleChatbotClient:
-        arguments:
-            $apiUrl: '%env(CHATBOT_API_URL)%'
-            $apiKey: '%env(CHATBOT_API_KEY)%'
-            $model: '%env(CHATBOT_MODEL)%'
-
-    # ── Finance module ──────────────────────────────────────────────
-    App\Service\Finance\FinanceStripeClient:
-        arguments:
-            $secretKey: '%env(STRIPE_SECRET_KEY)%'
-
-    # ── Passkey / WebAuthn ──────────────────────────────────────────
-    App\Service\PasskeyService:
-        arguments:
-            $rpId: '%app.passkey_rp_id%'
-            $rpName: '%app.passkey_rp_name%'
-
-    App\Service\Finance\TwilioWhatsAppNotifier:
-        arguments:
-            $accountSid: '%env(TWILIO_ACCOUNT_SID)%'
-            $authToken: '%env(TWILIO_AUTH_TOKEN)%'
-            $fromWhatsapp: '%env(TWILIO_WHATSAPP_FROM)%'
-            $smsFrom: '%env(TWILIO_SMS_FROM)%'
-
-    App\Service\Finance\PayslipPaymentSmsService:
-        arguments:
-            $paymentApiUrl: '%env(PAYMENT_API_URL)%'
-            $paymentApiKey: '%env(PAYMENT_API_KEY)%'
-            $paymentExtraJson: '%env(PAYMENT_EXTRA_JSON)%'
-            $smsApiUrl: '%env(SMS_API_URL)%'
-            $smsApiKey: '%env(SMS_API_KEY)%'
-            $smsExtraJson: '%env(SMS_EXTRA_JSON)%'
-            $smsSenderName: '%env(SMS_SENDER_NAME)%'
+    App\EventSubscriber\DoctrineSessionConfigSubscriber:
+        tags:
+            - { name: doctrine.event_listener, event: postConnect }

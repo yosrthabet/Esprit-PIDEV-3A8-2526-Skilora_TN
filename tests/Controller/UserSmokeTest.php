@@ -49,29 +49,25 @@ class UserSmokeTest extends WebTestCase
         yield 'profile' => ['/profile'];
         yield 'settings' => ['/settings'];
 
-        // Formations
+        // Jobs
+        yield 'jobs' => ['/jobs'];
+        yield 'job-preferences' => ['/job-preferences'];
+
+        // Learning
         yield 'formations' => ['/formations'];
-        yield 'my-formations' => ['/my-formations'];
-        yield 'my-certificates' => ['/my-certificates'];
+        yield 'learning' => ['/learning'];
+        yield 'certificates' => ['/certificates'];
 
         // Community
-        yield 'community-posts' => ['/community/posts'];
-        yield 'community-network' => ['/community/reseau'];
+        yield 'community' => ['/community'];
+        yield 'community-groups' => ['/community/groups'];
+        yield 'community-events' => ['/community/events'];
+        yield 'community-blog' => ['/community/blog'];
 
         // Support
-        yield 'support' => ['/support'];
-        yield 'support-new' => ['/support/new'];
+        yield 'support' => ['/support-space'];
 
-        // Candidate area
-        yield 'candidate-applications' => ['/mon-espace/candidatures'];
-        yield 'candidate-interviews' => ['/mon-espace/entretiens'];
-        yield 'candidate-cv' => ['/mon-espace/cv/generateur'];
-
-        // Public listings (should still work when logged in)
-        yield 'offres' => ['/offres'];
+        // Public pages (should still work when logged in)
         yield 'home' => ['/'];
-
-        // Finance
-        yield 'user-finance' => ['/workspace/finance'];
     }
 }

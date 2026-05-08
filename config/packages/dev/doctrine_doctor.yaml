@@ -1,0 +1,14 @@
+doctrine_doctor:
+    analyzers:
+        # These are educational heuristics. Applying them here would require
+        # unnecessary schema churn for an academic prototype with existing data.
+        blameable_trait:
+            enabled: false
+        naming_convention:
+            enabled: false
+        column_type:
+            enabled: false
+        # The application forces UTC at connection/session level. Loading MySQL
+        # timezone tables is a server administration task, not an app mapping fix.
+        time_zone:
+            enabled: false

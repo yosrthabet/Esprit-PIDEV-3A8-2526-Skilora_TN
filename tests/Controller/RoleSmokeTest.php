@@ -37,14 +37,9 @@ class RoleSmokeTest extends WebTestCase
 
     public static function employerGetRoutes(): iterable
     {
-        yield 'employer-dashboard' => ['/employer'];
-        yield 'employer-applications' => ['/employer/candidatures'];
-        yield 'employer-interviews' => ['/employer/entretiens'];
-        yield 'employer-profile' => ['/employer/profil'];
-        yield 'employer-finance' => ['/employer/finance'];
-        yield 'employer-job-offers' => ['/employer/job-offers'];
-        yield 'employer-job-offers-page' => ['/employer/job-offers/page'];
-        yield 'employer-job-offers-new' => ['/employer/job-offers/new'];
+        yield 'employer-workspace' => ['/workspace'];
+        yield 'employer-inbox' => ['/inbox'];
+        yield 'employer-applications' => ['/applications'];
     }
 
     // ── Trainer ─────────────────────────────────────────────
@@ -73,7 +68,9 @@ class RoleSmokeTest extends WebTestCase
     public static function trainerGetRoutes(): iterable
     {
         yield 'trainer-dashboard' => ['/trainer'];
+        yield 'trainer-inbox' => ['/inbox'];
         yield 'trainer-formations' => ['/trainer/formations'];
-        yield 'trainer-formations-new' => ['/trainer/formations/new'];
+        yield 'trainer-formation-new' => ['/trainer/formations/new'];
+        yield 'formations-catalog' => ['/formations'];
     }
 }

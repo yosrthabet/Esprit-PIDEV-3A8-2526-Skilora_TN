@@ -7,3 +7,9 @@ scheb_two_factor:
         enabled: true
         issuer: Skilora
         template: auth/2fa.html.twig
+
+when@dev:
+    scheb_two_factor:
+        ip_whitelist:
+            - '127.0.0.1'
+            - '::1'

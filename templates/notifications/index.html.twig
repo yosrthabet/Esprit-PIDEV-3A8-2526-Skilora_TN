@@ -1,0 +1,47 @@
+{% extends 'layouts/adaptive.html.twig' %}
+
+{% block page_title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl space-y-4 animate-fade-in pb-8 relative z-10">
+    <div class="glass-panel p-6 flex items-center justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-label text-primary">Notifications</p>
+            <h1 class="mt-1 text-2xl font-light text-foreground">Vos notifications</h1>
+        </div>
+        {% if notifications|length > 0 %}
+        <form method="post" action="{{ path('app_notifications_mark_all_read') }}" x-data>
+            <input type="hidden" name="_token" value="{{ csrf_token('mark_notifications_read') }}">
+            <button type="submit" class="text-xs text-muted-foreground hover:text-foreground underline">
+                Tout marquer comme lu
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if notifications is empty %}
+    <div class="glass-panel p-12 text-center">
+        <i data-lucide="bell-off" class="mx-auto h-10 w-10 text-muted-foreground opacity-30 mb-3"></i>
+        <p class="text-sm text-muted-foreground">Aucune notification pour l'instant.</p>
+    </div>
+    {% else %}
+    <div class="space-y-1">
+        {% for notif in notifications %}
+        <a href="{{ notification_urls[notif.id] ?? path('app_notifications_index') }}" class="glass-panel px-5 py-4 flex items-start gap-4 {{ not notif.read ? 'border-primary/30 bg-primary/5' : '' }} transition-colors hover:border-primary/30 hover:bg-muted/30">
+            <span class="mt-0.5 text-lg">{{ notif.icon ?? '🔔' }}</span>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-foreground {{ not notif.read ? 'font-semibold' : '' }}">{{ notif.title }}</p>
+                {% if notif.message %}
+                <p class="text-xs text-muted-foreground mt-0.5">{{ notif.message }}</p>
+                {% endif %}
+                <p class="text-[11px] text-muted-foreground/60 mt-1">{{ notif.createdAt|date('d M Y, H:i') }}</p>
+            </div>
+            {% if not notif.read %}
+            <span class="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0"></span>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

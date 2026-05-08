@@ -1,0 +1,24 @@
+# Skilora — MariaDB dev config
+# Copy to your MariaDB conf.d directory:
+#   macOS Homebrew: /opt/homebrew/etc/my.cnf.d/skilora-dev.cnf
+#   XAMPP:          /Applications/XAMPP/xamppfiles/etc/my.cnf (append [mysqld] section)
+#   Linux:          /etc/mysql/mariadb.conf.d/skilora-dev.cnf
+# Then restart MariaDB: brew services restart mariadb  (or equivalent)
+
+[mysqld]
+# --- Timezone: force UTC to match PHP ---
+default-time-zone = '+00:00'
+
+# --- InnoDB buffer pool: 256MB for dev (adjust to 50-70% RAM in prod) ---
+innodb_buffer_pool_size = 256M
+
+# --- Faster writes in dev (flush log every ~1s instead of every commit) ---
+# WARNING: Do NOT use in production — risk of losing last 1s of transactions on crash
+innodb_flush_log_at_trx_commit = 2
+
+# --- Strict SQL mode ---
+sql_mode = STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+
+# --- Collation defaults ---
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci

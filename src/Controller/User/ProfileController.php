@@ -11,17 +11,20 @@ use App\Repository\PortfolioItemRepository;
 use App\Repository\ProfileRepository;
 use App\Repository\SkillRepository;
 use App\Repository\UserRepository;
+use App\Service\User\ProfileAiService;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Controller\AppController;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
-class ProfileController extends AbstractController
+class ProfileController extends AppController
 {
     private bool $skillsTableMissingWarned = false;
 
@@ -31,24 +34,34 @@ class ProfileController extends AbstractController
         private SkillRepository $skillRepository,
         private ExperienceRepository $experienceRepository,
         private PortfolioItemRepository $portfolioItemRepository,
+        private ProfileAiService $profileAiService,
     ) {}
 
     #[Route('/profile', name: 'app_profile')]
     #[IsGranted('ROLE_USER')]
     public function index(): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAppUser();
         $profile = $this->profileRepository->findOneBy(['user' => $user]);
 
         if (!$profile) {
             $profile = new Profile();
             $profile->setUser($user);
             $this->em->persist($profile);
+        }
+
+        // Back-fill first/last name from User.fullName when the profile fields are empty
+        if (!$profile->getFirstName() && !$profile->getLastName() && $user->getFullName()) {
+            $parts = explode(' ', trim($user->getFullName()), 2);
+            $profile->setFirstName($parts[0] ?? null);
+            $profile->setLastName($parts[1] ?? null);
+            $this->em->flush();
+        } else {
             $this->em->flush();
         }
 
         $skills = $this->safeSkillsForProfile($profile);
-        $experiences = $this->experienceRepository->findBy(['profile' => $profile], ['startDate' => 'DESC']);
+        $experiences = $this->experienceRepository->findBy(['profile' => $profile], ['period.startDate' => 'DESC']);
         $portfolioItems = $this->portfolioItemRepository->findBy(['user' => $user], ['createdDate' => 'DESC']);
 
         return $this->render('user/profile/index.html.twig', [
@@ -63,11 +76,11 @@ class ProfileController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function update(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('profile_update', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('profile_update', $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
 
-        $user = $this->getUser();
+        $user = $this->getAppUser();
         $profile = $this->profileRepository->findOneBy(['user' => $user]);
 
         if (!$profile) {
@@ -76,15 +89,15 @@ class ProfileController extends AbstractController
             $this->em->persist($profile);
         }
 
-        $profile->setFirstName($request->request->get('first_name'));
-        $profile->setLastName($request->request->get('last_name'));
-        $profile->setPhone($request->request->get('phone'));
-        $profile->setLocation($request->request->get('location'));
-        $profile->setHeadline($request->request->get('headline'));
-        $profile->setBio($request->request->get('bio'));
-        $profile->setWebsite($request->request->get('website'));
+        $profile->setFirstName($request->request->getString('first_name'));
+        $profile->setLastName($request->request->getString('last_name'));
+        $profile->setPhone($request->request->getString('phone'));
+        $profile->setLocation($request->request->getString('location'));
+        $profile->setHeadline($request->request->getString('headline'));
+        $profile->setBio($request->request->getString('bio'));
+        $profile->setWebsite($request->request->getString('website'));
 
-        $birthDate = $request->request->get('birth_date');
+        $birthDate = $request->request->getString('birth_date');
         $profile->setBirthDate($birthDate ? new \DateTime($birthDate) : null);
 
         $this->em->flush();
@@ -97,11 +110,11 @@ class ProfileController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function uploadPhoto(Request $request, SluggerInterface $slugger): JsonResponse
     {
-        if (!$this->isCsrfTokenValid('profile_photo', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('profile_photo', $request->request->getString('_token'))) {
             return new JsonResponse(['error' => 'Invalid CSRF token.'], 403);
         }
 
-        $user = $this->getUser();
+        $user = $this->getAppUser();
         $profile = $this->profileRepository->findOneBy(['user' => $user]);
 
         if (!$profile) {
@@ -111,7 +124,7 @@ class ProfileController extends AbstractController
         }
 
         // Handle base64 cropped image data
-        $croppedData = $request->request->get('cropped_image');
+        $croppedData = $request->request->getString('cropped_image');
         if (!$croppedData) {
             return new JsonResponse(['error' => 'No image data received.'], 400);
         }
@@ -122,7 +135,7 @@ class ProfileController extends AbstractController
         }
 
         $extension = $matches[1] === 'jpeg' ? 'jpg' : $matches[1];
-        $imageData = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $croppedData));
+        $imageData = base64_decode((string) preg_replace('/^data:image\/\w+;base64,/', '', $croppedData));
 
         if ($imageData === false || strlen($imageData) > 5 * 1024 * 1024) {
             return new JsonResponse(['error' => 'Image too large (max 5MB).'], 400);
@@ -172,11 +185,11 @@ class ProfileController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function deletePhoto(Request $request): JsonResponse
     {
-        if (!$this->isCsrfTokenValid('profile_photo', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('profile_photo', $request->request->getString('_token'))) {
             return new JsonResponse(['error' => 'Invalid CSRF token.'], 403);
         }
 
-        $user = $this->getUser();
+        $user = $this->getAppUser();
         $profile = $this->profileRepository->findOneBy(['user' => $user]);
 
         if ($profile && $profile->getPhotoUrl()) {
@@ -198,7 +211,11 @@ class ProfileController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function addSkill(Request $request): Response
     {
-        $user = $this->getUser();
+        if (!$this->isCsrfTokenValid('profile_skill', $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $user = $this->getAppUser();
         $profile = $this->profileRepository->findOneBy(['user' => $user]);
 
         if (!$profile) {
@@ -207,8 +224,8 @@ class ProfileController extends AbstractController
 
         $skill = new Skill();
         $skill->setProfile($profile);
-        $skill->setSkillName($request->request->get('skill_name'));
-        $skill->setProficiencyLevel($request->request->get('proficiency_level'));
+        $skill->setSkillName($request->request->getString('skill_name'));
+        $skill->setProficiencyLevel($request->request->getString('proficiency_level'));
         $skill->setYearsExperience((int) $request->request->get('years_experience'));
 
         try {
@@ -226,9 +243,13 @@ class ProfileController extends AbstractController
 
     #[Route('/profile/skills/{id}/delete', name: 'app_profile_skill_delete', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
-    public function deleteSkill(int $id): Response
+    public function deleteSkill(int $id, Request $request): Response
     {
-        $user = $this->getUser();
+        if (!$this->isCsrfTokenValid('profile_skill', $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $user = $this->getAppUser();
         $profile = $this->profileRepository->findOneBy(['user' => $user]);
         try {
             $skill = $this->skillRepository->find($id);
@@ -238,7 +259,8 @@ class ProfileController extends AbstractController
             return $this->redirectToRoute('app_profile');
         }
 
-        if (!$skill || !$profile || $skill->getProfile()->getId() !== $profile->getId()) {
+        $skillProfile = $skill?->getProfile();
+        if (!$skill || !$profile || !$skillProfile || $skillProfile->getId() !== $profile->getId()) {
             throw $this->createAccessDeniedException();
         }
 
@@ -253,7 +275,11 @@ class ProfileController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function addExperience(Request $request): Response
     {
-        $user = $this->getUser();
+        if (!$this->isCsrfTokenValid('profile_experience', $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $user = $this->getAppUser();
         $profile = $this->profileRepository->findOneBy(['user' => $user]);
 
         if (!$profile) {
@@ -262,16 +288,16 @@ class ProfileController extends AbstractController
 
         $experience = new Experience();
         $experience->setProfile($profile);
-        $experience->setCompany($request->request->get('company'));
-        $experience->setPosition($request->request->get('position'));
-        $experience->setDescription($request->request->get('description'));
+        $experience->setCompany($request->request->getString('company'));
+        $experience->setPosition($request->request->getString('position'));
+        $experience->setDescription($request->request->getString('description'));
         $experience->setCurrentJob($request->request->has('current_job'));
 
-        $startDate = $request->request->get('start_date');
-        $experience->setStartDate($startDate ? new \DateTime($startDate) : null);
+        $startDate = $request->request->getString('start_date');
+        $experience->setStartDate($startDate ? new \DateTimeImmutable($startDate) : null);
 
-        $endDate = $request->request->get('end_date');
-        $experience->setEndDate($endDate ? new \DateTime($endDate) : null);
+        $endDate = $request->request->getString('end_date');
+        $experience->setEndDate($endDate ? new \DateTimeImmutable($endDate) : null);
 
         $this->em->persist($experience);
         $this->em->flush();
@@ -282,13 +308,18 @@ class ProfileController extends AbstractController
 
     #[Route('/profile/experience/{id}/delete', name: 'app_profile_experience_delete', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
-    public function deleteExperience(int $id): Response
+    public function deleteExperience(int $id, Request $request): Response
     {
-        $user = $this->getUser();
+        if (!$this->isCsrfTokenValid('profile_experience', $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $user = $this->getAppUser();
         $profile = $this->profileRepository->findOneBy(['user' => $user]);
         $experience = $this->experienceRepository->find($id);
 
-        if (!$experience || !$profile || $experience->getProfile()->getId() !== $profile->getId()) {
+        $experienceProfile = $experience?->getProfile();
+        if (!$experience || !$profile || !$experienceProfile || $experienceProfile->getId() !== $profile->getId()) {
             throw $this->createAccessDeniedException();
         }
 
@@ -303,16 +334,19 @@ class ProfileController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function addPortfolio(Request $request): Response
     {
-        $user = $this->getUser();
+        if (!$this->isCsrfTokenValid('profile_portfolio', $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $user = $this->getAppUser();
 
         $item = new PortfolioItem();
         $item->setUser($user);
-        $item->setTitle($request->request->get('title'));
-        $item->setDescription($request->request->get('description'));
-        $item->setProjectUrl($request->request->get('project_url'));
-        $item->setImageUrl($request->request->get('image_url'));
-        $item->setTechnologies($request->request->get('technologies'));
-        $item->setCreatedDate(new \DateTime());
+        $item->setTitle($request->request->getString('title'));
+        $item->setDescription($request->request->getString('description'));
+        $item->setProjectUrl($request->request->getString('project_url'));
+        $item->setImageUrl($request->request->getString('image_url'));
+        $item->setTechnologies($request->request->getString('technologies'));
 
         $this->em->persist($item);
         $this->em->flush();
@@ -323,12 +357,17 @@ class ProfileController extends AbstractController
 
     #[Route('/profile/portfolio/{id}/delete', name: 'app_profile_portfolio_delete', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
-    public function deletePortfolio(int $id): Response
+    public function deletePortfolio(int $id, Request $request): Response
     {
-        $user = $this->getUser();
+        if (!$this->isCsrfTokenValid('profile_portfolio', $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $user = $this->getAppUser();
         $item = $this->portfolioItemRepository->find($id);
 
-        if (!$item || $item->getUser()->getId() !== $user->getId()) {
+        $itemUser = $item?->getUser();
+        if (!$item || !$itemUser || $itemUser->getId() !== $user->getId()) {
             throw $this->createAccessDeniedException();
         }
 
@@ -364,13 +403,105 @@ class ProfileController extends AbstractController
         ]);
     }
 
+    // ─── AI Profile Analysis ────────────────────────────────────────────────
+
+    /**
+     * SSE stream: debounce-triggered by frontend, streams GPT analysis tokens.
+     */
+    #[Route('/profile/ai/analyze', name: 'app_profile_ai_analyze', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function aiAnalyzeStream(Request $request): StreamedResponse
+    {
+        if (!$this->isCsrfTokenValid('profile_ai_analyze', $request->request->getString('_token'))) {
+            return new StreamedResponse(function () {
+                echo "data: " . json_encode(['error' => 'Invalid CSRF token.']) . "\n\n";
+                echo "data: [DONE]\n\n";
+                ob_flush(); flush();
+            }, 403, ['Content-Type' => 'text/event-stream']);
+        }
+
+        $profileData = $this->buildProfileDataForCurrentUser();
+
+        $response = new StreamedResponse(function () use ($profileData) {
+            foreach ($this->profileAiService->streamAnalysis($profileData) as $chunk) {
+                echo $chunk;
+                ob_flush();
+                flush();
+            }
+        });
+
+        $response->headers->set('Content-Type', 'text/event-stream');
+        $response->headers->set('Cache-Control', 'no-cache');
+        $response->headers->set('X-Accel-Buffering', 'no');
+
+        return $response;
+    }
+
+    /**
+     * Returns a JSON snapshot of the current user's profile for the frontend
+     * (used to display "what was analyzed" alongside the AI result).
+     */
+    #[Route('/profile/ai/snapshot', name: 'app_profile_ai_snapshot', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function aiSnapshot(): JsonResponse
+    {
+        return new JsonResponse($this->buildProfileDataForCurrentUser());
+    }
+
+    /**
+     * @return array{
+     *     name: string,
+     *     headline: string,
+     *     bio: string,
+     *     location: string,
+     *     website: string,
+     *     skills: list<array{name: string, level: string, years: int}>,
+     *     experiences: list<array{company: string, position: string, description: string, current: bool}>,
+     *     portfolio: list<array{title: string, description: string, technologies: string}>
+     * }
+     */
+    private function buildProfileDataForCurrentUser(): array
+    {
+        $user    = $this->getAppUser();
+        $profile = $this->profileRepository->findOneBy(['user' => $user]);
+        $skills  = $profile ? $this->safeSkillsForProfile($profile) : [];
+        $exps    = $profile ? $this->experienceRepository->findBy(['profile' => $profile], ['startDate' => 'DESC']) : [];
+        $items   = $this->portfolioItemRepository->findBy(['user' => $user], ['createdDate' => 'DESC']);
+
+        return [
+            'name'        => $user->getDisplayName(),
+            'headline'    => $profile?->getHeadline() ?? '',
+            'bio'         => $profile?->getBio() ?? '',
+            'location'    => $profile?->getLocation() ?? '',
+            'website'     => $profile?->getWebsite() ?? '',
+            'skills'      => array_map(fn(Skill $s) => [
+                'name'  => $s->getSkillName() ?? '',
+                'level' => $s->getProficiencyLevel() ?? 'Intermediate',
+                'years' => $s->getYearsExperience() ?? 0,
+            ], $skills),
+            'experiences' => array_values(array_map(fn(Experience $e) => [
+                'company'     => $e->getCompany() ?? '',
+                'position'    => $e->getPosition() ?? '',
+                'description' => $e->getDescription() ?? '',
+                'current'     => (bool) $e->isCurrentJob(),
+            ], $exps)),
+            'portfolio'   => array_values(array_map(fn(PortfolioItem $p) => [
+                'title'        => $p->getTitle() ?? '',
+                'description'  => $p->getDescription() ?? '',
+                'technologies' => $p->getTechnologies() ?? '',
+            ], $items)),
+        ];
+    }
+
+    // ───────────────────────────────────────────────────────────────────────
+
     /**
      * @return list<Skill>
      */
     private function safeSkillsForProfile(Profile $profile): array
     {
         try {
-            return $this->skillRepository->findBy(['profile' => $profile]);
+            return array_values($this->skillRepository->findBy(['profile' => $profile]));
         } catch (TableNotFoundException $e) {
             if (!$this->skillsTableMissingWarned) {
                 $this->skillsTableMissingWarned = true;

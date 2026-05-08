@@ -1,0 +1,20 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Certificate{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <article class="glass-panel overflow-hidden p-10 text-center">
+        <p class="text-xs font-bold uppercase tracking-label text-primary">Skilora Certificate</p>
+        <h1 class="mt-4 text-4xl font-light tracking-holographic">{{ certificate.enrollment.formation.title }}</h1>
+        <p class="mt-4 text-muted-foreground">Awarded to</p>
+        <p class="mt-2 text-2xl font-semibold">{{ certificate.enrollment.user.displayName }}</p>
+        <p class="mt-6 text-sm text-muted-foreground">Issued {{ certificate.issuedAt|date('M d, Y') }}</p>
+        <p class="mt-6 rounded-xl bg-muted p-3 text-xs font-mono text-muted-foreground">{{ certificate.verificationId }}</p>
+        <div class="mt-5 flex flex-wrap justify-center gap-3">
+            <a href="{{ path('app_certificate_verify', {verificationId: certificate.verificationId}) }}" class="inline-flex rounded-xl border border-border px-5 py-3 text-sm font-bold">Public verification page</a>
+            <a href="{{ path('app_certificate_qr', {id: certificate.id}) }}" class="inline-flex rounded-xl border border-border px-5 py-3 text-sm font-bold">QR code</a>
+            <a href="{{ path('app_certificate_preview', {id: certificate.id}) }}" class="inline-flex rounded-xl border border-border px-5 py-3 text-sm font-bold">Preview</a>
+            <a href="{{ path('app_certificate_download', {id: certificate.id}) }}" class="inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Download PDF</a>
+        </div>
+    </article>
+</div>
+{% endblock %}

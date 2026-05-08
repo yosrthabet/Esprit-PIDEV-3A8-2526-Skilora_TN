@@ -3,7 +3,7 @@
 namespace App\Controller\Auth;
 
 use App\Entity\User;
-use App\Service\PasskeyService;
+use App\Service\User\PasskeyService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -43,12 +43,12 @@ class PasskeyController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true);
-        if (!$data || !isset($data['credential'])) {
+        if (!is_array($data) || !isset($data['credential']) || !is_array($data['credential'])) {
             return new JsonResponse(['error' => 'Invalid request'], Response::HTTP_BAD_REQUEST);
         }
 
         try {
-            $deviceName = $data['name'] ?? 'My Passkey';
+            $deviceName = is_string($data['name'] ?? null) ? $data['name'] : 'My Passkey';
             $passkey = $this->passkeyService->verifyRegistration($user, $data['credential'], $deviceName);
 
             return new JsonResponse([
@@ -79,7 +79,7 @@ class PasskeyController extends AbstractController
         EventDispatcherInterface $dispatcher,
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
-        if (!$data || !isset($data['credential'])) {
+        if (!is_array($data) || !isset($data['credential']) || !is_array($data['credential'])) {
             return new JsonResponse(['error' => 'Invalid request'], Response::HTTP_BAD_REQUEST);
         }
 
@@ -105,10 +105,9 @@ class PasskeyController extends AbstractController
 
             // Role-based redirect URL
             $route = match (strtoupper($user->getRole() ?? '')) {
-                'ADMIN' => 'app_dashboard',
-                'EMPLOYER' => 'app_employer_dashboard',
+                'ADMIN'   => 'app_dashboard',
                 'TRAINER' => 'app_trainer_dashboard',
-                default => 'app_workspace',
+                default   => 'app_workspace',
             };
 
             return new JsonResponse([

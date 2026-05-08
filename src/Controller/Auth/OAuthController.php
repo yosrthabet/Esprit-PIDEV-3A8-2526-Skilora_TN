@@ -3,13 +3,14 @@
 namespace App\Controller\Auth;
 
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
+use App\Controller\AppController;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-class OAuthController extends AbstractController
+class OAuthController extends AppController
 {
     public function __construct(private ClientRegistry $clientRegistry) {}
 
@@ -24,7 +25,7 @@ class OAuthController extends AbstractController
         try {
             $client = $this->clientRegistry->getClient($provider);
         } catch (\Exception $e) {
-            $request->getSession()->getFlashBag()->add('error', ucfirst($provider) . ' login is not configured yet.');
+            $this->addFlash('error', ucfirst($provider) . ' login is not configured yet.');
             return new RedirectResponse($this->generateUrl('app_login'));
         }
 

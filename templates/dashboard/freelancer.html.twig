@@ -1,259 +1,316 @@
-{# dashboard/freelancer.html.twig — Freelancer Workspace (Fiverr-like) #}
-{% extends 'layouts/app.html.twig' %}
+{# dashboard/freelancer.html.twig — Ultra-Modern Bento Workspace #}
+{% extends 'layouts/adaptive.html.twig' %}
 
-{% block page_title %}Workspace{% endblock %}
+{% block page_title %}Mon Espace{% endblock %}
 
 {% block content %}
-<div class="space-y-6 animate-fade-in pb-6">
+<div class="space-y-6 animate-fade-in pb-16 w-full max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10">
 
-    {# ── Welcome Banner ── #}
-    <div class="rounded-xl border border-border bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-transparent p-6">
-        <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
-            <div>
-                <h2 class="text-xl font-semibold tracking-tight text-foreground">
-                    Welcome back, {{ app.user.displayName }}
-                </h2>
-                <p class="text-sm text-muted-foreground mt-1">Track your learning journey and explore new formations.</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ path('app_formation_index') }}"
-                   class="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors">
-                    <i data-lucide="compass" class="h-3.5 w-3.5"></i>
-                    Explore Catalog
-                </a>
-                <span class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    {{ "now"|date("M d, Y") }}
-                </span>
-            </div>
-        </div>
-    </div>
+    {# ── BENTO GRID LAYOUT ── #}
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
 
-    {# ── Stat Cards ── #}
-    <div class="hidden bg-indigo-500 bg-sky-500 bg-amber-500 bg-emerald-500"></div>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {% set statIcons = {
-            'book-open': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>',
-            'bookmark': '<path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"/>',
-            'play-circle': '<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z"/>',
-            'check-circle': '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
-        } %}
-        {% for stat in stats %}
-        <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ stat.label }}</span>
-                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-{{ stat.color }}-500 text-white shadow-sm">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">{{ statIcons[stat.icon]|default('')|raw }}</svg>
-                </div>
-            </div>
-            <p class="text-2xl font-bold tracking-tight text-foreground">{{ stat.value }}</p>
-        </div>
-        {% endfor %}
-    </div>
-
-    {# ── Main Content ── #}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {# Left: Continue Learning #}
-        <div class="lg:col-span-2 space-y-4">
-
-            {# In Progress #}
-            <div class="rounded-xl border border-border bg-card shadow-sm">
-                <div class="flex items-center justify-between border-b border-border px-5 py-4">
-                    <div>
-                        <h3 class="text-sm font-semibold text-foreground">Continue Learning</h3>
-                        <p class="text-xs text-muted-foreground mt-0.5">Pick up where you left off</p>
+        {% if recruitment.mode|default('freelancer') == 'employer' %}
+        <section class="col-span-1 md:col-span-12 overflow-hidden glass-panel p-8 sm:p-10">
+            <div class="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div class="max-w-3xl">
+                    <div class="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-label text-emerald-600 dark:text-emerald-400">
+                        <span class="mr-2 h-2 w-2 rounded-full bg-emerald-500"></span>
+                        Hiring workspace
                     </div>
-                    <a href="{{ path('app_my_formations') }}" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                        View all
-                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                    <h1 class="mt-6 text-4xl font-light tracking-holographic text-foreground sm:text-6xl leading-[1.05]">
+                        Build a sharper<br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500">candidate pipeline.</span>
+                    </h1>
+                    <p class="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+                        Post focused roles, review candidates, and turn applications into interviews without mixing in freelancer learning widgets.
+                    </p>
+                </div>
+                <div class="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+                    <a href="{{ path('app_post_job') }}" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-foreground px-5 text-sm font-bold text-background shadow-sm transition hover:scale-[1.02]">
+                        <i data-lucide="plus" class="h-4 w-4"></i>
+                        Post a job
+                    </a>
+                    <a href="{{ path('app_applications') }}" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background/70 px-5 text-sm font-semibold text-foreground transition hover:bg-muted">
+                        <i data-lucide="users" class="h-4 w-4 text-muted-foreground"></i>
+                        Review candidates
                     </a>
                 </div>
-                <div class="divide-y divide-border">
-                    {% for enrollment in in_progress|slice(0, 5) %}
-                    <a href="{{ path('app_formation_show', { id: enrollment.formation.id }) }}"
-                       class="flex items-center gap-4 px-5 py-4 hover:bg-muted/40 transition-colors group">
-                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500 group-hover:bg-indigo-500/20 transition-colors">
-                            <i data-lucide="play" class="h-5 w-5"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{{ enrollment.formation.title }}</p>
-                            <p class="text-xs text-muted-foreground mt-0.5">
-                                {{ enrollment.formation.categoryLabelFr }} · {{ enrollment.formation.duration }} h · {{ enrollment.formation.levelLabelFr }}
-                            </p>
-                        </div>
-                        <span class="shrink-0 inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                            In Progress
+            </div>
+        </section>
+
+        <section class="col-span-1 md:col-span-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <a href="{{ path('app_active_offers') }}" class="glass-panel p-5 transition hover:border-emerald-500/30">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500"><i data-lucide="briefcase" class="h-5 w-5"></i></div>
+                <p class="mt-5 text-3xl font-light tracking-holographic text-foreground">{{ recruitment.open_jobs|default(0) }}</p>
+                <p class="mt-1 text-[10px] font-semibold uppercase tracking-label text-muted-foreground">Open roles</p>
+            </a>
+            <a href="{{ path('app_applications') }}" class="glass-panel p-5 transition hover:border-sky-500/30">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10 text-sky-500"><i data-lucide="inbox" class="h-5 w-5"></i></div>
+                <p class="mt-5 text-3xl font-light tracking-holographic text-foreground">{{ recruitment.applications|default([])|length }}</p>
+                <p class="mt-1 text-[10px] font-semibold uppercase tracking-label text-muted-foreground">Candidate queue</p>
+            </a>
+            <a href="{{ path('app_interviews') }}" class="glass-panel p-5 transition hover:border-violet-500/30">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500"><i data-lucide="video" class="h-5 w-5"></i></div>
+                <p class="mt-5 text-3xl font-light tracking-holographic text-foreground">0</p>
+                <p class="mt-1 text-[10px] font-semibold uppercase tracking-label text-muted-foreground">Interviews</p>
+            </a>
+            <div class="glass-panel p-5">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500"><i data-lucide="building-2" class="h-5 w-5"></i></div>
+                <p class="mt-5 truncate text-xl font-semibold text-foreground">{{ recruitment.company ? recruitment.company.name : 'Setup needed' }}</p>
+                <p class="mt-1 text-[10px] font-semibold uppercase tracking-label text-muted-foreground">Company profile</p>
+            </div>
+        </section>
+
+        <section class="col-span-1 md:col-span-12 glass-panel p-6 sm:p-7">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-label text-primary">Hiring cockpit</p>
+                    <h3 class="mt-1 text-2xl font-light tracking-holographic text-foreground">{{ recruitment.company ? recruitment.company.name : 'Company setup needed' }}</h3>
+                    <p class="mt-2 text-sm text-muted-foreground">{{ recruitment.open_jobs|default(0) }} open jobs · {{ recruitment.applications|default([])|length }} candidates need attention</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="{{ path('app_post_job') }}" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90"><i data-lucide="plus" class="h-4 w-4"></i>Post a job</a>
+                    <a href="{{ path('app_applications') }}" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border bg-background/60 px-4 text-sm font-semibold transition hover:bg-muted"><i data-lucide="users" class="h-4 w-4 text-muted-foreground"></i>Review candidates</a>
+                </div>
+            </div>
+            <div class="mt-5 grid gap-3 lg:grid-cols-3">
+                {% for application in recruitment.applications|default([])|slice(0, 3) %}
+                    <a href="{{ path('app_applications') }}" class="rounded-2xl border border-border/50 bg-background/50 p-4 transition hover:border-primary/40">
+                        <p class="text-sm font-semibold">{{ application.candidate.displayName }}</p>
+                        <p class="mt-1 text-xs text-muted-foreground">{{ application.jobOffer.title }} · {{ application.matchScore }}% match</p>
+                    </a>
+                {% else %}
+                    <div class="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground lg:col-span-3">No candidate activity yet. Publish a focused offer to start the funnel.</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        {% else %}
+
+        {# 1. WELCOME HERO — full width if profile 100%, else 8 cols #}
+        <div class="col-span-1 md:col-span-12 {% if profile_completion < 100 %}lg:col-span-8{% else %}lg:col-span-12{% endif %} relative overflow-hidden glass-panel p-8 sm:p-10 shadow-lg">
+            {# Abstract Background Mesh for hero specific #}
+            <div class="absolute inset-0 bg-zinc-950/5 dark:bg-black/20"></div>
+            <div class="absolute -top-[30%] -left-[10%] w-[70%] h-[150%] rounded-full bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.1),transparent_70%)] pointer-events-none"></div>
+            <div class="absolute -bottom-[20%] -right-[10%] w-[60%] h-[120%] rounded-full bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.1),transparent_70%)] pointer-events-none"></div>
+            
+            <div class="relative z-10 flex flex-col justify-between h-full min-h-[200px]">
+                <div>
+                    <div class="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-[10px] font-semibold tracking-label uppercase text-indigo-600 dark:text-indigo-400 mb-6 backdrop-blur-md">
+                        <span class="relative flex h-2 w-2 mr-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
                         </span>
-                    </a>
-                    {% else %}
-                    <div class="px-5 py-10 text-center">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mx-auto mb-3">
-                            <i data-lucide="book-open" class="h-5 w-5 text-muted-foreground"></i>
-                        </div>
-                        <p class="text-sm font-medium text-foreground">No formations in progress</p>
-                        <p class="text-xs text-muted-foreground mt-1">Explore the catalog to start learning</p>
-                        <a href="{{ path('app_formation_index') }}" class="inline-flex items-center gap-1 mt-3 text-xs font-medium text-primary hover:underline">
-                            Browse formations
-                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                        </a>
+                        Freelance Pro
                     </div>
-                    {% endfor %}
+                    <h1 class="text-4xl sm:text-6xl font-light tracking-holographic text-foreground mb-4 leading-[1.1]">
+                        Bon retour, <br/>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500">{{ app.user.fullName ?: app.user.username }}</span>.
+                    </h1>
+                    <p class="text-muted-foreground text-lg max-w-xl leading-relaxed font-medium">
+                        {% set pendingCourses = in_progress|length %}
+                        {% set appCount = applications_count %}
+                        {% if totalFormations is not defined %}{% set totalFormations = stats is not empty ? stats[0].value : '0' %}{% endif %}
+                        {% if pendingCourses > 0 and appCount > 0 %}
+                            Vous avez {{ appCount }} candidature{{ appCount > 1 ? 's' : '' }} et {{ pendingCourses }} formation{{ pendingCourses > 1 ? 's' : '' }} en cours.
+                        {% elseif pendingCourses > 0 %}
+                            Vous avez {{ pendingCourses }} formation{{ pendingCourses > 1 ? 's' : '' }} en cours.
+                        {% elseif appCount > 0 %}
+                            Vous avez {{ appCount }} candidature{{ appCount > 1 ? 's' : '' }}.
+                        {% else %}
+                            Explorez {{ totalFormations }} formations et offres d'emploi pour booster votre carrière.
+                        {% endif %}
+                    </p>
                 </div>
-            </div>
-
-            {# Recent Formations on Platform #}
-            {% if latest_formations is not empty %}
-            <div class="rounded-xl border border-border bg-card shadow-sm">
-                <div class="flex items-center justify-between border-b border-border px-5 py-4">
-                    <div>
-                        <h3 class="text-sm font-semibold text-foreground">New on Skilora</h3>
-                        <p class="text-xs text-muted-foreground mt-0.5">Latest formations added</p>
-                    </div>
-                    <a href="{{ path('app_formation_index') }}" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                        See all
-                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                
+                <div class="mt-8 flex flex-wrap gap-4">
+                    <a href="{{ path('app_jobs') }}" class="inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-[13px] font-bold text-background transition-transform hover:scale-105 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+                        <i data-lucide="search" class="mr-2 h-4 w-4"></i> Explorer les offres
                     </a>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border">
-                    {% for f in latest_formations %}
-                    <a href="{{ path('app_formation_show', { id: f.id }) }}" class="flex items-center gap-3 bg-card px-5 py-4 hover:bg-muted/40 transition-colors group">
-                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-{{ loop.index0 is even ? 'emerald' : 'purple' }}-500/10 text-{{ loop.index0 is even ? 'emerald' : 'purple' }}-500">
-                            <i data-lucide="graduation-cap" class="h-4 w-4"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{{ f.title }}</p>
-                            <p class="text-xs text-muted-foreground">{{ f.categoryLabelFr }} · {{ f.duration }} h</p>
-                        </div>
+                    <a href="{{ path('app_profile') }}" class="inline-flex items-center justify-center rounded-full border border-border/60 bg-background/50 backdrop-blur-md px-6 py-3 text-[13px] font-bold text-foreground transition-colors hover:bg-muted">
+                        <i data-lucide="edit-3" class="mr-2 h-4 w-4"></i> Modifier le profil
                     </a>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        {# Right Column #}
-        <div class="space-y-4">
-
-            {# Quick Actions #}
-            <div class="rounded-xl border border-border bg-card shadow-sm">
-                <div class="border-b border-border px-5 py-4">
-                    <h3 class="text-sm font-semibold text-foreground">Quick Actions</h3>
-                </div>
-                <div class="p-3 space-y-1">
-                    <a href="{{ path('app_formation_index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-500">
-                            <i data-lucide="search" class="h-4 w-4"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-foreground">Explore Formations</p>
-                            <p class="text-[11px] text-muted-foreground">Browse the catalog</p>
-                        </div>
-                    </a>
-                    <a href="{{ path('app_my_formations') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-                            <i data-lucide="book-open" class="h-4 w-4"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-foreground">My Formations</p>
-                            <p class="text-[11px] text-muted-foreground">Continue learning</p>
-                        </div>
-                    </a>
-                    <a href="{{ path('app_my_certificates') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
-                            <i data-lucide="award" class="h-4 w-4"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-foreground">My Certificates</p>
-                            <p class="text-[11px] text-muted-foreground">Download & share</p>
-                        </div>
-                    </a>
-                    <a href="{{ path('app_user_finance') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-                            <i data-lucide="wallet" class="h-4 w-4"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-foreground">My Finance</p>
-                            <p class="text-[11px] text-muted-foreground">Salary, contracts and payslips</p>
-                        </div>
-                    </a>
-                    <a href="{{ path('app_jobs') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 text-sky-500">
-                            <i data-lucide="briefcase" class="h-4 w-4"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-foreground">Job Feed</p>
-                            <p class="text-[11px] text-muted-foreground">Find opportunities</p>
-                        </div>
-                    </a>
-                </div>
-            </div>
-
-            {# Certificates #}
-            <div class="rounded-xl border border-border bg-card shadow-sm">
-                <div class="flex items-center justify-between border-b border-border px-5 py-4">
-                    <h3 class="text-sm font-semibold text-foreground">My Certificates</h3>
-                    <a href="{{ path('app_my_certificates') }}" class="text-xs font-medium text-primary hover:underline">View all</a>
-                </div>
-                <div class="divide-y divide-border">
-                    {% for cert in certificates|slice(0, 3) %}
-                    <div class="flex items-center gap-3 px-5 py-3">
-                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-                            <i data-lucide="award" class="h-4 w-4"></i>
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-sm font-medium text-foreground truncate">{{ cert.formation.title }}</p>
-                            <p class="text-[11px] text-muted-foreground">{{ cert.issuedAt|date('M d, Y') }}</p>
-                        </div>
-                        <a href="{{ path('app_certificate_pdf', { id: cert.id }) }}" class="shrink-0 text-muted-foreground hover:text-primary transition-colors" title="Download PDF">
-                            <i data-lucide="download" class="h-4 w-4"></i>
-                        </a>
-                    </div>
-                    {% else %}
-                    <div class="px-5 py-6 text-center text-xs text-muted-foreground">
-                        Complete formations to earn certificates.
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            {# Profile Card #}
-            <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-bold">
-                        {{ app.user.displayName|first|upper }}
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold text-foreground">{{ app.user.displayName }}</p>
-                        <p class="text-xs text-muted-foreground">{{ app.user.roleDisplayName }}</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-3 text-center">
-                    <div>
-                        <p class="text-lg font-bold text-foreground">{{ enrollments|length }}</p>
-                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider">Enrolled</p>
-                    </div>
-                    <div>
-                        <p class="text-lg font-bold text-foreground">{{ certificates|length }}</p>
-                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider">Certs</p>
-                    </div>
-                    <div>
-                        <p class="text-lg font-bold text-foreground">
-                            {% set total_hours = 0 %}
-                            {% for e in enrollments %}
-                                {% if e.completed %}
-                                    {% set total_hours = total_hours + (e.formation.duration ?? 0) %}
-                                {% endif %}
-                            {% endfor %}
-                            {{ total_hours }}h
-                        </p>
-                        <p class="text-[10px] text-muted-foreground uppercase tracking-wider">Hours</p>
-                    </div>
                 </div>
             </div>
         </div>
+
+        {# 2. PROFILE COMPLETION (col-span-12 lg:col-span-4) — hidden if 100% #}
+        {% if profile_completion < 100 %}
+        <div class="col-span-1 md:col-span-12 lg:col-span-4">
+            <div class="glass-panel p-6 shadow-sm flex flex-col relative overflow-hidden group h-full">
+                <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <div>
+                        <p class="text-[11px] font-semibold text-muted-foreground tracking-label uppercase mb-1">Profil</p>
+                        <p class="text-3xl font-light tracking-holographic text-foreground">{{ profile_completion }}%</p>
+                    </div>
+                    <div class="relative h-16 w-16">
+                        <svg class="h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
+                            <circle class="text-muted/40 stroke-current" stroke-width="10" cx="50" cy="50" r="40" fill="transparent"></circle>
+                            <circle class="text-amber-500 stroke-current drop-shadow-[0_0_6px_rgba(245,158,11,0.4)] transition-all duration-1000 ease-out"
+                                    stroke-width="10" stroke-linecap="round" cx="50" cy="50" r="40" fill="transparent"
+                                    stroke-dasharray="251.2" stroke-dashoffset="251.2"
+                                    style="--target-offset: {{ 251.2 - (251.2 * profile_completion / 100) }}; animation: fillProgress 1.5s ease-out forwards;"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-[11px] font-bold text-amber-500">{{ profile_completion }}%</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-muted-foreground mb-3 relative z-10">Complétez votre profil pour plus de visibilité</p>
+                <div class="flex-1 space-y-1.5 relative z-10 overflow-y-auto max-h-[180px]">
+                    {% for step in profile_steps %}
+                    {% if not step.done %}
+                    <a href="{{ path(step.route) }}" class="flex items-center gap-2.5 rounded-lg p-2 text-[12px] border border-border/40 bg-background/50 hover:border-amber-500/30 hover:bg-muted/30 transition-colors group/step">
+                        <div class="h-6 w-6 rounded-md bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+                            <i data-lucide="{{ step.icon }}" class="h-3 w-3"></i>
+                        </div>
+                        <span class="text-muted-foreground group-hover/step:text-foreground transition-colors">{{ step.label }}</span>
+                    </a>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# 2.5 FREELANCER SIGNALS #}
+        <div class="col-span-1 md:col-span-12 grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="{{ path('app_applications') }}" class="glass-panel p-5 shadow-sm flex flex-col justify-between group hover:border-indigo-500/30 transition-colors">
+                <div class="h-10 w-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 mb-5">
+                    <i data-lucide="send" class="h-5 w-5"></i>
+                </div>
+                <div>
+                    <p class="text-3xl font-light tracking-holographic text-foreground">{{ applications_count }}</p>
+                    <p class="text-[10px] tracking-label uppercase text-muted-foreground font-semibold mt-1">Applications sent</p>
+                </div>
+            </a>
+            <a href="{{ path('app_jobs') }}" class="glass-panel p-5 shadow-sm flex flex-col justify-between group hover:border-emerald-500/30 transition-colors">
+                <div class="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-5">
+                    <i data-lucide="radar" class="h-5 w-5"></i>
+                </div>
+                <div>
+                    <p class="text-3xl font-light tracking-holographic text-foreground">{{ recruitment.radar.fresh|default(0) }}</p>
+                    <p class="text-[10px] tracking-label uppercase text-muted-foreground font-semibold mt-1">Open opportunities</p>
+                </div>
+            </a>
+            <a href="{{ path('app_jobs', {work_type: 'remote'}) }}" class="glass-panel p-5 shadow-sm flex flex-col justify-between group hover:border-sky-500/30 transition-colors">
+                <div class="h-10 w-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-500 mb-5">
+                    <i data-lucide="wifi" class="h-5 w-5"></i>
+                </div>
+                <div>
+                    <p class="text-3xl font-light tracking-holographic text-foreground">{{ recruitment.radar.remote|default(0) }}</p>
+                    <p class="text-[10px] tracking-label uppercase text-muted-foreground font-semibold mt-1">Remote leads</p>
+                </div>
+            </a>
+            <a href="{{ path('app_profile') }}" class="glass-panel p-5 shadow-sm flex flex-col justify-between group hover:border-amber-500/30 transition-colors">
+                <div class="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 mb-5">
+                    <i data-lucide="sparkles" class="h-5 w-5"></i>
+                </div>
+                <div>
+                    <p class="text-3xl font-light tracking-holographic text-foreground">{{ profile_completion }}%</p>
+                    <p class="text-[10px] tracking-label uppercase text-muted-foreground font-semibold mt-1">Profile readiness</p>
+                </div>
+            </a>
+        </div>
+
+        <section class="col-span-1 md:col-span-12 glass-panel p-6 sm:p-7">
+            <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-label text-primary">Opportunity radar</p>
+                    <h3 class="mt-1 text-2xl font-light tracking-holographic text-foreground">Jobs that fit your profile</h3>
+                    <p class="mt-2 text-sm text-muted-foreground">{{ recruitment.radar.fresh|default(0) }} active jobs · {{ recruitment.radar.remote|default(0) }} remote-friendly</p>
+                </div>
+                <a href="{{ path('app_jobs') }}" class="inline-flex h-10 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90">
+                    <i data-lucide="radar" class="h-4 w-4"></i>
+                    Open job radar
+                </a>
+            </div>
+            <div class="mt-5 grid gap-3 lg:grid-cols-3">
+                {% for item in recruitment.recommended_jobs|default([])|slice(0, 3) %}
+                    {% set job = item.job %}
+                    <a href="{{ path('app_job_show', {id: job.id}) }}" class="rounded-2xl border border-border/50 bg-background/50 p-4 transition hover:border-primary/40 hover:bg-background/80">
+                        <div class="flex items-center justify-between gap-2"><p class="truncate text-sm font-semibold">{{ job.title }}</p><span class="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">{{ item.match.score }}%</span></div>
+                        <p class="mt-1 truncate text-xs text-muted-foreground">{{ job.companyLabel }} · {{ job.location|default('Remote/Hybrid') }}</p>
+                    </a>
+                {% else %}
+                    <div class="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground lg:col-span-3">Add skills to your profile or import jobs to activate recommendations.</div>
+                {% endfor %}
+            </div>
+        </section>
+        
+
+        <section class="col-span-12 grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
+            <div class="glass-panel p-6 shadow-sm">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-label text-primary">Application command center</p>
+                        <h3 class="mt-1 text-2xl font-light tracking-holographic text-foreground">Move from search to interview</h3>
+                    </div>
+                    <a href="{{ path('app_applications') }}" class="hidden rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted sm:inline-flex">View pipeline</a>
+                </div>
+                <div class="mt-6 grid gap-3 sm:grid-cols-3">
+                    <div class="rounded-2xl border border-border/50 bg-background/60 p-4">
+                        <p class="text-2xl font-light tracking-holographic">{{ applications_count }}</p>
+                        <p class="mt-1 text-xs text-muted-foreground">sent applications</p>
+                    </div>
+                    <div class="rounded-2xl border border-border/50 bg-background/60 p-4">
+                        <p class="text-2xl font-light tracking-holographic">{{ recruitment.saved_count|default(0) }}</p>
+                        <p class="mt-1 text-xs text-muted-foreground">saved opportunities</p>
+                    </div>
+                    <div class="rounded-2xl border border-border/50 bg-background/60 p-4">
+                        <p class="text-2xl font-light tracking-holographic">0</p>
+                        <p class="mt-1 text-xs text-muted-foreground">interviews pending</p>
+                    </div>
+                </div>
+                <div class="mt-5 rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+                    No active interview yet. Start with 3 focused applications from Opportunity Radar, then track responses here.
+                </div>
+            </div>
+
+            <div class="glass-panel p-6 shadow-sm">
+                <p class="text-[11px] font-semibold uppercase tracking-label text-primary">Profile lift plan</p>
+                <h3 class="mt-1 text-2xl font-light tracking-holographic text-foreground">Improve match accuracy</h3>
+                <div class="mt-5 space-y-3">
+                    {% for step in profile_steps %}
+                        {% if not step.done %}
+                        <a href="{{ path(step.route) }}" class="flex items-center gap-3 rounded-2xl border border-border/50 bg-background/60 p-3 transition hover:border-primary/30 hover:bg-muted/40">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><i data-lucide="{{ step.icon }}" class="h-4 w-4"></i></div>
+                            <span class="text-sm font-medium text-foreground">{{ step.label }}</span>
+                        </a>
+                        {% endif %}
+                    {% else %}
+                        <p class="rounded-2xl border border-border/50 bg-background/60 p-4 text-sm text-muted-foreground">Your profile is ready. Keep skills and portfolio fresh for better recommendations.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section class="col-span-12 glass-panel p-6 shadow-sm">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-label text-primary">Search shortcuts</p>
+                    <h3 class="mt-1 text-2xl font-light tracking-holographic text-foreground">Fast lanes for your next search</h3>
+                </div>
+                <a href="{{ path('app_jobs') }}" class="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground">Open full search</a>
+            </div>
+            <div class="mt-5 grid gap-3 md:grid-cols-4">
+                <a href="{{ path('app_jobs', {sort: 'fresh'}) }}" class="rounded-2xl border border-border/50 bg-background/60 p-4 transition hover:border-primary/30"><p class="font-semibold">Fresh jobs</p><p class="mt-1 text-xs text-muted-foreground">Newest listings first</p></a>
+                <a href="{{ path('app_jobs', {work_type: 'remote'}) }}" class="rounded-2xl border border-border/50 bg-background/60 p-4 transition hover:border-primary/30"><p class="font-semibold">Remote jobs</p><p class="mt-1 text-xs text-muted-foreground">Work from anywhere</p></a>
+                <a href="{{ path('app_jobs', {q: 'Symfony'}) }}" class="rounded-2xl border border-border/50 bg-background/60 p-4 transition hover:border-primary/30"><p class="font-semibold">Symfony</p><p class="mt-1 text-xs text-muted-foreground">Backend opportunities</p></a>
+                <a href="{{ path('app_jobs', {q: 'React'}) }}" class="rounded-2xl border border-border/50 bg-background/60 p-4 transition hover:border-primary/30"><p class="font-semibold">React</p><p class="mt-1 text-xs text-muted-foreground">Frontend opportunities</p></a>
+            </div>
+        </section>
+
+        {% endif %}
+
     </div>
-
 </div>
+
+<style>
+@keyframes fillProgress {
+    0% { stroke-dashoffset: 251.2; }
+    100% { stroke-dashoffset: var(--target-offset); }
+}
+</style>
 {% endblock %}

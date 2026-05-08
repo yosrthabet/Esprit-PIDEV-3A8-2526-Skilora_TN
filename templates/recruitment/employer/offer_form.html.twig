@@ -1,0 +1,22 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Send Offer{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+    <form method="post" class="glass-panel space-y-6 p-8">
+        <input type="hidden" name="_token" value="{{ csrf_token('send_offer_' ~ application.id) }}">
+        <header>
+            <a href="{{ path('app_application_show', {id: application.id}) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"><i data-lucide="arrow-left" class="h-4 w-4"></i>Back to application</a>
+            <p class="mt-6 text-xs font-bold uppercase tracking-label text-primary">Hire offer</p>
+            <h1 class="mt-2 text-4xl font-light tracking-holographic">Send an offer to {{ application.candidate.displayName }}</h1>
+        </header>
+        <div class="grid gap-4 md:grid-cols-2">
+            <label class="space-y-1"><span class="text-sm font-semibold">Salary offered</span><input name="salary_offered" inputmode="decimal" class="w-full rounded-xl border border-border bg-background/70 p-3"></label>
+            <label class="space-y-1"><span class="text-sm font-semibold">Currency</span><select name="currency" class="w-full rounded-xl border border-border bg-background/70 p-3"><option>TND</option><option>EUR</option><option>USD</option></select></label>
+            <label class="space-y-1"><span class="text-sm font-semibold">Contract type</span><select name="contract_type" class="w-full rounded-xl border border-border bg-background/70 p-3"><option>Freelance</option><option>CDD</option><option>CDI</option><option>Internship</option></select></label>
+            <label class="space-y-1"><span class="text-sm font-semibold">Start date</span><input type="date" name="start_date" class="w-full rounded-xl border border-border bg-background/70 p-3"></label>
+            <label class="space-y-1 md:col-span-2"><span class="text-sm font-semibold">Benefits / terms</span><textarea name="benefits" rows="4" class="w-full rounded-xl border border-border bg-background/70 p-3"></textarea></label>
+        </div>
+        <button class="rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground">Send offer</button>
+    </form>
+</div>
+{% endblock %}

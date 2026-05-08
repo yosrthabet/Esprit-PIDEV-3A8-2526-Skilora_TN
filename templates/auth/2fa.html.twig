@@ -3,11 +3,11 @@
 {% block page_title %}Two-Factor Authentication{% endblock %}
 
 {% block content %}
-<div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[380px]">
+<div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[380px] font-spatial">
 
     <div class="flex flex-col space-y-2 text-center">
         <i data-lucide="shield-check" class="mx-auto h-10 w-10 text-primary"></i>
-        <h1 class="text-2xl font-semibold tracking-tight">Two-Factor Verification</h1>
+        <h1 class="text-3xl font-light tracking-holographic text-foreground">Two-Factor Verification</h1>
         <p class="text-sm text-muted-foreground">Enter the 6-digit code from your authenticator app.</p>
     </div>
 
@@ -17,7 +17,7 @@
         </div>
     {% endif %}
 
-    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+    <div class="glass-panel p-6">
         <form action="{{ checkPathUrl ? checkPathUrl : path(checkPathRoute) }}" method="post" class="space-y-4">
 
             <div class="space-y-2">

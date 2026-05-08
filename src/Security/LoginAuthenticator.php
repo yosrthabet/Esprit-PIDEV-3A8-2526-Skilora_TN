@@ -8,7 +8,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\AbstractLoginFormAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
@@ -61,15 +60,19 @@ class LoginAuthenticator extends AbstractLoginFormAuthenticator
             throw new CustomUserMessageAuthenticationException('Your account has been deactivated.');
         }
 
+        // Block login until email is verified
+        if (!$user->isVerified()) {
+            throw new CustomUserMessageAuthenticationException('Please verify your email address before logging in. Check your inbox for a verification link.');
+        }
+
         // Clear any saved target path so it doesn't override role-based redirect
         $this->removeTargetPath($request->getSession(), $firewallName);
 
         // Role-based redirect to each role's dashboard
         $route = match (strtoupper($user->getRole() ?? '')) {
-            'ADMIN' => 'app_dashboard',
-            'EMPLOYER' => 'app_employer_dashboard',
+            'ADMIN'   => 'app_dashboard',
             'TRAINER' => 'app_trainer_dashboard',
-            default => 'app_workspace',
+            default   => 'app_workspace',  // EMPLOYER + USER both land on workspace
         };
 
         return new RedirectResponse($this->urlGenerator->generate($route));

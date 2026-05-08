@@ -2,84 +2,100 @@
 
 namespace App\Controller;
 
+use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * Redirects sidebar nav placeholders to actual module pages.
+ * Nav placeholders + public marketing pages.
  */
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
 class PageController extends AbstractController
 {
-    #[Route('/recruitment', name: 'app_recruitment')]
-    public function recruitment(): Response
+    #[Route('/health', name: 'app_health', methods: ['GET'])]
+    public function health(Connection $db): JsonResponse
     {
-        return $this->redirectToRoute('app_candidate_offres_index');
+        try {
+            $db->executeQuery('SELECT 1');
+            $dbOk = true;
+        } catch (\Throwable) {
+            $dbOk = false;
+        }
+
+        $status = $dbOk ? 'ok' : 'degraded';
+        $code = $dbOk ? 200 : 503;
+
+        return new JsonResponse([
+            'status' => $status,
+            'db' => $dbOk ? 'ok' : 'error',
+            'time' => date('c'),
+        ], $code);
     }
 
-    #[Route('/finance', name: 'app_finance')]
-    public function finance(): Response
+    #[Route('/offline', name: 'app_offline')]
+    public function offline(): Response
     {
-        return $this->redirectToRoute('admin_finance_index');
+        return $this->render('pages/offline.html.twig');
     }
 
-    #[Route('/support-space', name: 'app_support')]
-    public function support(): Response
+    #[Route('/about', name: 'app_about')]
+    public function about(): Response
     {
-        return $this->redirectToRoute('support_index');
+        return $this->render('pages/about.html.twig');
     }
 
-    #[Route('/community', name: 'app_community')]
-    public function community(): Response
+    #[Route('/pricing', name: 'app_pricing')]
+    public function pricing(): Response
     {
-        return $this->redirectToRoute('app_community_posts');
+        return $this->render('pages/pricing.html.twig');
     }
 
-    #[Route('/jobs', name: 'app_jobs')]
-    public function jobs(): Response
+    #[Route('/careers', name: 'app_careers')]
+    public function careers(): Response
     {
-        return $this->redirectToRoute('app_candidate_offres_index');
+        return $this->render('pages/careers.html.twig', [
+            'positions' => [
+                ['title' => 'Full-Stack Developer', 'team' => 'Engineering', 'location' => 'Remote / Tunis', 'type' => 'Full-time'],
+                ['title' => 'Senior UI/UX Designer', 'team' => 'Design', 'location' => 'Remote / Tunis', 'type' => 'Full-time'],
+                ['title' => 'AI/ML Engineer', 'team' => 'AI R&D', 'location' => 'Remote / Tunis', 'type' => 'Full-time'],
+                ['title' => 'Community Manager', 'team' => 'Growth', 'location' => 'Remote / Tunis', 'type' => 'Full-time'],
+                ['title' => 'DevOps Engineer', 'team' => 'Infrastructure', 'location' => 'Remote / Tunis', 'type' => 'Full-time'],
+            ],
+        ]);
     }
 
-    #[Route('/applications', name: 'app_applications')]
-    public function applications(): Response
+    #[Route('/case-studies', name: 'app_case_studies')]
+    public function caseStudies(): Response
     {
-        return $this->redirectToRoute('app_candidate_area_applications');
-    }
-
-    #[Route('/post-job', name: 'app_post_job')]
-    public function postJob(): Response
-    {
-        return $this->redirectToRoute('app_employer_job_offer_new');
-    }
-
-    #[Route('/active-offers', name: 'app_active_offers')]
-    public function activeOffers(): Response
-    {
-        return $this->redirectToRoute('app_employer_job_offer_index');
-    }
-
-    #[Route('/inbox', name: 'app_inbox')]
-    public function inbox(): Response
-    {
-        return $this->redirectToRoute('app_employer_applications');
-    }
-
-    #[Route('/interviews', name: 'app_interviews')]
-    public function interviews(): Response
-    {
-        return $this->redirectToRoute('app_employer_interviews');
-    }
-
-    #[Route('/mentorship', name: 'app_mentorship')]
-    public function mentorship(): Response
-    {
-        return $this->render('pages/placeholder.html.twig', [
-            'page_title' => 'Mentorship',
-            'page_description' => 'Connect with mentees and manage your mentoring sessions.',
-            'page_icon' => 'heart-handshake',
+        return $this->render('pages/case_studies.html.twig', [
+            'studies' => [
+                [
+                    'client' => 'Vermeg',
+                    'title' => 'Scaling a Banking Platform with Top Freelancers',
+                    'desc' => 'Vermeng used Skilora to onboard 12 senior full-stack developers in under 3 weeks, accelerating their digital banking rollout by 40%.',
+                    'tags' => ['Fintech', 'Web Development', 'Scaling'],
+                    'results' => ['12 hires', '3 weeks', '40% faster'],
+                    'image' => 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
+                ],
+                [
+                    'client' => 'Proxym',
+                    'title' => 'Rebuilding a SaaS Product from the Ground Up',
+                    'desc' => 'Proxym assembled a cross-functional team of designers and engineers through Skilora to reimagine their analytics dashboard.',
+                    'tags' => ['SaaS', 'UI/UX', 'Product Design'],
+                    'results' => ['5 freelancers', '2 months', '4.9 rating'],
+                    'image' => 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+                ],
+                [
+                    'client' => 'Focus Corp',
+                    'title' => 'AI-Powered Talent Matching for Enterprise Hiring',
+                    'desc' => 'Focus Corp integrated Skilora’s smart-matching API into their internal hiring pipeline, reducing time-to-hire by 60%.',
+                    'tags' => ['Enterprise', 'AI', 'API'],
+                    'results' => ['60% faster', '100+ roles', '$500K saved'],
+                    'image' => 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80',
+                ],
+            ],
         ]);
     }
 }

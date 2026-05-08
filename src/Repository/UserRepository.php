@@ -21,11 +21,14 @@ class UserRepository extends ServiceEntityRepository
      */
     public function getRecentUsers(int $limit = 5): array
     {
-        return $this->createQueryBuilder('u')
+        /** @var User[] $users */
+        $users = $this->createQueryBuilder('u')
             ->orderBy('u.id', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
+
+        return $users;
     }
 
     public function countAll(): int
@@ -52,7 +55,7 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return list<array{name: string, email: string, role: string, status: string}>
+     * @return list<array{name: string, email: string|null, role: string, status: string}>
      */
     public function findRecentSummaries(int $limit = 8): array
     {
@@ -86,9 +89,12 @@ class UserRepository extends ServiceEntityRepository
      */
     public function findAllOrderedByName(): array
     {
-        return $this->createQueryBuilder('u')
+        /** @var User[] $users */
+        $users = $this->createQueryBuilder('u')
             ->orderBy('u.fullName', 'ASC')
             ->getQuery()
             ->getResult();
+
+        return $users;
     }
 }

@@ -84,7 +84,7 @@ class ProfileCrudTest extends DatabaseTestCase
         $e->setProfile($p);
         $e->setCompany('Sofrecom');
         $e->setPosition('Developer');
-        $e->setStartDate(new \DateTime('2020-01-01'));
+        $e->setStartDate(new \DateTimeImmutable('2020-01-01'));
         $e->setCurrentJob(true);
         $this->em->persist($e);
         $this->em->flush();

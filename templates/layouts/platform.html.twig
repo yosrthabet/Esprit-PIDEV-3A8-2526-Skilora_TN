@@ -1,0 +1,427 @@
+{# layouts/platform.html.twig — Top-Nav App Shell for Members (Freelancers & Clients) #}
+{% extends 'base.html.twig' %}
+
+{% block title %}{% if block('page_title') is defined %}{{ block('page_title') }} · Skilora{% else %}Skilora{% endif %}{% endblock %}
+
+{% block body_page %}platform{% endblock %}
+
+{% block head %}
+{{ parent() }}
+<script>
+(function(){
+    var t = localStorage.getItem('theme');
+    var d = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (d) {
+        document.documentElement.classList.add('dark');
+    }
+})();
+</script>
+{% endblock %}
+
+{% block body %}
+{# ── Load centralized nav config from Twig extension ── #}
+{% set _nav = skilora_nav() %}
+{% set user_role = _nav.user_role %}
+{% set nav_items = _nav.nav_items %}
+{% set topnav_items = _nav.topnav_items %}
+{% set topnav_grouped = _nav.topnav_grouped %}
+{% set current_route = app.request.attributes.get('_route') %}
+<div x-data="{
+        mobileMenuOpen: false,
+        profileDropdownOpen: false,
+        isLoading: true,
+        openDropdown: null,
+        toggleDropdown(name) { this.openDropdown = this.openDropdown === name ? null : name; },
+        closeDropdowns() { this.openDropdown = null; this.profileDropdownOpen = false; }
+     }" 
+     x-init="$nextTick(() => isLoading = false)"
+     @keydown.escape.window="closeDropdowns()"
+     class="min-h-screen bg-background text-foreground transition-colors duration-300 font-spatial selection:bg-primary/30 selection:text-primary">
+
+    {# ── 1. SPATIAL ENVIRONMENT ── #}
+    {# Subtle grid texture (Dark mode only or adaptive) #}
+    <div class="fixed inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_1px,transparent_1px)] dark:bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[length:24px_24px] pointer-events-none z-0"></div>
+    
+    {# Abstract Light Orbs (Global Background) #}
+    <div class="fixed top-[5%] left-[10%] w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.1),transparent_60%)] rounded-full pointer-events-none z-0"></div>
+    <div class="fixed bottom-[10%] right-[5%] w-[500px] h-[500px] bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.1),transparent_60%)] rounded-full pointer-events-none z-0"></div>
+
+    {# ═══════════════════════════════════════════════════════
+       NAVBAR — Sticky, glass-morphism, grouped navigation
+       ═══════════════════════════════════════════════════════ #}
+    <header class="sticky top-0 z-40 w-full border-b border-border/40 bg-background/75 backdrop-blur-md
+                   supports-[backdrop-filter]:bg-background/60
+                   transition-[box-shadow,border-color] duration-300"
+            x-data="{ scrolled: false }"
+            x-init="window.addEventListener('scroll', () => scrolled = window.scrollY > 8)"
+            :class="scrolled && 'shadow-sm border-border/60'">
+        <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8">
+            <div class="flex h-14 items-center justify-between gap-4">
+
+                {# ── Logo ──────────────────────────────────────── #}
+                <a href="{{ path('app_home') }}" class="flex shrink-0 items-center gap-2.5 group">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg
+                                bg-primary text-primary-foreground text-sm font-bold
+                                shadow-md shadow-primary/25 group-hover:shadow-lg group-hover:shadow-primary/30
+                                group-hover:scale-[1.04] transition-all duration-200">
+                        S
+                    </div>
+                    <span class="hidden sm:block text-[17px] font-bold tracking-tight text-foreground">
+                        Skilora
+                    </span>
+                </a>
+
+                {# ── Desktop Navigation ────────────────────────── #}
+                <nav class="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
+                    {# Primary links #}
+                    {% for link in topnav_grouped.primary %}
+                        {% set is_active = (current_route is defined and current_route == link.route) or (current_route is defined and current_route starts with link.route|split('_index')[0] ~ '_') %}
+                        <a href="{{ path(link.route) }}"
+                           class="relative flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium
+                                  transition-all duration-200 select-none
+                                  {{ is_active
+                                      ? 'text-primary bg-primary/[0.08]'
+                                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60' }}">
+                            <i data-lucide="{{ link.icon }}" class="h-4 w-4 shrink-0"></i>
+                            <span>{{ link.label }}</span>
+                            {% if is_active %}
+                                <span class="absolute -bottom-[9px] left-3 right-3 h-[2px] rounded-full bg-primary"></span>
+                            {% endif %}
+                        </a>
+                    {% endfor %}
+
+                    {# Dropdown groups #}
+                    {% for group in topnav_grouped.groups %}
+                        <div class="relative" @click.away="openDropdown === '{{ group.label }}' && (openDropdown = null)">
+                            {# Check if any child is active #}
+                            {% set group_active = false %}
+                            {% for child in group.children %}
+                                {% if current_route is defined and (current_route == child.route or current_route starts with child.route|split('_index')[0] ~ '_') %}
+                                    {% set group_active = true %}
+                                {% endif %}
+                            {% endfor %}
+
+                            <button @click="toggleDropdown('{{ group.label }}')"
+                                    class="relative flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium
+                                           transition-all duration-200 select-none
+                                           {{ group_active
+                                               ? 'text-primary bg-primary/[0.08]'
+                                               : 'text-muted-foreground hover:text-foreground hover:bg-muted/60' }}">
+                                <i data-lucide="{{ group.icon }}" class="h-4 w-4 shrink-0"></i>
+                                <span>{{ group.label }}</span>
+                                <svg class="h-3 w-3 opacity-50 transition-transform duration-200"
+                                     :class="openDropdown === '{{ group.label }}' && 'rotate-180'"
+                                     fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                                {% if group_active %}
+                                    <span class="absolute -bottom-[9px] left-3 right-3 h-[2px] rounded-full bg-primary"></span>
+                                {% endif %}
+                            </button>
+
+                            {# Dropdown panel #}
+                            <div x-show="openDropdown === '{{ group.label }}'"
+                                 x-transition:enter="transition ease-out duration-150"
+                                 x-transition:enter-start="opacity-0 translate-y-1"
+                                 x-transition:enter-end="opacity-100 translate-y-0"
+                                 x-transition:leave="transition ease-in duration-100"
+                                 x-transition:leave-start="opacity-100 translate-y-0"
+                                 x-transition:leave-end="opacity-0 translate-y-1"
+                                 class="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-52
+                                        rounded-xl border border-border/50 bg-popover/95 backdrop-blur-lg
+                                        text-popover-foreground shadow-xl shadow-black/[0.08]
+                                        ring-1 ring-black/[0.03] overflow-hidden"
+                                 style="display: none;">
+                                <div class="p-1.5">
+                                    {% for child in group.children %}
+                                        {% set child_active = current_route is defined and (current_route == child.route or current_route starts with child.route|split('_index')[0] ~ '_') %}
+                                        <a href="{{ path(child.route) }}"
+                                           @click="openDropdown = null"
+                                           class="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium
+                                                  transition-colors duration-150
+                                                  {{ child_active
+                                                      ? 'text-primary bg-primary/[0.08]'
+                                                      : 'text-foreground/80 hover:bg-muted/70 hover:text-foreground' }}">
+                                            <i data-lucide="{{ child.icon }}" class="h-4 w-4 shrink-0 {{ child_active ? 'text-primary' : 'text-muted-foreground' }}"></i>
+                                            {{ child.label }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </nav>
+
+                {# ── Live job search ─────────────────────────────── #}
+                {% if app.user %}
+                <div class="relative hidden w-48 shrink-0 xl:block 2xl:w-64" x-data="{ q: '', results: [], open: false, timer: null, search() { clearTimeout(this.timer); this.timer = setTimeout(() => { if (this.q.length < 2) { this.results = []; this.open = false; return; } fetch('/search/jobs?q=' + encodeURIComponent(this.q)).then(r => r.json()).then(d => { this.results = d.results || []; this.open = true; }); }, 220); }, go() { if (this.q.trim().length > 0) window.location.href = '/jobs?q=' + encodeURIComponent(this.q.trim()); } }" @click.away="open = false">
+                    <div class="flex h-9 items-center gap-2 rounded-full border border-border/60 bg-muted/50 px-3 transition focus-within:border-primary/50 focus-within:bg-background focus-within:ring-4 focus-within:ring-primary/10">
+                        <i data-lucide="search" class="h-4 w-4 text-muted-foreground"></i>
+                        <input x-model="q" @input="search" @focus="q.length >= 2 && (open = true)" @keydown.enter.prevent="go" placeholder="Command jobs..." class="w-full bg-transparent text-[13px] outline-none placeholder:text-muted-foreground">
+                        <button type="button" x-show="q.length > 0" @click="q=''; results=[]; open=false" class="text-muted-foreground hover:text-foreground" style="display:none;"><i data-lucide="x" class="h-3.5 w-3.5"></i></button>
+                    </div>
+                    <div x-show="open" x-transition class="absolute left-1/2 top-full z-50 mt-2 w-80 -translate-x-1/2 overflow-hidden rounded-xl border border-border/60 bg-popover/95 shadow-xl backdrop-blur-lg" style="display:none;">
+                        <div class="border-b border-border/40 px-3 py-2 text-[10px] font-bold uppercase tracking-label text-muted-foreground">Quick matches</div>
+                        <template x-for="item in results" :key="item.url">
+                            <a :href="item.url" class="block border-b border-border/40 px-3 py-3 last:border-b-0 hover:bg-muted/60">
+                                <div class="flex items-center justify-between gap-2"><span x-text="item.title" class="truncate text-sm font-semibold"></span><span x-text="item.score + '%'" class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"></span></div>
+                                <p class="mt-1 truncate text-xs text-muted-foreground"><span x-text="item.company"></span> · <span x-text="item.location || item.source"></span></p>
+                            </a>
+                        </template>
+                        <button type="button" @click="go" class="block w-full px-3 py-2.5 text-left text-xs font-semibold text-primary hover:bg-muted/60">Search all results →</button>
+                        <div x-show="results.length === 0" class="px-3 py-4 text-center text-xs text-muted-foreground">No matches yet</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {# ── Right actions ─────────────────────────────── #}
+                <div class="flex items-center gap-1 sm:gap-2">
+                    {# Employer CTA #}
+                    {% if user_role == 'EMPLOYER' %}
+                        <a href="{{ path('app_post_job') }}"
+                           class="hidden md:inline-flex h-8 items-center justify-center rounded-lg
+                                  bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground
+                                  shadow-sm shadow-primary/20 hover:bg-primary/90
+                                  hover:shadow-md hover:shadow-primary/25
+                                  transition-all duration-200">
+                            <i data-lucide="plus" class="h-3.5 w-3.5 mr-1.5"></i>
+                            Publier une offre
+                        </a>
+                    {% endif %}
+
+                    {# Notification Bell #}
+                    {% if app.user %}
+                    <div class="relative" x-data="{ open: false, count: 0, items: [], loading: false, async refresh() { this.loading = true; try { const [countResp, recentResp] = await Promise.all([fetch('/notifications/unread-count'), fetch('/notifications/recent')]); const countData = await countResp.json(); const recentData = await recentResp.json(); this.count = countData.count || 0; this.items = recentData.notifications || []; } finally { this.loading = false; } } }"
+                         x-init="refresh()"
+                         @click.away="open = false">
+                        <button @click="open = !open; if (open) refresh()"
+                                class="relative inline-flex items-center justify-center h-9 w-9 rounded-lg
+                                       text-muted-foreground hover:text-foreground hover:bg-muted/60
+                                       transition-colors duration-200">
+                            <i data-lucide="bell" class="h-[18px] w-[18px]"></i>
+                            <span x-show="count > 0" x-text="count > 9 ? '9+' : count"
+                                  class="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-0.5 ring-2 ring-background"></span>
+                        </button>
+                        <div x-show="open" x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                             class="absolute right-0 top-full mt-2 w-80 rounded-xl border border-border/50 bg-popover/95 backdrop-blur-lg shadow-xl overflow-hidden z-50"
+                             style="display:none;">
+                            <div class="flex items-center justify-between px-4 py-3 border-b border-border/40">
+                                <span class="text-sm font-semibold">Notifications</span>
+                                <a href="{{ path('app_notifications_index') }}" class="text-xs text-primary hover:underline">Voir tout</a>
+                            </div>
+                             <div class="max-h-80 overflow-y-auto">
+                                 <p x-show="loading" class="px-4 py-6 text-center text-xs text-muted-foreground">Chargement…</p>
+                                 <template x-for="item in items" :key="item.id">
+                                     <a :href="item.url" class="flex gap-3 border-b border-border/40 px-4 py-3 last:border-b-0 hover:bg-muted/60 transition-colors">
+                                         <span class="mt-0.5 text-base" x-text="item.icon"></span>
+                                         <span class="min-w-0 flex-1">
+                                             <span class="flex items-center gap-2">
+                                                 <span class="truncate text-sm font-semibold" x-text="item.title"></span>
+                                                 <span x-show="!item.read" class="h-2 w-2 shrink-0 rounded-full bg-primary"></span>
+                                             </span>
+                                             <span class="mt-0.5 block truncate text-xs text-muted-foreground" x-text="item.message || 'Open details'"></span>
+                                             <span class="mt-1 block text-[10px] text-muted-foreground/70" x-text="item.createdAt"></span>
+                                         </span>
+                                     </a>
+                                 </template>
+                                 <p x-show="!loading && items.length === 0" class="px-4 py-6 text-center text-xs text-muted-foreground">Aucune notification.</p>
+                             </div>
+                         </div>
+                    </div>
+                    {% endif %}
+
+                    {# Theme Toggle #}
+                    <button type="button"
+                            class="hidden sm:inline-flex items-center justify-center h-9 w-9 rounded-lg
+                                   text-muted-foreground hover:text-foreground hover:bg-muted/60
+                                   transition-colors duration-200"
+                            onclick="var t=localStorage.getItem('theme')==='dark'?'light':'dark';localStorage.setItem('theme',t);document.documentElement.classList.toggle('dark', t==='dark');">
+                        <i data-lucide="moon" class="h-[18px] w-[18px] hidden dark:block"></i>
+                        <i data-lucide="sun" class="h-[18px] w-[18px] block dark:hidden"></i>
+                    </button>
+
+                    {# ── Avatar & Profile Dropdown ─────────────── #}
+                    <div class="relative ml-1" @click.away="profileDropdownOpen = false">
+                        <button type="button" @click="profileDropdownOpen = !profileDropdownOpen"
+                                class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg
+                                       ring-1 ring-border/60 hover:ring-primary/30
+                                       transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40">
+                            {% if app.user and app.user.photoUrl %}
+                                <img src="{{ app.user.photoUrl starts with 'data:image' or app.user.photoUrl starts with 'http' ? app.user.photoUrl : asset('uploads/avatars/' ~ app.user.photoUrl) }}"
+                                     alt="Avatar" class="h-full w-full object-cover">
+                            {% else %}
+                                <div class="flex h-full w-full items-center justify-center
+                                            bg-gradient-to-br from-primary to-primary/80
+                                            text-primary-foreground text-xs font-bold uppercase">
+                                    {{ app.user ? app.user.username|slice(0, 2) : 'A' }}
+                                </div>
+                            {% endif %}
+                        </button>
+
+                        {# Profile dropdown #}
+                        <div x-show="profileDropdownOpen"
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 translate-y-1 scale-[0.97]"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-100"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-1 scale-[0.97]"
+                             class="absolute right-0 top-full mt-2 w-60 origin-top-right
+                                    rounded-xl border border-border/50 bg-popover/95 backdrop-blur-lg
+                                    text-popover-foreground shadow-xl shadow-black/[0.08]
+                                    ring-1 ring-black/[0.03] overflow-hidden"
+                             style="display: none;">
+                            {# User card #}
+                            <div class="p-4 border-b border-border/40">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg ring-1 ring-border/40">
+                                        {% if app.user and app.user.photoUrl %}
+                                            <img src="{{ app.user.photoUrl starts with 'data:image' or app.user.photoUrl starts with 'http' ? app.user.photoUrl : asset('uploads/avatars/' ~ app.user.photoUrl) }}"
+                                                 alt="" class="h-full w-full object-cover">
+                                        {% else %}
+                                            <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs font-bold uppercase">
+                                                {{ app.user ? app.user.username|slice(0, 2) : 'A' }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-sm font-semibold truncate">{{ app.user ? (app.user.fullName ?: app.user.username) : 'User' }}</p>
+                                        <p class="text-xs text-muted-foreground truncate">{{ app.user ? app.user.email : '' }}</p>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="inline-flex rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                                        {{ app.user ? app.user.roleDisplayName : 'Guest' }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="p-1.5">
+                                {% if app.user %}
+                                    <a href="{{ path('app_profile') }}"
+                                       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted/70 hover:text-foreground transition-colors">
+                                        <i data-lucide="user" class="h-4 w-4 text-muted-foreground"></i> Mon profil
+                                    </a>
+                                    <a href="{{ path('app_settings') }}"
+                                       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted/70 hover:text-foreground transition-colors">
+                                        <i data-lucide="settings" class="h-4 w-4 text-muted-foreground"></i> Paramètres
+                                    </a>
+                                    <button onclick="var t=localStorage.getItem('theme')==='dark'?'light':'dark';localStorage.setItem('theme',t);document.documentElement.classList.toggle('dark', t==='dark');"
+                                            class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted/70 hover:text-foreground transition-colors sm:hidden">
+                                        <i data-lucide="sun-moon" class="h-4 w-4 text-muted-foreground"></i> Thème
+                                    </button>
+                                {% endif %}
+                            </div>
+                            <div class="border-t border-border/40 p-1.5">
+                                <a href="{{ path('app_logout') }}"
+                                   class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-destructive hover:bg-destructive/10 transition-colors">
+                                    <i data-lucide="log-out" class="h-4 w-4"></i> Se déconnecter
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Mobile menu toggle #}
+                    <button @click="mobileMenuOpen = !mobileMenuOpen"
+                            class="flex lg:hidden items-center justify-center h-9 w-9 rounded-lg
+                                   text-muted-foreground hover:text-foreground hover:bg-muted/60
+                                   transition-colors duration-200">
+                        <i data-lucide="menu" class="h-5 w-5" x-show="!mobileMenuOpen"></i>
+                        <i data-lucide="x" class="h-5 w-5" x-show="mobileMenuOpen" style="display: none;"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# ── Mobile slide-down menu ────────────────────────── #}
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-2"
+             class="lg:hidden border-t border-border/30 bg-background/95 backdrop-blur-lg shadow-lg"
+             style="display: none;">
+            <nav class="mx-auto max-w-lg p-3 space-y-0.5">
+                {% for link in topnav_items %}
+                    {% set is_active = (current_route is defined and current_route == link.route) or (current_route is defined and current_route starts with link.route|split('_index')[0] ~ '_') %}
+                    <a href="{{ path(link.route) }}"
+                       @click="mobileMenuOpen = false"
+                       class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-150
+                              {{ is_active ? 'bg-primary/[0.08] text-primary' : 'text-foreground/70 hover:bg-muted/60 hover:text-foreground' }}">
+                        <i data-lucide="{{ link.icon }}" class="h-5 w-5 shrink-0 {{ is_active ? 'text-primary' : 'text-muted-foreground' }}"></i>
+                        {{ link.label }}
+                    </a>
+                {% endfor %}
+            </nav>
+        </div>
+    </header>
+
+    {# --- Main Content Area --- #}
+    <main id="main-content" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+        
+        {# Page Title Area (if blocks exist, render them smartly outside the white container if needed) #}
+        <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-foreground">
+                    {% block page_title %}{% endblock %}
+                </h1>
+                {# Optional page subtitle can be passed via a variable or a new block, omitted for brevity #}
+            </div>
+            
+            {% if block('topbar_actions') is defined %}
+                <div class="flex items-center gap-2">
+                    {% block topbar_actions %}{% endblock %}
+                </div>
+            {% endif %}
+        </div>
+
+        {# SKELETON — overlay that auto-hides. Content is ALWAYS rendered underneath. #}
+        <div x-ref="skeleton" x-show="isLoading"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="skilora-skeleton absolute inset-0 z-10 bg-background w-full max-w-6xl mx-auto space-y-6 pt-4 animate-pulse"
+             id="page-skeleton">
+            <div class="h-32 bg-muted/60 rounded-3xl border border-border/50"></div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="h-28 bg-muted/60 rounded-xl border border-border/50"></div>
+                <div class="h-28 bg-muted/60 rounded-xl border border-border/50"></div>
+                <div class="h-28 bg-muted/60 rounded-xl border border-border/50"></div>
+                <div class="h-28 bg-muted/60 rounded-xl border border-border/50"></div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 h-96 bg-muted/60 rounded-xl border border-border/50"></div>
+                <div class="h-96 bg-muted/60 rounded-xl border border-border/50"></div>
+            </div>
+        </div>
+        <script>setTimeout(function(){var s=document.getElementById('page-skeleton');if(s){s.style.transition='opacity .2s';s.style.opacity='0';setTimeout(function(){s.remove();},250);}},2500);</script>
+
+        {# ACTUAL CONTENT — always visible, never gated behind Alpine #}
+        <div class="relative z-0">
+            {% block content %}{% endblock %}
+        </div>
+
+    </main>
+</div>
+
+{# Reusable dialogs #}
+{{ include('components/edit-dialog.html.twig') }}
+
+{# Hand Gesture Control — lazy-loaded on demand or when enabled #}
+{{ include('components/hand-gesture.html.twig') }}
+<script>
+(function(){
+    var loaded=false;
+    function loadGesture(){
+        if(loaded)return;loaded=true;
+        var s=document.createElement('script');s.src='{{ asset('js/hand-gesture.js') }}';document.head.appendChild(s);
+    }
+    var btn=document.getElementById('gesture-toggle-btn');
+    if(btn)btn.addEventListener('click',loadGesture);
+    /* Never auto-load on page start — user must explicitly click the button */
+})();
+</script>
+
+{% endblock %}

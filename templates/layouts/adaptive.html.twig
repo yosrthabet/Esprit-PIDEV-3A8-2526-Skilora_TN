@@ -1,0 +1,9 @@
+{# layouts/adaptive.html.twig — Unified adaptive layout
+   Dynamically extends the correct shell based on user role:
+   • ADMIN        → layouts/app.html.twig     (sidebar + topbar)
+   • USER/EMPLOYER/TRAINER → layouts/platform.html.twig  (top-nav bar)
+
+   Usage: {% extends 'layouts/adaptive.html.twig' %}
+   All blocks (page_title, content, topbar_actions) pass through transparently.
+#}
+{% extends (app.user and app.user.role == 'ADMIN') ? 'layouts/app.html.twig' : 'layouts/platform.html.twig' %}

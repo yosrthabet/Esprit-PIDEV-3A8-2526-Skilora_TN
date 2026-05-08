@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use App\Enum\LoginMethod;
+use App\Enum\LoginStatus;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -9,6 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(columns: ['user_id'], name: 'idx_login_history_user')]
 class LoginHistory
 {
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -24,11 +27,11 @@ class LoginHistory
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $userAgent = null;
 
-    #[ORM\Column(length: 20)]
-    private string $status = 'success'; // 'success' | 'failure'
+    #[ORM\Column(length: 20, enumType: LoginStatus::class)]
+    private LoginStatus $status = LoginStatus::SUCCESS;
 
-    #[ORM\Column(length: 50, nullable: true)]
-    private ?string $method = null; // 'password' | 'google' | 'github'
+    #[ORM\Column(length: 50, nullable: true, enumType: LoginMethod::class)]
+    private ?LoginMethod $method = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
@@ -49,11 +52,11 @@ class LoginHistory
     public function getUserAgent(): ?string { return $this->userAgent; }
     public function setUserAgent(?string $userAgent): static { $this->userAgent = $userAgent; return $this; }
 
-    public function getStatus(): string { return $this->status; }
-    public function setStatus(string $status): static { $this->status = $status; return $this; }
+    public function getStatus(): LoginStatus { return $this->status; }
+    public function setStatus(LoginStatus $status): static { $this->status = $status; return $this; }
 
-    public function getMethod(): ?string { return $this->method; }
-    public function setMethod(?string $method): static { $this->method = $method; return $this; }
+    public function getMethod(): ?LoginMethod { return $this->method; }
+    public function setMethod(?LoginMethod $method): static { $this->method = $method; return $this; }
 
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
 }

@@ -1,0 +1,95 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Inbox{% endblock %}
+{% block content %}
+<div class="mx-auto grid max-w-[90rem] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8">
+    <aside class="space-y-4">
+        <section class="glass-panel p-5">
+            <p class="text-xs font-bold uppercase tracking-label text-primary">Inbox</p>
+            <h1 class="mt-2 text-3xl font-light tracking-holographic">Messages</h1>
+        </section>
+        <section class="glass-panel p-4">
+            <h2 class="text-sm font-bold">Start a conversation</h2>
+            <div class="mt-3 max-h-64 space-y-2 overflow-auto pr-1">
+                {% for contact in contacts %}
+                    <form method="post" action="{{ path('app_inbox_start', {userId: contact.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('inbox_start_' ~ contact.id) }}">
+                        <button class="w-full rounded-xl border border-border px-3 py-2 text-left text-sm transition hover:border-primary/40">
+                            <span class="block font-semibold">{{ contact.displayName }}</span>
+                            <span class="text-xs text-muted-foreground">{{ contact.roleDisplayName }}</span>
+                        </button>
+                    </form>
+                {% else %}
+                    <p class="text-sm text-muted-foreground">No contacts available.</p>
+                {% endfor %}
+            </div>
+        </section>
+        <section class="space-y-2">
+            {% for conversation in conversations %}
+                {% set other = conversation.otherParticipant(app.user) %}
+                <a href="{{ path('app_inbox_conversation', {id: conversation.id}) }}" class="glass-panel block p-4 transition hover:border-primary/40 {{ active_conversation and active_conversation.id == conversation.id ? 'border-primary/50' }}">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="font-semibold">{{ other ? other.displayName : 'Conversation' }}</span>
+                        <span class="text-xs text-muted-foreground">{{ conversation.lastMessageAt ? conversation.lastMessageAt|date('M d') : conversation.createdAt|date('M d') }}</span>
+                    </div>
+                    <p class="mt-1 text-xs text-muted-foreground">{{ other ? other.roleDisplayName : 'Direct message' }}</p>
+                </a>
+            {% else %}
+                <div class="glass-panel p-5 text-center text-sm text-muted-foreground">No conversations yet.</div>
+            {% endfor %}
+        </section>
+    </aside>
+
+    <section class="glass-panel min-h-[36rem] p-0">
+        {% if active_conversation %}
+            {% set other = active_conversation.otherParticipant(app.user) %}
+            <div class="border-b border-border p-5">
+                <h2 class="text-xl font-semibold">{{ other ? other.displayName : 'Conversation' }}</h2>
+                <p class="text-sm text-muted-foreground">{{ other ? other.roleDisplayName : 'Direct message' }}</p>
+            </div>
+            <div x-data="dmInbox({ conversationId: {{ active_conversation.id }}, csrfToken: '{{ csrf_token('inbox_send_' ~ active_conversation.id) }}', initialMessages: {{ messages|map(message => {id: message.id, body: message.body, sender: message.sender.displayName, mine: message.sender.id == app.user.id, created_at: message.createdAt|date('M d, H:i')})|json_encode|e('html_attr') }} })" x-init="start()" class="flex h-[34rem] flex-col">
+                <div x-ref="list" class="flex-1 space-y-3 overflow-auto p-5">
+                    <template x-for="message in messages" :key="message.id">
+                        <article class="flex" :class="message.mine ? 'justify-end' : 'justify-start'">
+                            <div class="max-w-[75%] rounded-2xl border border-border px-4 py-3" :class="message.mine ? 'bg-primary text-primary-foreground' : 'bg-background/60'">
+                                <p class="text-xs font-semibold" x-text="message.sender"></p>
+                                <p class="mt-1 whitespace-pre-line text-sm" x-text="message.body"></p>
+                                <p class="mt-2 text-[11px] opacity-70" x-text="message.created_at"></p>
+                            </div>
+                        </article>
+                    </template>
+                </div>
+                <form @submit.prevent="send" class="flex gap-3 border-t border-border p-4">
+                    <input x-model="body" required placeholder="Write a message..." class="h-11 flex-1 rounded-xl border border-border bg-background/70 px-4 text-sm outline-none focus:border-primary">
+                    <button class="rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground">Send</button>
+                </form>
+            </div>
+            <script>
+                function dmInbox(config) {
+                    return {
+                        conversationId: config.conversationId,
+                        csrfToken: config.csrfToken,
+                        messages: config.initialMessages || [],
+                        body: '',
+                        timer: null,
+                        start() { this.scrollDown(); this.timer = setInterval(() => this.poll(), 3000); },
+                        lastId() { return this.messages.length ? this.messages[this.messages.length - 1].id : 0; },
+                        poll() { fetch('/api/inbox/' + this.conversationId + '/messages?after=' + this.lastId()).then(r => r.json()).then(data => { (data.messages || []).forEach(m => this.messages.push(m)); this.scrollDown(); }); },
+                        send() {
+                            const body = this.body.trim();
+                            if (!body) return;
+                            const form = new FormData();
+                            form.append('body', body);
+                            form.append('_token', this.csrfToken);
+                            this.body = '';
+                            fetch('/api/inbox/' + this.conversationId + '/send', { method: 'POST', body: form }).then(r => r.json()).then(data => { if (data.message) { this.messages.push(data.message); this.scrollDown(); } });
+                        },
+                        scrollDown() { this.$nextTick(() => { this.$refs.list.scrollTop = this.$refs.list.scrollHeight; }); }
+                    }
+                }
+            </script>
+        {% else %}
+            <div class="flex h-[36rem] items-center justify-center p-10 text-center text-muted-foreground">Start a conversation from the contact list.</div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

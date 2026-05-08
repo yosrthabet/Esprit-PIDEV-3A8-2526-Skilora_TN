@@ -122,16 +122,24 @@ window.initHomepage = () => {
   loaderTL.to("#loader-dot", { scale: 0, opacity: 0, duration: 0.5, ease: "power2.inOut" })
           .to("#loader", { opacity: 0, duration: 0.5, display: "none" }, "-=0.2");
 
-  // Hero title + subtitle stagger
-  loaderTL.from(".hero-title", { y: 60, opacity: 0, duration: 1, ease: "power4.out", stagger: 0.15 }, "-=0.2")
-          .from(".hero-subtitle", { y: 40, opacity: 0, duration: 0.8, ease: "power3.out", stagger: 0.1 }, "-=0.6")
-          .from(".hero-scroll-indicator", { opacity: 0, y: 20, duration: 0.6, ease: "power2.out" }, "-=0.3");
+  // Hero title + subtitle stagger (only on landing page)
+  if (document.querySelector(".hero-title")) {
+    loaderTL.from(".hero-title", { y: 60, opacity: 0, duration: 1, ease: "power4.out", stagger: 0.15 }, "-=0.2");
+    if (document.querySelector(".hero-subtitle")) {
+      loaderTL.from(".hero-subtitle", { y: 40, opacity: 0, duration: 0.8, ease: "power3.out", stagger: 0.1 }, "-=0.6");
+    }
+    if (document.querySelector(".hero-scroll-indicator")) {
+      loaderTL.from(".hero-scroll-indicator", { opacity: 0, y: 20, duration: 0.6, ease: "power2.out" }, "-=0.3");
+    }
+  }
 
   // Hero blob parallax
-  gsap.to("#hero-blob", {
-      y: "40vh", scale: 1.5,
-      scrollTrigger: { trigger: "#hero-section", start: "top top", end: "bottom top", scrub: true }
-  });
+  if (document.getElementById("hero-blob")) {
+    gsap.to("#hero-blob", {
+        y: "40vh", scale: 1.5,
+        scrollTrigger: { trigger: "#hero-section", start: "top top", end: "bottom top", scrub: true }
+    });
+  }
 
   // Hero marquee
   if (document.getElementById("hero-marquee")) {

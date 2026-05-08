@@ -1,0 +1,29 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}{{ action }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+    <form method="post" class="glass-panel space-y-5 p-8">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-label text-primary">Trainer studio</p>
+            <h1 class="mt-2 text-3xl font-light tracking-holographic">{{ action }}</h1>
+        </div>
+        {% if errors|default([]) is not empty %}
+            <div class="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+                {% for error in errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+        {% endif %}
+        <input type="hidden" name="_token" value="{{ csrf_token(formation.id ? 'trainer_formation_edit_' ~ formation.id : 'trainer_formation_new') }}">
+        <input name="title" value="{{ formation.title }}" placeholder="Formation title" required class="h-11 w-full rounded-xl border border-border bg-background/70 px-4 text-sm">
+        <textarea name="description" rows="5" placeholder="What will learners achieve?" class="w-full rounded-xl border border-border bg-background/70 px-4 py-3 text-sm">{{ formation.description }}</textarea>
+        <div class="grid gap-4 md:grid-cols-2">
+            <input name="category" value="{{ formation.category }}" placeholder="Category" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <select name="level" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+                {% for level in levels %}<option value="{{ level.value }}" {{ formation.level == level ? 'selected' }}>{{ level.value|replace({'_': ' '})|title }}</option>{% endfor %}
+            </select>
+            <input name="duration_hours" value="{{ formation.durationHours }}" type="number" min="0" placeholder="Duration hours" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <input name="price_amount" value="{{ formation.priceAmount }}" inputmode="decimal" placeholder="Price or leave free" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+        </div>
+        <button class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">{{ action }}</button>
+    </form>
+</div>
+{% endblock %}

@@ -37,8 +37,8 @@ class Profile
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $location = null;
 
-    #[ORM\Column(name: 'birth_date', type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $birthDate = null;
+    #[ORM\Column(name: 'birth_date', type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $birthDate = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $headline = null;
@@ -138,7 +138,7 @@ class Profile
 
     public function setBirthDate(?\DateTimeInterface $birthDate): static
     {
-        $this->birthDate = $birthDate;
+        $this->birthDate = ($birthDate !== null ?\DateTimeImmutable::createFromInterface($birthDate) : null);
         return $this;
     }
 

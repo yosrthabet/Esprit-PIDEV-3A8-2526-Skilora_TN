@@ -11,6 +11,7 @@ use League\OAuth2\Client\Provider\GithubResourceOwner;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
@@ -34,7 +35,7 @@ class OAuthAuthenticator extends OAuth2Authenticator
 
     public function authenticate(Request $request): Passport
     {
-        $provider = $request->attributes->get('provider');
+        $provider = $request->attributes->getString('provider');
         $client = $this->clientRegistry->getClient($provider);
         $accessToken = $this->fetchAccessToken($client);
 
@@ -43,8 +44,12 @@ class OAuthAuthenticator extends OAuth2Authenticator
                 $oauthUser = $client->fetchUserFromToken($accessToken);
 
                 return match ($provider) {
-                    'google' => $this->handleGoogleUser($oauthUser),
-                    'github' => $this->handleGithubUser($oauthUser),
+                    'google' => $oauthUser instanceof GoogleUser
+                        ? $this->handleGoogleUser($oauthUser)
+                        : throw new AuthenticationException('Unexpected Google user response.'),
+                    'github' => $oauthUser instanceof GithubResourceOwner
+                        ? $this->handleGithubUser($oauthUser)
+                        : throw new AuthenticationException('Unexpected GitHub user response.'),
                     default => throw new AuthenticationException('Unsupported OAuth provider.'),
                 };
             })
@@ -55,6 +60,9 @@ class OAuthAuthenticator extends OAuth2Authenticator
     {
         $googleId = $googleUser->getId();
         $email = $googleUser->getEmail();
+        if (!is_string($googleId)) {
+            throw new AuthenticationException('Google account did not provide a valid identifier.');
+        }
 
         // 1. Find by Google ID
         $user = $this->em->getRepository(User::class)->findOneBy(['googleId' => $googleId]);
@@ -137,10 +145,9 @@ class OAuthAuthenticator extends OAuth2Authenticator
         $user = $token->getUser();
 
         $route = match (strtoupper($user->getRole() ?? '')) {
-            'ADMIN' => 'app_dashboard',
-            'EMPLOYER' => 'app_employer_dashboard',
+            'ADMIN'   => 'app_dashboard',
             'TRAINER' => 'app_trainer_dashboard',
-            default => 'app_workspace',
+            default   => 'app_workspace',
         };
 
         return new RedirectResponse($this->router->generate($route));
@@ -165,7 +172,10 @@ class OAuthAuthenticator extends OAuth2Authenticator
             return new RedirectResponse($this->router->generate('app_oauth_complete_registration'));
         }
 
-        $request->getSession()->getFlashBag()->add('error', 'OAuth authentication failed: ' . $exception->getMessageKey());
+        $session = $request->getSession();
+        if ($session instanceof FlashBagAwareSessionInterface) {
+            $session->getFlashBag()->add('error', 'OAuth authentication failed: ' . $exception->getMessageKey());
+        }
 
         return new RedirectResponse($this->router->generate('app_login'));
     }

@@ -1,0 +1,29 @@
+{% set job = item.job|default(job|default(null)) %}
+{% set match = item.match|default(match|default({score: 0, reasons: []})) %}
+{% if job %}
+<article class="glass-panel p-5 transition hover:border-primary/40 hover:shadow-lg">
+    <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span class="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">{{ match.score }}% {{ match.confidence|default('match') }}</span>
+                <span>{{ job.companyLabel }}</span>
+                {% if job.feedSource %}<span class="rounded-full border border-border px-2 py-0.5">{{ job.feedSource.value|replace({'_': ' '})|title }}</span>{% endif %}
+            </div>
+            <h3 class="mt-2 text-lg font-semibold text-foreground"><a href="{{ path('app_job_show', {id: job.id}) }}" class="hover:text-primary">{{ job.title }}</a></h3>
+            <p class="mt-2 line-clamp-2 text-sm text-muted-foreground">{{ job.description|clean_job_description|default('No description yet.')|striptags }}</p>
+        </div>
+        <div class="hidden shrink-0 rounded-2xl bg-primary/10 p-3 text-primary sm:block"><i data-lucide="briefcase" class="h-5 w-5"></i></div>
+    </div>
+    <div class="mt-4 flex flex-wrap gap-2 text-xs">
+        {% if job.location %}<span class="rounded-lg bg-muted px-2.5 py-1">{{ job.location }}</span>{% endif %}
+        {% if job.workType %}<span class="rounded-lg bg-muted px-2.5 py-1">{{ job.workType|work_type_label }}</span>{% endif %}
+        {% if job.maxSalary %}<span class="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-emerald-600">up to {{ job.maxSalary }} {{ job.currency.value }}</span>{% endif %}
+        <span class="rounded-lg bg-muted px-2.5 py-1">{{ job.postedAt|date('M d') }}</span>
+    </div>
+    {% if match.reasons is not empty %}
+        <div class="mt-4 flex flex-wrap gap-2">
+            {% for reason in match.reasons|slice(0, 3) %}<span class="rounded-full border border-primary/20 px-2.5 py-1 text-[11px] text-muted-foreground">{{ reason }}</span>{% endfor %}
+        </div>
+    {% endif %}
+</article>
+{% endif %}

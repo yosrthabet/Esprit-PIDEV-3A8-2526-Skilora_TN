@@ -1,0 +1,119 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% set editing = job is not null %}
+{% block page_title %}{{ editing ? 'Edit Offer' : 'Post a Job' }}{% endblock %}
+{% block content %}
+<div
+    class="mx-auto grid max-w-[90rem] gap-6 px-4 py-6 lg:grid-cols-[1fr_24rem] sm:px-6 lg:px-8"
+    x-data="{
+        title: {{ (job ? job.title : '')|json_encode }},
+        location: {{ (job ? job.location : '')|json_encode }},
+        workType: {{ (job and job.workType ? job.workType.value : 'remote')|json_encode }},
+        experience: {{ (job and job.experienceLevel ? job.experienceLevel.value : 'junior')|json_encode }},
+        deadline: {{ (job and job.expiresAt ? job.expiresAt|date('Y-m-d') : '')|json_encode }},
+        description: {{ (job ? job.description : '')|json_encode }},
+        requirements: {{ (job ? job.requirements : '')|json_encode }},
+        skills: {{ (job ? job.skillsRequired : '')|json_encode }},
+        benefits: {{ (job ? job.benefits : '')|json_encode }},
+        minSalary: {{ (job ? job.minSalary : '')|json_encode }},
+        maxSalary: {{ (job ? job.maxSalary : '')|json_encode }},
+        currency: {{ (job ? job.currency.value : 'TND')|json_encode }},
+        score() {
+            let score = 0;
+            if (this.title.trim().length >= 8) score += 15;
+            if (this.description.trim().length >= 80) score += 25;
+            if (this.requirements.trim().length >= 30) score += 15;
+            if (this.skills.trim().length >= 3) score += 15;
+            if (this.minSalary.trim() || this.maxSalary.trim()) score += 15;
+            if (this.location.trim() || this.workType) score += 10;
+            if (this.deadline.trim()) score += 5;
+            return score;
+        },
+        label() {
+            const score = this.score();
+            if (score >= 91) return 'Excellent';
+            if (score >= 71) return 'Strong';
+            if (score >= 41) return 'Good start';
+            return 'Weak posting';
+        },
+        missing() {
+            const items = [];
+            if (this.title.trim().length < 8) items.push('Clear role title');
+            if (this.description.trim().length < 80) items.push('Detailed description');
+            if (this.requirements.trim().length < 30) items.push('Requirements');
+            if (this.skills.trim().length < 3) items.push('Skills');
+            if (!this.minSalary.trim() && !this.maxSalary.trim()) items.push('Salary range');
+            if (!this.location.trim() && !this.workType) items.push('Location or work type');
+            if (!this.deadline.trim()) items.push('Application deadline');
+            return items;
+        }
+    }"
+>
+    <form method="post" action="{{ editing ? path('app_employer_offer_edit', {id: job.id}) : path('app_post_job') }}" class="glass-panel space-y-8 p-6 sm:p-8">
+        <input type="hidden" name="_token" value="{{ csrf_token(editing ? 'edit_job_' ~ job.id : 'post_job') }}">
+        <header>
+            <a href="{{ path('app_active_offers') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"><i data-lucide="arrow-left" class="h-4 w-4"></i>Back to offers</a>
+            <p class="mt-6 text-xs font-bold uppercase tracking-label text-primary">Hiring wizard</p>
+            <h1 class="mt-2 text-4xl font-light tracking-holographic">{{ editing ? 'Refine your offer.' : 'Post a job that attracts signal.' }}</h1>
+            <p class="mt-2 text-sm text-muted-foreground">Company: {{ company.name }}</p>
+        </header>
+
+        <section class="space-y-4">
+            <div class="flex items-center gap-3"><span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">1</span><h2 class="font-semibold">Role basics</h2></div>
+            <div class="grid gap-4 md:grid-cols-2">
+                <label class="space-y-1 md:col-span-2"><span class="text-sm font-semibold">Title</span><input required name="title" x-model="title" placeholder="Senior Symfony Developer" class="w-full rounded-xl border border-border bg-background/70 p-3"></label>
+                <label class="space-y-1"><span class="text-sm font-semibold">Location</span><input name="location" x-model="location" placeholder="Tunis, Remote, Hybrid" class="w-full rounded-xl border border-border bg-background/70 p-3"></label>
+                <label class="space-y-1"><span class="text-sm font-semibold">Work type</span><select name="work_type" x-model="workType" class="w-full rounded-xl border border-border bg-background/70 p-3"><option value="remote">Remote</option><option value="hybrid">Hybrid</option><option value="onsite">On site</option></select></label>
+                <label class="space-y-1"><span class="text-sm font-semibold">Experience</span><select name="experience_level" x-model="experience" class="w-full rounded-xl border border-border bg-background/70 p-3"><option value="junior">Junior</option><option value="mid">Mid</option><option value="senior">Senior</option><option value="lead">Lead</option></select></label>
+                <label class="space-y-1"><span class="text-sm font-semibold">Deadline</span><input type="date" name="deadline" x-model="deadline" class="w-full rounded-xl border border-border bg-background/70 p-3"></label>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="flex items-center gap-3"><span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">2</span><h2 class="font-semibold">Scope and signal</h2></div>
+            <label class="block space-y-1"><span class="text-sm font-semibold">Description</span><textarea required name="description" x-model="description" rows="7" placeholder="Describe outcomes, team context, and what success looks like..." class="w-full rounded-xl border border-border bg-background/70 p-3"></textarea></label>
+            <label class="block space-y-1"><span class="text-sm font-semibold">Requirements</span><textarea name="requirements" x-model="requirements" rows="4" placeholder="Required experience, must-have skills, language, availability..." class="w-full rounded-xl border border-border bg-background/70 p-3"></textarea></label>
+            <label class="block space-y-1"><span class="text-sm font-semibold">Skills</span><input name="skills" x-model="skills" placeholder="Symfony, React, Docker" class="w-full rounded-xl border border-border bg-background/70 p-3"></label>
+            <label class="block space-y-1"><span class="text-sm font-semibold">Benefits</span><textarea name="benefits" x-model="benefits" rows="3" placeholder="Remote flexibility, bonuses, learning budget..." class="w-full rounded-xl border border-border bg-background/70 p-3"></textarea></label>
+        </section>
+
+        <section class="space-y-4">
+            <div class="flex items-center gap-3"><span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">3</span><h2 class="font-semibold">Compensation</h2></div>
+            <div class="grid gap-4 md:grid-cols-3">
+                <label class="space-y-1"><span class="text-sm font-semibold">Min salary</span><input name="min_salary" x-model="minSalary" inputmode="decimal" class="w-full rounded-xl border border-border bg-background/70 p-3"></label>
+                <label class="space-y-1"><span class="text-sm font-semibold">Max salary</span><input name="max_salary" x-model="maxSalary" inputmode="decimal" class="w-full rounded-xl border border-border bg-background/70 p-3"></label>
+                <label class="space-y-1"><span class="text-sm font-semibold">Currency</span><select name="currency" x-model="currency" class="w-full rounded-xl border border-border bg-background/70 p-3"><option>TND</option><option>EUR</option><option>USD</option></select></label>
+            </div>
+        </section>
+
+        <footer class="flex flex-wrap gap-3 border-t border-border/50 pt-6">
+            <button name="intent" value="open" class="rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground">{{ editing ? 'Save and publish' : 'Publish job' }}</button>
+            <button name="intent" value="draft" class="rounded-xl border border-border px-6 py-3 text-sm font-semibold">Save draft</button>
+        </footer>
+    </form>
+
+    <aside class="space-y-4 lg:sticky lg:top-24 lg:self-start">
+        <div class="glass-panel p-5">
+            <div class="flex items-center justify-between"><h2 class="font-semibold">Offer readiness</h2><span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary" x-text="score() + '%'">0%</span></div>
+            <p class="mt-1 text-sm text-muted-foreground" x-text="label()">Draft</p>
+            <div class="mt-4 h-2 overflow-hidden rounded-full bg-muted"><div class="h-full rounded-full bg-primary transition-all" :style="`width: ${score()}%`"></div></div>
+            <ul class="mt-4 space-y-2 text-sm text-muted-foreground">
+                <template x-for="item in missing()" :key="item"><li class="flex gap-2"><span class="text-amber-500">•</span><span x-text="item"></span></li></template>
+                <li x-show="missing().length === 0" class="text-emerald-600">Looks ready to publish.</li>
+            </ul>
+        </div>
+        <div class="glass-panel p-5">
+            <h2 class="font-semibold">Candidate preview</h2>
+            <div class="mt-4 rounded-2xl border border-border/50 bg-background/60 p-4">
+                <p class="text-sm text-muted-foreground">{{ company.name }}</p>
+                <p class="mt-1 text-lg font-semibold" x-text="title || 'Your job title'"></p>
+                <p class="mt-2 line-clamp-3 text-sm text-muted-foreground" x-text="description || 'Your description preview updates as you type.'"></p>
+                <div class="mt-3 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                    <span class="rounded-full bg-muted px-2 py-1" x-text="workType || 'work type'"></span>
+                    <span class="rounded-full bg-muted px-2 py-1" x-show="location" x-text="location"></span>
+                    <span class="rounded-full bg-muted px-2 py-1" x-show="maxSalary" x-text="'up to ' + maxSalary + ' ' + currency"></span>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}

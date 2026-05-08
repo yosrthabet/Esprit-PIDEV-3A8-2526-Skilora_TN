@@ -2,8 +2,6 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
 use Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration;
@@ -11,6 +9,7 @@ use Scheb\TwoFactorBundle\Model\Totp\TotpConfigurationInterface;
 use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Ignore;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
@@ -22,12 +21,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $username = null;
+    private string $username = '';
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Ignore]
     private ?string $password = null;
 
     #[ORM\Column(length: 50, nullable: true)]
@@ -45,8 +45,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
     #[ORM\Column(name: 'is_active', type: 'boolean', options: ['default' => true])]
     private bool $active = true;
 
-    #[ORM\Column(name: 'created_at', type: 'datetime_immutable', nullable: true)]
-    private ?\DateTimeImmutable $createdAt = null;
+    #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
+    private \DateTimeImmutable $createdAt;
 
     #[ORM\Column(name: 'two_factor_enabled', type: 'boolean', options: ['default' => false])]
     private bool $twoFactorEnabled = false;
@@ -64,6 +64,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
     private ?\DateTimeImmutable $termsAcceptedAt = null;
 
     #[ORM\Column(name: 'reset_token', length: 64, nullable: true)]
+    #[Ignore]
     private ?string $resetToken = null;
 
     #[ORM\Column(name: 'reset_token_expires_at', type: 'datetime_immutable', nullable: true)]
@@ -80,40 +81,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
     // --- 2FA TOTP ---
 
     #[ORM\Column(name: 'totp_secret', length: 255, nullable: true)]
+    #[Ignore]
     private ?string $totpSecret = null;
-
-    /** @var Collection<int, CommunityPost> */
-    #[ORM\OneToMany(targetEntity: CommunityPost::class, mappedBy: 'author', orphanRemoval: true)]
-    private Collection $communityPosts;
 
     public function __construct()
     {
-        $this->communityPosts = new ArrayCollection();
-    }
-
-    /**
-     * @return Collection<int, CommunityPost>
-     */
-    public function getCommunityPosts(): Collection
-    {
-        return $this->communityPosts;
-    }
-
-    public function addCommunityPost(CommunityPost $post): self
-    {
-        if (!$this->communityPosts->contains($post)) {
-            $this->communityPosts->add($post);
-            $post->setAuthor($this);
-        }
-
-        return $this;
-    }
-
-    public function removeCommunityPost(CommunityPost $post): self
-    {
-        $this->communityPosts->removeElement($post);
-
-        return $this;
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -143,6 +116,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
         return $this;
     }
 
+    /**
+     * Returns the hashed password for Symfony Security internals only.
+     * Never expose this value in controllers, serializers, templates, or logs.
+     */
+    #[Ignore]
     public function getPassword(): ?string
     {
         return $this->password;
@@ -209,7 +187,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
         return $this;
     }
 
-    public function getResetToken(): ?string
+    protected function getResetToken(): ?string
     {
         return $this->resetToken;
     }
@@ -225,9 +203,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
         return $this->resetTokenExpiresAt;
     }
 
-    public function setResetTokenExpiresAt(?\DateTimeImmutable $resetTokenExpiresAt): static
+    public function expireResetToken(): static
     {
-        $this->resetTokenExpiresAt = $resetTokenExpiresAt;
+        $this->resetTokenExpiresAt = null;
+        return $this;
+    }
+
+    public function setResetTokenExpiry(\DateTimeImmutable $expiresAt): static
+    {
+        $this->resetTokenExpiresAt = $expiresAt;
         return $this;
     }
 
@@ -235,7 +219,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
 
     public function getUserIdentifier(): string
     {
-        return $this->email ?? $this->username;
+        return $this->username;
     }
 
     public function getRoles(): array
@@ -260,17 +244,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
 
     public function getDisplayName(): string
     {
-        return $this->fullName ?? $this->username ?? 'User';
+        return $this->fullName ?? $this->username;
     }
 
     public function getRoleDisplayName(): string
     {
         return match (strtoupper($this->role ?? '')) {
-            'ADMIN' => 'Administrator',
+            'ADMIN' => 'Administrateur',
             'USER' => 'Freelancer',
-            'EMPLOYER' => 'Client',
-            'TRAINER' => 'Trainer',
-            default => 'User',
+            'EMPLOYER' => 'Employeur',
+            'TRAINER' => 'Formateur',
+            default => 'Utilisateur',
         };
     }
 
@@ -308,7 +292,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
         return new TotpConfiguration($this->totpSecret, TotpConfiguration::ALGORITHM_SHA1, 30, 6);
     }
 
-    public function getTotpSecret(): ?string { return $this->totpSecret; }
+    public function hasTotpSecret(): bool
+    {
+        return $this->totpSecret !== null && $this->totpSecret !== '';
+    }
+
+    public function ensureTotpSecret(string $totpSecret): static
+    {
+        if (!$this->hasTotpSecret()) {
+            $this->totpSecret = $totpSecret;
+        }
+
+        return $this;
+    }
+
+    public function getTotpSetupSecret(): ?string
+    {
+        return $this->totpSecret;
+    }
+
+    #[Ignore]
+    protected function getTotpSecret(): ?string { return $this->totpSecret; }
     public function setTotpSecret(?string $totpSecret): static { $this->totpSecret = $totpSecret; return $this; }
 
     // --- 2FA state ---
@@ -317,8 +321,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
     public function setTwoFactorEnabled(bool $enabled): static { $this->twoFactorEnabled = $enabled; return $this; }
 
     public function getTwoFactorEnabledAt(): ?\DateTimeImmutable { return $this->twoFactorEnabledAt; }
-    public function setTwoFactorEnabledAt(?\DateTimeImmutable $at): static { $this->twoFactorEnabledAt = $at; return $this; }
+    public function enableTwoFactor(?\DateTimeImmutable $at = null): static { $this->twoFactorEnabledAt = $at ?? new \DateTimeImmutable(); return $this; }
+    public function disableTwoFactor(): static { $this->twoFactorEnabledAt = null; return $this; }
 
     public function getTwoFactorLockedUntil(): ?\DateTimeImmutable { return $this->twoFactorLockedUntil; }
-    public function setTwoFactorLockedUntil(?\DateTimeImmutable $until): static { $this->twoFactorLockedUntil = $until; return $this; }
+    public function lockTwoFactorUntil(?\DateTimeImmutable $until): static { $this->twoFactorLockedUntil = $until; return $this; }
 }

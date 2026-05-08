@@ -41,14 +41,14 @@
     </div>
 
     {# Right form panel #}
-    <div class="flex w-full lg:w-1/2 items-center justify-center p-6 sm:p-12">
+    <div class="flex w-full lg:w-1/2 items-center justify-center p-6 sm:p-12 relative z-10 font-spatial">
         <div class="w-full max-w-md space-y-6">
             {# Mobile logo #}
             <a href="{{ path('app_home') }}" class="flex items-center gap-2 lg:hidden transition-opacity hover:opacity-80">
                 <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
                     S
                 </div>
-                <span class="text-lg font-semibold">Skilora</span>
+                <span class="text-lg font-semibold tracking-label">Skilora</span>
             </a>
 
             {% block content %}{% endblock %}

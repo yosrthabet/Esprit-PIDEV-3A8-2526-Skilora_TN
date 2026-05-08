@@ -1,0 +1,41 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Formation Materials{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="glass-panel p-8">
+        <p class="text-xs font-bold uppercase tracking-label text-primary">Materials library</p>
+        <h1 class="mt-2 text-3xl font-light tracking-holographic">{{ formation.title }}</h1>
+        <p class="mt-2 text-muted-foreground">Manage all resources attached to your modules.</p>
+        <div class="mt-5 flex flex-wrap gap-2"><a href="{{ path('app_trainer_formation_modules', {id: formation.id}) }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Back to modules</a><a href="{{ path('app_trainer_formations') }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Catalog</a></div>
+    </section>
+    <section class="space-y-4">
+        {% for module in formation.modules %}
+            <article class="glass-panel p-5">
+                <h2 class="text-lg font-semibold">{{ module.position }}. {{ module.title }}</h2>
+                <form method="post" action="{{ path('app_trainer_formation_material_add', {id: formation.id, moduleId: module.id}) }}" class="mt-4 grid gap-3 md:grid-cols-[1fr_120px_1fr_auto]">
+                    <input type="hidden" name="_token" value="{{ csrf_token('trainer_material_' ~ formation.id ~ '_' ~ module.id) }}">
+                    <input name="title" required placeholder="Resource title" class="h-10 rounded-xl border border-border bg-background/70 px-3 text-sm">
+                    <input name="kind" placeholder="link" class="h-10 rounded-xl border border-border bg-background/70 px-3 text-sm">
+                    <input name="resource_url" required placeholder="https://..." class="h-10 rounded-xl border border-border bg-background/70 px-3 text-sm">
+                    <button class="rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground">Add</button>
+                </form>
+                <div class="mt-4 space-y-2">
+                    {% for material in module.materials %}
+                        <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-background/50 px-3 py-2">
+                            <a href="{{ material.resourceUrl }}" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold hover:text-primary">{{ material.position }}. {{ material.title }} <span class="text-xs text-muted-foreground">{{ material.kind }}</span></a>
+                            <form method="post" action="{{ path('app_trainer_formation_material_delete', {id: formation.id, moduleId: module.id, materialId: material.id}) }}" onsubmit="return confirm('Delete this material?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('trainer_material_delete_' ~ formation.id ~ '_' ~ material.id) }}">
+                                <button class="text-sm font-bold text-destructive">Delete</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-muted-foreground">No materials for this module yet.</p>
+                    {% endfor %}
+                </div>
+            </article>
+        {% else %}
+            <div class="glass-panel p-10 text-center text-muted-foreground">Add modules before managing materials.</div>
+        {% endfor %}
+    </section>
+</div>
+{% endblock %}

@@ -20,9 +20,11 @@ final class BaseUrlResolver
      */
     public function resolveLanBaseUrl(): array
     {
-        $configured = trim((string) ($_ENV['APP_URL'] ?? ''));
+        $configuredEnv = $_ENV['APP_URL'] ?? '';
+        $configured = is_scalar($configuredEnv) ? trim((string) $configuredEnv) : '';
         if ('' !== $configured && $this->isHostReachable($configured)) {
-            $host = (string) parse_url($configured, PHP_URL_HOST);
+            $parsedHost = parse_url($configured, PHP_URL_HOST);
+            $host = is_string($parsedHost) ? $parsedHost : '';
             $port = (int) (parse_url($configured, PHP_URL_PORT) ?: $this->resolvePort());
 
             return [
@@ -48,7 +50,8 @@ final class BaseUrlResolver
 
     private function resolvePort(): int
     {
-        $configured = trim((string) ($_ENV['APP_URL'] ?? ''));
+        $configuredEnv = $_ENV['APP_URL'] ?? '';
+        $configured = is_scalar($configuredEnv) ? trim((string) $configuredEnv) : '';
         if ('' !== $configured) {
             $parsedPort = parse_url($configured, PHP_URL_PORT);
             if (\is_int($parsedPort) && $parsedPort > 0) {
@@ -56,7 +59,8 @@ final class BaseUrlResolver
             }
         }
 
-        $envPort = (int) ($_ENV['APP_PORT'] ?? self::DEFAULT_PORT);
+        $envPortValue = $_ENV['APP_PORT'] ?? self::DEFAULT_PORT;
+        $envPort = is_numeric($envPortValue) ? (int) $envPortValue : self::DEFAULT_PORT;
 
         return $envPort > 0 ? $envPort : self::DEFAULT_PORT;
     }
@@ -71,7 +75,8 @@ final class BaseUrlResolver
             return [$serverAddr, 'server_addr', 'server'];
         }
 
-        $hostnameIp = gethostbyname(gethostname());
+        $hostname = gethostname();
+        $hostnameIp = is_string($hostname) ? gethostbyname($hostname) : '';
         if ($this->isLanIp($hostnameIp)) {
             return [$hostnameIp, 'hostname', 'dns'];
         }

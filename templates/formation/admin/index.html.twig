@@ -1,0 +1,21 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Admin Formations{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="glass-panel flex flex-wrap items-center justify-between gap-4 p-8">
+        <div><p class="text-xs font-bold uppercase tracking-label text-primary">Admin supervision</p><h1 class="mt-2 text-4xl font-light tracking-holographic">Formation review queue.</h1></div>
+        <a href="{{ path('app_admin_formation_new') }}" class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">New formation</a>
+    </section>
+    <section class="grid gap-4 lg:grid-cols-2">
+        {% for formation in formations %}
+            <a href="{{ path('app_admin_formation_show', {id: formation.id}) }}" class="glass-panel p-5 transition hover:border-primary/40">
+                <span class="rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">{{ formation.status.value|title }}</span>
+                <h2 class="mt-4 text-xl font-semibold">{{ formation.title ?: 'Untitled formation' }}</h2>
+                <p class="mt-2 text-sm text-muted-foreground">{{ formation.trainer.displayName }} · {{ formation.modules|length }} modules · {{ formation.enrollments|length }} students</p>
+            </a>
+        {% else %}
+            <div class="glass-panel col-span-full p-12 text-center text-muted-foreground">No formations have been created yet.</div>
+        {% endfor %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{
+  "name": "Skilora",
+  "short_name": "Skilora",
+  "description": "The freelance & learning platform for professionals.",
+  "start_url": "/workspace",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Trouver un emploi",
+      "url": "/offres",
+      "description": "Parcourir les offres d'emploi"
+    },
+    {
+      "name": "Mes formations",
+      "url": "/mes-formations",
+      "description": "Continuer une formation"
+    }
+  ]
+}

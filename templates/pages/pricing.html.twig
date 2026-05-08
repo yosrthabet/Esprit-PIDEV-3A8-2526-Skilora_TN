@@ -1,0 +1,117 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pricing — Skilora{% endblock %}
+
+{% block head %}
+{{ parent() }}
+<script>document.documentElement.classList.remove('dark');</script>
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-zinc-950 text-white">
+
+    <section class="relative pt-32 pb-16 px-6 overflow-hidden">
+        <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:80px_80px] pointer-events-none"></div>
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold mb-4">Pricing</p>
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight leading-[0.95] mb-6">
+                Simple, transparent<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">for everyone.</span>
+            </h1>
+            <p class="text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                Zero hidden fees. No subscription lock-in. Pay only for what you use. Freelancers keep what they earn.
+            </p>
+        </div>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-6 pb-24 grid md:grid-cols-3 gap-6">
+        {% set plans = [
+            {
+                name: 'Freelancer',
+                price: 'Free',
+                period: 'forever',
+                desc: 'For individual talent getting started.',
+                features: ['Unlimited profile visibility','Apply to 20 projects/month','Basic AI matching','Community access','Standard support'],
+                cta: 'Join Free',
+                cta_route: 'app_register',
+                highlight: false,
+            },
+            {
+                name: 'Pro',
+                price: '29 DT',
+                period: '/month',
+                desc: 'For serious freelancers who want priority.',
+                features: ['Everything in Freelancer','Unlimited project applications','Priority AI matching (top 20%)','Featured profile badge','Direct client messaging','Priority support','Certificate generation'],
+                cta: 'Upgrade to Pro',
+                cta_route: 'app_register',
+                highlight: true,
+            },
+            {
+                name: 'Business',
+                price: '99 DT',
+                period: '/month',
+                desc: 'For teams and agencies scaling fast.',
+                features: ['Everything in Pro','Team member invites (up to 5)','Dedicated account manager','Custom contract templates','Advanced analytics dashboard','API access','White-label proposals'],
+                cta: 'Contact Sales',
+                cta_route: 'app_about',
+                highlight: false,
+            },
+        ] %}
+        {% for plan in plans %}
+        <div class="relative p-8 rounded-2xl border {{ plan.highlight ? 'border-indigo-500/50 bg-gradient-to-b from-indigo-500/5 to-zinc-900/50' : 'border-zinc-800 bg-zinc-900/20' }} flex flex-col">
+            {% if plan.highlight %}
+                <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">Most Popular</span>
+            {% endif %}
+            <h3 class="text-xl font-bold mb-2">{{ plan.name }}</h3>
+            <div class="flex items-baseline gap-1 mb-4">
+                <span class="text-4xl font-black">{{ plan.price }}</span>
+                <span class="text-sm text-zinc-500">{{ plan.period }}</span>
+            </div>
+            <p class="text-sm text-zinc-400 mb-8">{{ plan.desc }}</p>
+            <ul class="space-y-3 mb-8 flex-1">
+                {% for feat in plan.features %}
+                <li class="flex items-start gap-2.5 text-sm">
+                    <svg class="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span class="text-zinc-300">{{ feat }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="{{ path(plan.cta_route) }}" class="inline-flex items-center justify-center w-full py-3 rounded-xl {{ plan.highlight ? 'bg-indigo-600 text-white font-bold hover:bg-indigo-500' : 'border border-zinc-700 text-white font-semibold hover:border-zinc-500' }} transition-colors">
+                {{ plan.cta }}
+            </a>
+        </div>
+        {% endfor %}
+    </section>
+
+    <section class="max-w-4xl mx-auto px-6 pb-24">
+        <h2 class="text-2xl font-bold mb-8 text-center">Frequently asked questions</h2>
+        <div class="space-y-4" x-data="{ open: null }">
+            {% set faqs = [
+                { q: 'Is there a fee for freelancers?', a: 'No. Skilora is free for freelancers on the Starter plan. We take a small 5% platform fee only on paid invoices — lower than most global platforms.' },
+                { q: 'Can I cancel my Pro plan anytime?', a: 'Absolutely. No contracts, no cancellation fees. Downgrade back to Free at any time with one click.' },
+                { q: 'What payment methods do you support?', a: 'We support D17, CIB, and international cards via Stripe. Employers can also pay via bank transfer for invoices above 5,000 DT.' },
+                { q: 'Do you offer refunds?', a: 'Pro plan subscriptions come with a 14-day money-back guarantee. No questions asked.' },
+            ] %}
+            {% for faq in faqs %}
+            <div class="rounded-xl border border-zinc-800 bg-zinc-900/20 overflow-hidden">
+                <button @click="open === {{ loop.index0 }} ? open = null : open = {{ loop.index0 }}"
+                        class="w-full flex items-center justify-between px-6 py-4 text-left font-medium text-sm hover:bg-zinc-900/40 transition-colors">
+                    {{ faq.q }}
+                    <svg class="w-4 h-4 text-zinc-500 transition-transform shrink-0 ml-4" :class="open === {{ loop.index0 }} && 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="open === {{ loop.index0 }}" x-collapse class="px-6 pb-4 text-sm text-zinc-400 leading-relaxed">
+                    {{ faq.a }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <footer class="bg-zinc-950 text-white border-t border-zinc-800 py-12 px-6">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="font-black text-xl tracking-tight">SKILORA</p>
+            <p class="text-sm text-zinc-500">&copy; {{ 'now'|date('Y') }} Skilora. All rights reserved.</p>
+        </div>
+    </footer>
+</div>
+{% endblock %}

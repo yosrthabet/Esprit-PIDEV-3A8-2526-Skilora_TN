@@ -1,0 +1,42 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Community{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="glass-panel flex flex-wrap items-center justify-between gap-4 p-8">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-label text-primary">Community feed</p>
+            <h1 class="mt-2 text-4xl font-light tracking-holographic">Share progress, ask questions, find collaborators.</h1>
+        </div>
+        {% if not app.user.admin %}
+            <a href="{{ path('app_community_post_new') }}" class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">New post</a>
+        {% endif %}
+        <div class="w-full">{% include 'community/_tabs.html.twig' %}</div>
+    </section>
+
+    <section class="space-y-4">
+        {% for post in posts %}
+            <article class="glass-panel p-5">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <p class="font-semibold">{{ post.author.displayName }}</p>
+                        <p class="text-xs text-muted-foreground">{{ post.createdAt|date('M d, Y H:i') }}</p>
+                    </div>
+                    <span class="rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">{{ post.likesCount }} likes · {{ post.commentsCount }} comments</span>
+                </div>
+                <p class="mt-4 whitespace-pre-line text-sm leading-6 text-foreground">{{ post.content }}</p>
+                <div class="mt-5 flex flex-wrap gap-2">
+                    <a href="{{ path('app_community_post_show', {id: post.id}) }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Open thread</a>
+                    {% if not app.user.admin %}
+                        <form method="post" action="{{ path('app_community_post_like', {id: post.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('community_like_' ~ post.id) }}">
+                            <button class="rounded-xl border border-border px-4 py-2 text-sm font-bold">{{ post.id in liked_post_ids ? 'Unlike' : 'Like' }}</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </article>
+        {% else %}
+            <div class="glass-panel p-12 text-center text-muted-foreground">No community posts yet. Start the first discussion.</div>
+        {% endfor %}
+    </section>
+</div>
+{% endblock %}

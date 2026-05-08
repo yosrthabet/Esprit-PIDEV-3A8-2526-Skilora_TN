@@ -1,4 +1,4 @@
-{% extends 'layouts/app.html.twig' %}
+{% extends 'layouts/adaptive.html.twig' %}
 
 {% block page_title %}Settings{% endblock %}
 
@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-2xl space-y-6">
+<div class="mx-auto max-w-2xl space-y-6 relative z-10 font-spatial">
 
     {# Flash messages #}
     {% for msg in app.flashes('success') %}
@@ -46,9 +46,9 @@
 
         {# Tab: Account #}
         <div x-show="tab === 'account'" x-cloak>
-            <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <div class="glass-panel overflow-hidden">
                 <div class="flex flex-col space-y-1.5 p-6">
-                    <h3 class="font-semibold leading-none tracking-tight">Account Information</h3>
+                    <h3 class="font-semibold leading-none tracking-label">Account Information</h3>
                     <p class="text-sm text-muted-foreground">Update your name and email address.</p>
                 </div>
                 <form action="{{ path('app_settings_profile') }}" method="post">
@@ -78,9 +78,9 @@
 
         {# Tab: Password #}
         <div x-show="tab === 'password'" x-cloak>
-            <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <div class="glass-panel overflow-hidden">
                 <div class="flex flex-col space-y-1.5 p-6">
-                    <h3 class="font-semibold leading-none tracking-tight">Change Password</h3>
+                    <h3 class="font-semibold leading-none tracking-label">Change Password</h3>
                     <p class="text-sm text-muted-foreground">Update your password. Use at least 6 characters.</p>
                 </div>
                 <form action="{{ path('app_settings_password') }}" method="post">
@@ -116,11 +116,11 @@
         <div x-show="tab === 'security'" x-cloak class="space-y-6">
 
             {# ── Two-Factor Authentication ───────────────────────── #}
-            <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <div class="glass-panel overflow-hidden">
                 <div class="flex flex-col space-y-1.5 p-6">
                     <div class="flex items-center gap-2">
                         <i data-lucide="shield-check" class="h-5 w-5 text-primary"></i>
-                        <h3 class="font-semibold leading-none tracking-tight">Two-Factor Authentication</h3>
+                        <h3 class="font-semibold leading-none tracking-label">Two-Factor Authentication</h3>
                     </div>
                     <p class="text-sm text-muted-foreground">Add an extra layer of security with TOTP authenticator apps.</p>
                 </div>
@@ -188,11 +188,11 @@
             </div>
 
             {# ── Connected Accounts ──────────────────────────────── #}
-            <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <div class="glass-panel overflow-hidden">
                 <div class="flex flex-col space-y-1.5 p-6">
                     <div class="flex items-center gap-2">
                         <i data-lucide="link" class="h-5 w-5 text-primary"></i>
-                        <h3 class="font-semibold leading-none tracking-tight">Connected Accounts</h3>
+                        <h3 class="font-semibold leading-none tracking-label">Connected Accounts</h3>
                     </div>
                     <p class="text-sm text-muted-foreground">Manage third-party login providers linked to your account.</p>
                 </div>
@@ -226,14 +226,14 @@
             </div>
 
             {# ── Active Sessions ─────────────────────────────────── #}
-            <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <div class="glass-panel overflow-hidden">
 
             {# ── Passkeys / Biometric Login ──────────────────────── #}
-            <div x-data="passkeyManager()" class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <div x-data="passkeyManager()" class="glass-panel overflow-hidden">
                 <div class="flex flex-col space-y-1.5 p-6">
                     <div class="flex items-center gap-2">
                         <i data-lucide="fingerprint" class="h-5 w-5 text-primary"></i>
-                        <h3 class="font-semibold leading-none tracking-tight">Passkeys &amp; Biometric Login</h3>
+                        <h3 class="font-semibold leading-none tracking-label">Passkeys &amp; Biometric Login</h3>
                     </div>
                     <p class="text-sm text-muted-foreground">Sign in with Face ID, Touch ID, Windows Hello, or a security key. No password needed.</p>
                 </div>
@@ -366,11 +366,11 @@
             </div>
 
             {# ── Login History ───────────────────────────────────── #}
-            <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <div class="glass-panel overflow-hidden">
                 <div class="flex flex-col space-y-1.5 p-6">
                     <div class="flex items-center gap-2">
                         <i data-lucide="history" class="h-5 w-5 text-primary"></i>
-                        <h3 class="font-semibold leading-none tracking-tight">Login History</h3>
+                        <h3 class="font-semibold leading-none tracking-label">Login History</h3>
                     </div>
                     <p class="text-sm text-muted-foreground">Recent sign-in activity on your account.</p>
                 </div>
@@ -392,7 +392,7 @@
                                     {% for entry in login_history %}
                                         <tr>
                                             <td class="py-2.5">
-                                                {% if entry.status == 'success' %}
+                                                {% if entry.status.value == 'success' %}
                                                     <span class="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
                                                         <i data-lucide="check" class="h-3 w-3"></i> Success
                                                     </span>
@@ -404,14 +404,14 @@
                                             </td>
                                             <td class="py-2.5">
                                                 <span class="inline-flex items-center gap-1 text-xs text-muted-foreground capitalize">
-                                                    {% if entry.method == 'google' %}
+                                                    {% if entry.method and entry.method.value == 'google' %}
                                                         <svg class="h-3 w-3" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                                                    {% elseif entry.method == 'github' %}
+                                                    {% elseif entry.method and entry.method.value == 'github' %}
                                                         <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
                                                     {% else %}
                                                         <i data-lucide="key-round" class="h-3 w-3"></i>
                                                     {% endif %}
-                                                    {{ entry.method }}
+                                                    {{ entry.method ? entry.method.value : '—' }}
                                                 </span>
                                             </td>
                                             <td class="py-2.5 text-xs text-muted-foreground font-mono">{{ entry.ip }}</td>
@@ -445,12 +445,21 @@
                         this.gestureEnabled = !this.gestureEnabled;
                         if (this.gestureEnabled) {
                             localStorage.setItem('skilora_gesture_enabled', '1');
-                            if (window.SkiloraGestureUI) {
-                                window.SkiloraGestureUI.startStandby();
+                            /* Load gesture script on demand if not already loaded */
+                            function _enableStandby() {
+                                if (window.SkiloraGestureUI) window.SkiloraGestureUI.startStandby();
+                            }
+                            if (!window.SkiloraGesture) {
+                                var s = document.createElement('script');
+                                s.src = '{{ asset('js/hand-gesture.js') }}';
+                                s.onload = function() { _enableStandby(); };
+                                document.head.appendChild(s);
+                            } else {
+                                _enableStandby();
                             }
                         } else {
-                            localStorage.removeItem('skilora_gesture_enabled');
-                            localStorage.removeItem('skilora_gesture_active');
+                            localStorage.setItem('skilora_gesture_enabled', '0');
+                            localStorage.setItem('skilora_gesture_active', '0');
                             if (window.SkiloraGesture) {
                                 window.SkiloraGesture.stop();
                                 window.SkiloraGesture.stopStandby();
@@ -466,8 +475,8 @@
                     reset() {
                         localStorage.removeItem('skilora_gesture_prefs');
                         localStorage.removeItem('skilora_gesture_tutorial_seen');
-                        localStorage.removeItem('skilora_gesture_enabled');
-                        localStorage.removeItem('skilora_gesture_active');
+                        localStorage.setItem('skilora_gesture_enabled', '0');
+                        localStorage.setItem('skilora_gesture_active', '0');
                         this.gestureEnabled = false;
                         this.sensitivity = 5;
                         this.showPreview = true;
@@ -477,13 +486,13 @@
                         }
                     }
                 }"
-                 class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+                 class="glass-panel overflow-hidden">
                 <div class="flex flex-col space-y-1.5 p-6">
                     <div class="flex items-center gap-2">
                         <svg class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10.05 4.575a1.575 1.575 0 10-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 013.15 0v1.5m-3.15 0l.075 5.925m3.075-7.425a1.575 1.575 0 10-3.15 0v4.5m3.15-4.5a1.575 1.575 0 013.15 0v3.075M13.2 9.15v1.275a1.575 1.575 0 003.15 0V7.5m0 0a1.575 1.575 0 013.15 0v5.325a7.125 7.125 0 01-7.125 7.125H9.7a4.875 4.875 0 01-4.55-3.12 4.994 4.994 0 01-.237-.975l-.467-5.14a1.232 1.232 0 012.403-.516l.694 2.606"/>
                         </svg>
-                        <h3 class="font-semibold leading-none tracking-tight">Hand Gesture Control</h3>
+                        <h3 class="font-semibold leading-none tracking-label">Hand Gesture Control</h3>
                         <span class="ml-auto inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">ADVANCED</span>
                     </div>
                     <p class="text-sm text-muted-foreground">Control Skilora with hand gestures using your webcam. Point to move, pinch to click, palm to scroll.</p>
