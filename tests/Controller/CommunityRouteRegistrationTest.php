@@ -42,5 +42,10 @@ final class CommunityRouteRegistrationTest extends KernelTestCase
         yield 'blog' => ['app_community_blog'];
         yield 'blog-new' => ['app_community_blog_new'];
         yield 'blog-show' => ['app_community_blog_show'];
+        yield 'network' => ['app_community_network'];
+        yield 'invitation-send' => ['app_community_invitation_send'];
+        yield 'invitation-accept' => ['app_community_invitation_accept'];
+        yield 'invitation-decline' => ['app_community_invitation_decline'];
+        yield 'invitation-cancel' => ['app_community_invitation_cancel'];
     }
 }
