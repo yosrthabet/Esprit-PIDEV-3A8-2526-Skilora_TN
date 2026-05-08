@@ -1,0 +1,82 @@
+{% extends 'layouts/adaptive.html.twig' %}
+
+{% block page_title %}Candidate · {{ application.candidate.displayName }}{% endblock %}
+
+{% block content %}
+{% set candidate = application.candidate %}
+{% set job = application.jobOffer %}
+<div class="mx-auto grid max-w-[90rem] gap-6 px-4 py-6 lg:grid-cols-[1fr_24rem] sm:px-6 lg:px-8">
+    <article class="glass-panel p-8">
+        <a href="{{ path('app_applications') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"><i data-lucide="arrow-left" class="h-4 w-4"></i>Back to candidates</a>
+
+        <div class="mt-6 flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{{ application.status.label }}</span>
+            <span class="text-xs text-muted-foreground">Applied {{ application.appliedAt|date('M d, Y H:i') }}</span>
+        </div>
+
+        <div class="mt-5 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-label text-primary">Candidate profile</p>
+                <h1 class="mt-2 text-4xl font-light tracking-holographic">{{ candidate.displayName }}</h1>
+                {% if candidate.email %}<p class="mt-2 text-sm text-muted-foreground">{{ candidate.email }}</p>{% endif %}
+                <p class="mt-3 text-muted-foreground">Applied to <a href="{{ path('app_employer_offer_show', {id: job.id}) }}" class="font-semibold text-foreground hover:text-primary">{{ job.title }}</a></p>
+            </div>
+            <div class="grid min-w-64 grid-cols-2 gap-3 text-center">
+                <div class="rounded-2xl border border-border/50 bg-background/60 p-4"><p class="text-2xl font-light">{{ application.matchScore }}%</p><p class="text-[10px] uppercase tracking-label text-muted-foreground">match score</p></div>
+                <div class="rounded-2xl border border-border/50 bg-background/60 p-4"><p class="text-2xl font-light">{{ interview ? 'Yes' : 'No' }}</p><p class="text-[10px] uppercase tracking-label text-muted-foreground">interview</p></div>
+            </div>
+        </div>
+
+        <section class="mt-8 grid gap-4 md:grid-cols-2">
+            <div class="rounded-2xl border border-border/50 bg-background/60 p-5">
+                <h2 class="font-semibold">Job</h2>
+                <p class="mt-3 text-sm text-muted-foreground">{{ job.companyLabel }}{% if job.location %} · {{ job.location }}{% endif %}</p>
+                {% if job.workType %}<p class="mt-2 text-sm text-muted-foreground">{{ job.workType.value|replace({'_': ' '})|title }}</p>{% endif %}
+            </div>
+            <div class="rounded-2xl border border-border/50 bg-background/60 p-5">
+                <h2 class="font-semibold">Pipeline</h2>
+                <p class="mt-3 text-sm text-muted-foreground">Current status: <span class="font-semibold text-foreground">{{ application.status.label }}</span></p>
+                {% if hire_offer %}<p class="mt-2 text-sm text-muted-foreground">Hire offer: {{ hire_offer.status.value|title }}</p>{% endif %}
+            </div>
+        </section>
+
+        <section id="cover-letter" class="mt-8 space-y-3 {{ cover_letter_focus|default(false) ? 'rounded-2xl border border-primary/30 bg-primary/5 p-5' : '' }}">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h2 class="text-xl font-semibold">Cover letter</h2>
+                {% if application.coverLetter %}<a href="{{ path('app_employer_application_cover_letter', {id: application.id}) }}" class="text-sm font-semibold text-primary hover:underline">Dedicated view</a>{% endif %}
+            </div>
+            <p class="whitespace-pre-line rounded-2xl border border-border/50 bg-background/60 p-5 text-muted-foreground">{{ application.coverLetter ?: 'No cover letter attached.' }}</p>
+        </section>
+
+        <section class="mt-8 space-y-3">
+            <h2 class="text-xl font-semibold">Candidate CV</h2>
+            {% if application.cvPath %}
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ path('app_employer_applications_cv', {id: application.id, inline: 1}) }}" target="_blank" rel="noopener" class="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Open CV</a>
+                    <a href="{{ path('app_employer_applications_cv', {id: application.id}) }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Download CV</a>
+                </div>
+            {% else %}
+                <p class="rounded-2xl border border-border/50 bg-background/60 p-5 text-sm text-muted-foreground">No CV attached to this application.</p>
+            {% endif %}
+        </section>
+    </article>
+
+    <aside class="space-y-4 lg:sticky lg:top-24 lg:self-start">
+        <div class="glass-panel p-5">
+            <h2 class="font-semibold">Review actions</h2>
+            <div class="mt-4 grid gap-2">
+                {% for status in ['viewed', 'interview', 'rejected'] %}
+                    <form method="post" action="{{ path('app_application_status', {id: application.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('application_status_' ~ application.id) }}">
+                        <input type="hidden" name="status" value="{{ status }}">
+                        <button class="w-full rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">Mark {{ status|title }}</button>
+                    </form>
+                {% endfor %}
+            </div>
+        </div>
+        <a href="{{ path('app_application_interview', {id: application.id}) }}" class="block rounded-xl bg-primary px-4 py-3 text-center text-sm font-bold text-primary-foreground">Plan interview</a>
+        <a href="{{ path('app_application_offer', {id: application.id}) }}" class="block rounded-xl border border-border px-4 py-3 text-center text-sm font-semibold hover:bg-muted">Send hire offer</a>
+        <a href="{{ path('app_application_show', {id: application.id}) }}" class="block rounded-xl border border-border px-4 py-3 text-center text-sm font-semibold hover:bg-muted">Application detail</a>
+    </aside>
+</div>
+{% endblock %}

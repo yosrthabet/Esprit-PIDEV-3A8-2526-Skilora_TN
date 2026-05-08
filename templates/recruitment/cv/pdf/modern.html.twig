@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CV - {{ cv.fullName }}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #eef2f7; font-family: DejaVu Sans, sans-serif; color: #17324d; font-size: 10pt; }
+        .page { padding: 18pt 14pt; }
+        .sheet { background: #ffffff; border: 1pt solid #d8dde5; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        td { vertical-align: top; }
+        .side { width: 32%; padding: 20pt 16pt; background: #dce5ee; }
+        .main { padding: 0 22pt 20pt; background: #f8fafc; }
+        .photo { width: 112pt; height: 124pt; object-fit: cover; border: 3pt solid #f8fafc; margin-bottom: 15pt; }
+        .hero { margin: 22pt -22pt 17pt; padding: 18pt 22pt 15pt; background: #123f69; color: #ffffff; }
+        .name { margin: 0; font-size: 25pt; line-height: 1.2; font-weight: bold; }
+        .role { margin: 5pt 0 0; color: #d8e4f0; font-size: 13pt; }
+        h2 { margin: 15pt 0 8pt; color: #173e63; font-size: 16pt; }
+        .side-title { margin: 16pt 0 8pt; color: #173e63; font-size: 12pt; font-weight: bold; }
+        .side-line, .skill-line { margin: 0 0 7pt; color: #284f74; line-height: 1.35; }
+        .summary, .desc { color: #355a78; line-height: 1.55; text-align: justify; }
+        .item { margin-bottom: 11pt; page-break-inside: avoid; }
+        .item-title { margin: 0; color: #173e63; font-size: 10.8pt; font-weight: bold; }
+        .meta { margin: 2pt 0 0; color: #4e6f8a; font-style: italic; }
+        .duration { float: right; color: #4e6f8a; font-size: 9pt; font-style: italic; }
+        .chip { display: inline-block; margin: 0 4pt 5pt 0; padding: 3pt 8pt; border-radius: 9pt; background: #dfeaf4; color: #173e63; font-size: 8.7pt; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="sheet">
+        <table>
+            <tr>
+                <td class="side">
+                    {% if cv.photoDataUri %}<img src="{{ cv.photoDataUri }}" alt="" class="photo">{% endif %}
+                    <p class="side-title">Contact</p>
+                    <p class="side-line">{{ cv.email }}</p>
+                    {% if cv.phone %}<p class="side-line">{{ cv.phone }}</p>{% endif %}
+                    {% if cv.address %}<p class="side-line">{{ cv.address|nl2br }}</p>{% endif %}
+
+                    <p class="side-title">Skills</p>
+                    {% for skill in cv.skillsAsList() %}<p class="skill-line">{{ skill }}</p>{% endfor %}
+
+                    {% if cv.languagesAsList() is not empty %}
+                        <p class="side-title">Languages</p>
+                        {% for language in cv.languagesAsList() %}<p class="side-line">{{ language }}</p>{% endfor %}
+                    {% endif %}
+                </td>
+                <td class="main">
+                    <div class="hero">
+                        <p class="name">{{ cv.fullName }}</p>
+                        <p class="role">{{ cv.professionalTitle }}</p>
+                    </div>
+
+                    <h2>Profile</h2>
+                    <div class="summary">{{ cv.professionalSummary|nl2br }}</div>
+
+                    {% if cv.experience is not empty %}
+                        <h2>Experience</h2>
+                        {% for item in cv.experience %}
+                            <div class="item">
+                                {% if item.duration %}<span class="duration">{{ item.duration }}</span>{% endif %}
+                                <p class="item-title">{{ item.jobTitle }}</p>
+                                <p class="meta">{{ item.company }}</p>
+                                {% if item.description %}<div class="desc">{{ item.description|nl2br }}</div>{% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if cv.education is not empty %}
+                        <h2>Education</h2>
+                        {% for item in cv.education %}
+                            <div class="item">
+                                {% if item.year %}<span class="duration">{{ item.year }}</span>{% endif %}
+                                <p class="item-title">{{ item.degree }}</p>
+                                <p class="meta">{{ item.institution }}</p>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if cv.skillsAsList() is not empty %}
+                        <h2>Key skills</h2>
+                        <div>{% for skill in cv.skillsAsList() %}<span class="chip">{{ skill }}</span>{% endfor %}</div>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+</body>
+</html>

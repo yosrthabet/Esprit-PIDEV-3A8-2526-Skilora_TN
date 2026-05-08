@@ -45,6 +45,26 @@ class ApplicationSubmissionService
         }
 
         $relativePath = $this->storeCv($cv);
+        return $this->createApplication($candidate, $jobOffer, $relativePath, $coverLetter);
+    }
+
+    public function submitUsingExistingCvPath(User $candidate, JobOffer $jobOffer, string $relativeCvPath, ?string $coverLetter): Application
+    {
+        if (strtoupper($candidate->getRole() ?? '') === 'EMPLOYER') {
+            throw new \RuntimeException('Employers cannot apply to jobs.');
+        }
+        $existing = $this->applicationRepository->findOneBy(['candidate' => $candidate, 'jobOffer' => $jobOffer]);
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        $relativePath = $this->normalizeExistingCvPath($relativeCvPath);
+
+        return $this->createApplication($candidate, $jobOffer, $relativePath, $coverLetter);
+    }
+
+    private function createApplication(User $candidate, JobOffer $jobOffer, string $relativePath, ?string $coverLetter): Application
+    {
         $match = $this->jobMatchService->score($candidate, $jobOffer);
         $application = (new Application())
             ->setCandidate($candidate)
@@ -59,6 +79,43 @@ class ApplicationSubmissionService
         $this->entityManager->flush();
 
         return $application;
+    }
+
+    private function normalizeExistingCvPath(string $relativeCvPath): string
+    {
+        $relativeCvPath = trim(str_replace('\\', '/', $relativeCvPath));
+        if ($relativeCvPath === '' || str_contains($relativeCvPath, "\0") || str_starts_with($relativeCvPath, '/')) {
+            throw new \RuntimeException('Saved CV path is invalid.');
+        }
+
+        $parts = [];
+        foreach (explode('/', $relativeCvPath) as $part) {
+            if ($part === '' || $part === '.') {
+                continue;
+            }
+            if ($part === '..') {
+                throw new \RuntimeException('Saved CV path cannot contain path traversal.');
+            }
+            $parts[] = $part;
+        }
+        if ($parts === []) {
+            throw new \RuntimeException('Saved CV path is invalid.');
+        }
+
+        $normalized = implode('/', $parts);
+        $baseDir = realpath($this->cvUploadDir);
+        $fullPath = rtrim($this->cvUploadDir, '/\\') . '/' . $normalized;
+        $resolvedPath = realpath($fullPath);
+        if ($baseDir === false || $resolvedPath === false || !is_file($resolvedPath) || !is_readable($resolvedPath)) {
+            throw new \RuntimeException('Saved generated CV is not available.');
+        }
+
+        $baseDir = rtrim($baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (!str_starts_with($resolvedPath, $baseDir)) {
+            throw new \RuntimeException('Saved CV path must stay inside the CV upload directory.');
+        }
+
+        return $normalized;
     }
 
     private function storeCv(UploadedFile $file): string

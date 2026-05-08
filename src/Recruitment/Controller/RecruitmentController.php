@@ -119,6 +119,7 @@ class RecruitmentController extends AppController
                 'job' => $jobOffer,
                 'match' => $this->jobMatchService->score($user, $jobOffer),
                 'has_applied' => $this->applicationRepository->existsForUserAndJob($user, $jobOffer),
+                'saved_cv_relpath' => $request->getSession()->get('candidate_generated_cv_relpath'),
             ]);
         }
 
@@ -129,7 +130,16 @@ class RecruitmentController extends AppController
         try {
             if (!$this->applicationRepository->existsForUserAndJob($user, $jobOffer)) {
                 $cv = $request->files->get('cv');
-                $this->applicationSubmissionService->submit($user, $jobOffer, $cv instanceof UploadedFile ? $cv : null, $request->request->getString('cover_letter'));
+                $coverLetter = $request->request->getString('cover_letter');
+                if ($request->request->getBoolean('use_generated_cv')) {
+                    $savedCv = $request->getSession()->get('candidate_generated_cv_relpath');
+                    if (!is_string($savedCv) || trim($savedCv) === '') {
+                        throw new \RuntimeException('No generated CV is available. Create one or upload a CV file.');
+                    }
+                    $this->applicationSubmissionService->submitUsingExistingCvPath($user, $jobOffer, $savedCv, $coverLetter);
+                } else {
+                    $this->applicationSubmissionService->submit($user, $jobOffer, $cv instanceof UploadedFile ? $cv : null, $coverLetter);
+                }
                 $this->addFlash('success', 'Application sent. Track it from your pipeline.');
             } else {
                 $this->addFlash('info', 'You already applied to this job.');
@@ -224,6 +234,51 @@ class RecruitmentController extends AppController
             throw $this->createAccessDeniedException();
         }
 
+        return $this->buildApplicationCvResponse($request, $application);
+    }
+
+    #[Route('/employer/candidatures/{id}/cv', name: 'app_employer_applications_cv', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_EMPLOYER')]
+    public function employerApplicationCv(Request $request, Application $application): BinaryFileResponse
+    {
+        $this->applicationPipelineService->assertEmployerManages($this->getAppUser(), $application);
+
+        return $this->buildApplicationCvResponse($request, $application);
+    }
+
+    #[Route('/applications/{id}/profile', name: 'app_application_profile', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[Route('/employer/candidatures/{id}/profil', name: 'app_employer_applications_profile', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_EMPLOYER')]
+    public function applicationProfile(Application $application): Response
+    {
+        $this->applicationPipelineService->assertEmployerManages($this->getAppUser(), $application);
+
+        return $this->render('recruitment/employer/profile.html.twig', [
+            'application' => $application,
+            'interview' => $this->jobInterviewRepository->findOneForApplication($application),
+            'hire_offer' => $this->hireOfferRepository->findOneForApplication($application),
+        ]);
+    }
+
+    #[Route('/employer/candidatures/{id}/lettre', name: 'app_employer_application_cover_letter', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_EMPLOYER')]
+    public function applicationCoverLetter(Application $application): Response
+    {
+        $this->applicationPipelineService->assertEmployerManages($this->getAppUser(), $application);
+        if (trim($application->getCoverLetter() ?? '') === '') {
+            throw $this->createNotFoundException('No cover letter attached to this application.');
+        }
+
+        return $this->render('recruitment/employer/profile.html.twig', [
+            'application' => $application,
+            'interview' => $this->jobInterviewRepository->findOneForApplication($application),
+            'hire_offer' => $this->hireOfferRepository->findOneForApplication($application),
+            'cover_letter_focus' => true,
+        ]);
+    }
+
+    private function buildApplicationCvResponse(Request $request, Application $application): BinaryFileResponse
+    {
         $cvPath = $application->getCvPath();
         if ($cvPath === null) {
             throw $this->createNotFoundException('No CV attached to this application.');

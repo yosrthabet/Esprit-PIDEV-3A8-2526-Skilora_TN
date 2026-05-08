@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CV - {{ cv.fullName }}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 24pt 28pt; font-family: DejaVu Sans, sans-serif; color: #1f2937; font-size: 10pt; }
+        .header { text-align: center; border-bottom: 1.5pt solid #374151; padding-bottom: 13pt; margin-bottom: 16pt; }
+        .photo { max-height: 88px; border-radius: 50%; border: 1pt solid #d1d5db; margin-bottom: 8pt; }
+        h1 { margin: 0; font-size: 23pt; color: #111827; }
+        .title { margin: 5pt 0 8pt; color: #4b5563; font-size: 11pt; text-transform: uppercase; letter-spacing: .9pt; }
+        .contact { color: #4b5563; line-height: 1.5; }
+        h2 { margin: 15pt 0 7pt; padding-bottom: 4pt; border-bottom: .7pt solid #d1d5db; color: #111827; font-size: 11pt; text-transform: uppercase; letter-spacing: .8pt; }
+        .summary, .desc { line-height: 1.55; text-align: justify; }
+        .item { margin-bottom: 9pt; page-break-inside: avoid; }
+        .item-title { font-weight: bold; color: #111827; }
+        .meta { margin-top: 2pt; color: #6b7280; font-size: 9pt; }
+        .chip { display: inline-block; margin: 0 5pt 5pt 0; padding: 3pt 7pt; border: .6pt solid #d1d5db; background: #f9fafb; border-radius: 3pt; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if cv.photoDataUri %}<div><img src="{{ cv.photoDataUri }}" alt="" class="photo"></div>{% endif %}
+        <h1>{{ cv.fullName }}</h1>
+        <p class="title">{{ cv.professionalTitle }}</p>
+        <div class="contact">
+            <div>{{ cv.email }}{% if cv.phone %} | {{ cv.phone }}{% endif %}</div>
+            {% if cv.address %}<div>{{ cv.address|nl2br }}</div>{% endif %}
+        </div>
+    </div>
+
+    <h2>Profile</h2>
+    <div class="summary">{{ cv.professionalSummary|nl2br }}</div>
+
+    {% if cv.experience is not empty %}
+        <h2>Experience</h2>
+        {% for item in cv.experience %}
+            <div class="item">
+                <div class="item-title">{{ item.jobTitle }}</div>
+                <div class="meta">{{ item.company }}{% if item.duration %} | {{ item.duration }}{% endif %}</div>
+                {% if item.description %}<div class="desc">{{ item.description|nl2br }}</div>{% endif %}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if cv.education is not empty %}
+        <h2>Education</h2>
+        {% for item in cv.education %}
+            <div class="item">
+                <div class="item-title">{{ item.degree }}</div>
+                <div class="meta">{{ item.institution }}{% if item.year %} | {{ item.year }}{% endif %}</div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <h2>Skills</h2>
+    <div>{% for skill in cv.skillsAsList() %}<span class="chip">{{ skill }}</span>{% endfor %}</div>
+
+    {% if cv.languagesAsList() is not empty %}
+        <h2>Languages</h2>
+        <div>{% for language in cv.languagesAsList() %}<span class="chip">{{ language }}</span>{% endfor %}</div>
+    {% endif %}
+</body>
+</html>

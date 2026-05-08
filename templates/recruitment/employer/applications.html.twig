@@ -23,7 +23,7 @@
                 </div>
                 <div class="space-y-3">
                     {% for app_item in applications|filter(a => a.status.value == status) %}
-                        <a href="{{ path('app_application_show', {id: app_item.id}) }}" class="block rounded-2xl border border-border/50 bg-background/60 p-4 transition hover:border-primary/40">
+                        <a href="{{ path('app_application_profile', {id: app_item.id}) }}" class="block rounded-2xl border border-border/50 bg-background/60 p-4 transition hover:border-primary/40">
                             <p class="font-semibold">{{ app_item.candidate.displayName }}</p>
                             <p class="mt-1 line-clamp-1 text-xs text-muted-foreground">{{ app_item.jobOffer.title }}</p>
                             <p class="mt-3 text-xs text-muted-foreground">{{ app_item.matchScore }}% match · {{ app_item.appliedAt|date('M d') }}</p>
