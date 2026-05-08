@@ -1,0 +1,49 @@
+{% extends 'layouts/adaptive.html.twig' %}
+
+{% block page_title %}Escrow Ledger{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="glass-panel p-8">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-label text-primary">Internal escrow ledger</p>
+                <h1 class="mt-2 text-4xl font-light tracking-holographic">Escrow transactions</h1>
+                <p class="mt-2 max-w-3xl text-sm text-muted-foreground">These entries are internal platform ledger state created by contract actions. They do not represent real payment gateway movement.</p>
+            </div>
+            <a href="{{ path('app_finance') }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold transition hover:border-primary/50">Finance dashboard</a>
+        </div>
+    </section>
+
+    <section class="glass-panel overflow-hidden p-5">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-border text-left text-xs uppercase tracking-label text-muted-foreground">
+                        <th class="py-3 pr-4 font-semibold">Type</th>
+                        <th class="py-3 pr-4 font-semibold">Contract</th>
+                        <th class="py-3 pr-4 font-semibold">Status</th>
+                        <th class="py-3 pr-4 text-right font-semibold">Amount</th>
+                        <th class="py-3 text-right font-semibold">Created</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border/50">
+                    {% for transaction in transactions %}
+                        {% set contract = transaction.contract %}
+                        {% set application = contract.hireOffer.application %}
+                        <tr>
+                            <td class="py-3 pr-4"><span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ transaction.type.label }}</span></td>
+                            <td class="py-3 pr-4"><a href="{{ path('app_contract_show', {id: contract.id}) }}" class="font-medium hover:text-primary">{{ application.jobOffer.title }}</a></td>
+                            <td class="py-3 pr-4 text-muted-foreground">{{ transaction.status|title }}</td>
+                            <td class="py-3 pr-4 text-right font-semibold">{{ transaction.amount ?: '0.00' }} {{ transaction.currency.value }}</td>
+                            <td class="py-3 text-right text-muted-foreground">{{ transaction.createdAt|date('M d, Y H:i') }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="5" class="py-12 text-center text-muted-foreground">No escrow ledger entries yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

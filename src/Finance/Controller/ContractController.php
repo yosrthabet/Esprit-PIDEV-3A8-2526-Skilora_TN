@@ -26,7 +26,6 @@ class ContractController extends AppController
     }
 
     #[Route('/contracts', name: 'app_contracts', methods: ['GET'])]
-    #[Route('/finance', name: 'app_finance', methods: ['GET'])]
     public function index(): Response
     {
         return $this->render('finance/contracts/index.html.twig', [

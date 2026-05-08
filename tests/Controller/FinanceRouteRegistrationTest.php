@@ -22,6 +22,14 @@ final class FinanceRouteRegistrationTest extends KernelTestCase
 
     public static function routeNames(): iterable
     {
+        yield 'finance-dashboard' => ['app_finance'];
+        yield 'finance-invoices' => ['app_finance_invoices'];
+        yield 'finance-invoice-show' => ['app_finance_invoice_show'];
+        yield 'finance-escrow' => ['app_finance_escrow'];
+        yield 'old-freelancer-invoices' => ['app_freelancer_invoices'];
+        yield 'old-employer-invoices' => ['app_employer_invoices'];
+        yield 'old-invoice-show' => ['app_invoice_show'];
+        yield 'old-escrow' => ['app_escrow_index'];
         yield 'contracts' => ['app_contracts'];
         yield 'contract-show' => ['app_contract_show'];
         yield 'fund' => ['app_contract_fund'];

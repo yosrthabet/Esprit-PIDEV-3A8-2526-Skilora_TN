@@ -1,0 +1,134 @@
+{% extends 'layouts/adaptive.html.twig' %}
+
+{% block page_title %}Finance{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="glass-panel overflow-hidden p-8">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-label text-primary">Finance dashboard</p>
+                <h1 class="mt-2 text-4xl font-light tracking-holographic">Contracts, invoices, and escrow ledger</h1>
+                <p class="mt-2 max-w-3xl text-sm text-muted-foreground">This overview uses the internal finance ledger from accepted hire offers. Escrow entries are platform state only and do not represent external payment gateway movement.</p>
+            </div>
+            <a href="{{ path('app_contracts') }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold transition hover:border-primary/50">View contracts</a>
+        </div>
+    </section>
+
+    <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <article class="glass-panel p-5">
+            <p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Contracts</p>
+            <p class="mt-3 text-3xl font-light">{{ contract_count }}</p>
+            <p class="mt-1 text-xs text-muted-foreground">visible contracts</p>
+        </article>
+        <article class="glass-panel p-5">
+            <p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Active escrow</p>
+            <p class="mt-3 text-3xl font-light">{{ active_escrow_total|number_format(2, '.', ',') }}</p>
+            <p class="mt-1 text-xs text-muted-foreground">funded internally, not released</p>
+        </article>
+        <article class="glass-panel p-5">
+            <p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Paid invoices</p>
+            <p class="mt-3 text-3xl font-light">{{ paid_invoice_total|number_format(2, '.', ',') }}</p>
+            <p class="mt-1 text-xs text-muted-foreground">total paid invoice value</p>
+        </article>
+        <article class="glass-panel p-5">
+            <p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Open disputes</p>
+            <p class="mt-3 text-3xl font-light">{{ open_dispute_count }}</p>
+            <p class="mt-1 text-xs text-muted-foreground">requiring review</p>
+        </article>
+    </section>
+
+    <section class="glass-panel p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="text-xl font-semibold">Contract status</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Counts across contracts where you are the employer or freelancer.</p>
+            </div>
+        </div>
+        <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {% for status, count in status_counts %}
+                <div class="rounded-2xl border border-border/60 bg-background/60 p-4">
+                    <p class="text-2xl font-light">{{ count }}</p>
+                    <p class="mt-1 text-xs font-bold uppercase tracking-label text-muted-foreground">{{ status|replace({'_': ' '})|title }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
+        <article class="glass-panel p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-semibold">Recent escrow ledger</h2>
+                    <p class="mt-1 text-sm text-muted-foreground">Internal ledger events created by contract finance actions.</p>
+                </div>
+            </div>
+            <div class="mt-4 overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-border text-left text-xs uppercase tracking-label text-muted-foreground">
+                            <th class="py-3 pr-4 font-semibold">Type</th>
+                            <th class="py-3 pr-4 font-semibold">Contract</th>
+                            <th class="py-3 pr-4 text-right font-semibold">Amount</th>
+                            <th class="py-3 text-right font-semibold">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border/50">
+                        {% for transaction in recent_transactions %}
+                            {% set contract = transaction.contract %}
+                            {% set application = contract.hireOffer.application %}
+                            <tr>
+                                <td class="py-3 pr-4"><span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ transaction.type.label }}</span></td>
+                                <td class="py-3 pr-4"><a href="{{ path('app_contract_show', {id: contract.id}) }}" class="font-medium hover:text-primary">{{ application.jobOffer.title }}</a></td>
+                                <td class="py-3 pr-4 text-right font-semibold">{{ transaction.amount ?: '0.00' }} {{ transaction.currency.value }}</td>
+                                <td class="py-3 text-right text-muted-foreground">{{ transaction.createdAt|date('M d, Y') }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4" class="py-8 text-center text-muted-foreground">No escrow ledger entries yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <aside class="space-y-6">
+            <section class="glass-panel p-5">
+                <h2 class="text-xl font-semibold">Open disputes</h2>
+                <div class="mt-4 space-y-3">
+                    {% for dispute in open_disputes %}
+                        {% set contract = dispute.contract %}
+                        {% set application = contract.hireOffer.application %}
+                        <article class="rounded-2xl border border-border/60 bg-background/60 p-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="font-semibold">{{ dispute.reason }}</p>
+                                    <p class="mt-1 text-xs text-muted-foreground">{{ application.jobOffer.title }} · {{ dispute.createdAt|date('M d, Y') }}</p>
+                                </div>
+                                <a href="{{ path('app_contract_show', {id: contract.id}) }}" class="rounded-xl border border-border px-3 py-2 text-xs font-bold">Open</a>
+                            </div>
+                        </article>
+                    {% else %}
+                        <p class="rounded-2xl border border-border/60 bg-background/60 p-4 text-sm text-muted-foreground">No open disputes.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="glass-panel p-5">
+                <h2 class="text-xl font-semibold">Recent contracts</h2>
+                <div class="mt-4 space-y-3">
+                    {% for contract in contracts %}
+                        {% set application = contract.hireOffer.application %}
+                        <a href="{{ path('app_contract_show', {id: contract.id}) }}" class="block rounded-2xl border border-border/60 bg-background/60 p-4 transition hover:border-primary/40">
+                            <span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ contract.status.label }}</span>
+                            <p class="mt-3 font-semibold">{{ application.jobOffer.title }}</p>
+                            <p class="mt-1 text-xs text-muted-foreground">{{ contract.amount ?: 'Negotiable' }} {{ contract.currency.value }}</p>
+                        </a>
+                    {% else %}
+                        <p class="rounded-2xl border border-border/60 bg-background/60 p-4 text-sm text-muted-foreground">No contracts yet.</p>
+                    {% endfor %}
+                </div>
+            </section>
+        </aside>
+    </section>
+</div>
+{% endblock %}
