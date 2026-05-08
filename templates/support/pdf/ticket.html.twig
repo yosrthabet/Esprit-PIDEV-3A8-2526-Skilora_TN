@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Support Ticket #{{ ticket.id }}</title>
+    <style>
+        body { color: #111827; font-family: Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.45; margin: 32px; }
+        h1, h2 { margin: 0; }
+        h1 { font-size: 26px; font-weight: 400; }
+        h2 { font-size: 16px; margin-bottom: 10px; }
+        .muted { color: #6b7280; }
+        .panel { border: 1px solid #e5e7eb; border-radius: 12px; margin-top: 18px; padding: 16px; }
+        .grid { display: table; width: 100%; }
+        .row { display: table-row; }
+        .cell { display: table-cell; padding: 4px 12px 4px 0; vertical-align: top; }
+        .label { color: #6b7280; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .message { border-top: 1px solid #e5e7eb; padding: 12px 0; }
+        .message:first-child { border-top: 0; }
+        .internal { background: #fffbeb; border: 1px solid #f59e0b; border-radius: 8px; padding: 8px; }
+        .preline { white-space: pre-line; }
+    </style>
+</head>
+<body>
+    <p class="label">{{ admin ? 'Admin support export' : 'Support export' }}</p>
+    <h1>Ticket #{{ ticket.id }}: {{ ticket.subject }}</h1>
+    <p class="muted">Generated {{ 'now'|date('Y-m-d H:i') }}</p>
+
+    <section class="panel">
+        <h2>Ticket details</h2>
+        <div class="grid">
+            <div class="row"><div class="cell label">Requester</div><div class="cell">{{ ticket.requester.displayName }}</div></div>
+            <div class="row"><div class="cell label">Status</div><div class="cell">{{ ticket.status.label }}</div></div>
+            <div class="row"><div class="cell label">Priority</div><div class="cell">{{ ticket.priority.label }}</div></div>
+            <div class="row"><div class="cell label">Category</div><div class="cell">{{ ticket.category.label }}</div></div>
+            <div class="row"><div class="cell label">Created</div><div class="cell">{{ ticket.createdAt|date('Y-m-d H:i') }}</div></div>
+            <div class="row"><div class="cell label">Updated</div><div class="cell">{{ ticket.updatedAt|date('Y-m-d H:i') }}</div></div>
+        </div>
+        <p class="label" style="margin-top: 14px;">Description</p>
+        <p class="preline">{{ ticket.description }}</p>
+    </section>
+
+    <section class="panel">
+        <h2>Conversation</h2>
+        {% for message in messages %}
+            <article class="message {{ message.internalNote ? 'internal' }}">
+                {% if message.internalNote %}<p class="label">Internal admin note</p>{% endif %}
+                <p class="preline">{{ message.body }}</p>
+                <p class="muted">{{ message.sender.displayName }} · {{ message.createdAt|date('Y-m-d H:i') }}</p>
+            </article>
+        {% else %}
+            <p class="muted">No messages yet.</p>
+        {% endfor %}
+    </section>
+</body>
+</html>
