@@ -391,7 +391,7 @@ class ProfileController extends AppController
 
         $profile = $this->profileRepository->findOneBy(['user' => $user]);
         $skills = $profile ? $this->safeSkillsForProfile($profile) : [];
-        $experiences = $profile ? $this->experienceRepository->findBy(['profile' => $profile], ['startDate' => 'DESC']) : [];
+        $experiences = $profile ? $this->experienceRepository->findBy(['profile' => $profile], ['period.startDate' => 'DESC']) : [];
         $portfolioItems = $this->portfolioItemRepository->findBy(['user' => $user], ['createdDate' => 'DESC']);
 
         return $this->render('user/profile/public.html.twig', [
@@ -465,7 +465,7 @@ class ProfileController extends AppController
         $user    = $this->getAppUser();
         $profile = $this->profileRepository->findOneBy(['user' => $user]);
         $skills  = $profile ? $this->safeSkillsForProfile($profile) : [];
-        $exps    = $profile ? $this->experienceRepository->findBy(['profile' => $profile], ['startDate' => 'DESC']) : [];
+        $exps    = $profile ? $this->experienceRepository->findBy(['profile' => $profile], ['period.startDate' => 'DESC']) : [];
         $items   = $this->portfolioItemRepository->findBy(['user' => $user], ['createdDate' => 'DESC']);
 
         return [

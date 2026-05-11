@@ -4,41 +4,44 @@
 {% block page_title %}Profil{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl space-y-6">
+<div class="max-w-4xl space-y-6 animate-fade-in">
 
     {# Hero section #}
-    <div class="rounded-xl border border-border bg-card shadow-sm p-6">
-        <div class="flex items-start gap-5">
-            <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-bold uppercase">
-                {% set initials = (target_user.fullName ?? target_user.username)|slice(0,2)|upper %}
-                {{ initials }}
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-3 flex-wrap">
-                    <h1 class="text-xl font-semibold tracking-tight">{{ target_user.fullName ?? target_user.username }}</h1>
-                    {% if average_rating %}
-                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
-                            ★ {{ average_rating }} <span class="text-muted-foreground font-normal">({{ review_count }} avis)</span>
-                        </span>
+    <div class="glass-panel relative overflow-hidden p-0">
+        <div class="h-28 bg-gradient-to-br from-primary/20 via-indigo-500/10 to-violet-500/10"></div>
+        <div class="px-6 pb-6 -mt-10 relative z-10">
+            <div class="flex items-end gap-5">
+                <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-4 border-card bg-primary text-primary-foreground text-2xl font-bold uppercase shadow-lg">
+                    {% set initials = (target_user.fullName ?? target_user.username)|split(' ')|map(w => w|first)|join('')|upper %}
+                    {{ initials }}
+                </div>
+                <div class="flex-1 min-w-0 pb-1">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <h1 class="text-xl font-semibold tracking-tight text-foreground">{{ target_user.fullName ?? target_user.username }}</h1>
+                        {% if average_rating %}
+                            <span class="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                                <i data-lucide="star" class="h-3 w-3 fill-current"></i> {{ average_rating }} <span class="text-muted-foreground font-normal">({{ review_count }})</span>
+                            </span>
+                        {% endif %}
+                        <span class="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">{{ target_user.roleDisplayName }}</span>
+                    </div>
+                    {% if profile and profile.headline %}
+                        <p class="text-sm text-muted-foreground mt-1">{{ profile.headline }}</p>
                     {% endif %}
                 </div>
-                {% if profile and profile.headline %}
-                    <p class="text-sm text-muted-foreground mt-1">{{ profile.headline }}</p>
+            </div>
+            <div class="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+                {% if profile and profile.location %}
+                    <span class="inline-flex items-center gap-1"><i data-lucide="map-pin" class="h-3.5 w-3.5"></i> {{ profile.location }}</span>
                 {% endif %}
-                <div class="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    {% if profile and profile.location %}
-                        <span class="flex items-center gap-1"><i data-lucide="map-pin" class="h-3.5 w-3.5"></i> {{ profile.location }}</span>
-                    {% endif %}
-                    <span class="flex items-center gap-1"><i data-lucide="calendar" class="h-3.5 w-3.5"></i> Membre depuis {{ target_user.createdAt ? target_user.createdAt|date('m/Y') : '—' }}</span>
-                    <span class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium">{{ target_user.roleDisplayName }}</span>
+                <span class="inline-flex items-center gap-1"><i data-lucide="calendar" class="h-3.5 w-3.5"></i> Membre depuis {{ target_user.createdAt ? target_user.createdAt|date('m/Y') : '—' }}</span>
+            </div>
+            {% if profile and profile.bio %}
+                <div class="mt-4 pt-4 border-t border-border/40">
+                    <p class="text-sm text-foreground/80 leading-relaxed">{{ profile.bio }}</p>
                 </div>
-            </div>
+            {% endif %}
         </div>
-        {% if profile and profile.bio %}
-            <div class="mt-4 pt-4 border-t border-border">
-                <p class="text-sm text-foreground/80 leading-relaxed">{{ profile.bio }}</p>
-            </div>
-        {% endif %}
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -120,26 +123,30 @@
             {% endif %}
 
             {# Quick stats #}
-            <div class="rounded-xl border border-border bg-card shadow-sm p-6">
+            <div class="glass-panel p-6">
                 <h2 class="text-base font-semibold mb-4">Statistiques</h2>
-                <div class="space-y-3 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-muted-foreground">Avis reçus</span>
-                        <span class="font-semibold">{{ review_count }}</span>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-xl border border-border bg-background/50 p-3 text-center">
+                        <div class="flex h-8 w-8 mx-auto items-center justify-center rounded-lg bg-amber-500/10 text-amber-500"><i data-lucide="message-square" class="h-4 w-4"></i></div>
+                        <p class="mt-2 text-lg font-semibold">{{ review_count }}</p>
+                        <p class="text-[10px] text-muted-foreground">Avis</p>
                     </div>
                     {% if average_rating %}
-                    <div class="flex justify-between">
-                        <span class="text-muted-foreground">Note moyenne</span>
-                        <span class="font-semibold">★ {{ average_rating }}</span>
+                    <div class="rounded-xl border border-border bg-background/50 p-3 text-center">
+                        <div class="flex h-8 w-8 mx-auto items-center justify-center rounded-lg bg-amber-500/10 text-amber-500"><i data-lucide="star" class="h-4 w-4 fill-current"></i></div>
+                        <p class="mt-2 text-lg font-semibold">{{ average_rating }}</p>
+                        <p class="text-[10px] text-muted-foreground">Note</p>
                     </div>
                     {% endif %}
-                    <div class="flex justify-between">
-                        <span class="text-muted-foreground">Compétences</span>
-                        <span class="font-semibold">{{ skills|length }}</span>
+                    <div class="rounded-xl border border-border bg-background/50 p-3 text-center">
+                        <div class="flex h-8 w-8 mx-auto items-center justify-center rounded-lg bg-sky-500/10 text-sky-500"><i data-lucide="zap" class="h-4 w-4"></i></div>
+                        <p class="mt-2 text-lg font-semibold">{{ skills|length }}</p>
+                        <p class="text-[10px] text-muted-foreground">Compétences</p>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-muted-foreground">Projets</span>
-                        <span class="font-semibold">{{ portfolio_items|length }}</span>
+                    <div class="rounded-xl border border-border bg-background/50 p-3 text-center">
+                        <div class="flex h-8 w-8 mx-auto items-center justify-center rounded-lg bg-violet-500/10 text-violet-500"><i data-lucide="folder" class="h-4 w-4"></i></div>
+                        <p class="mt-2 text-lg font-semibold">{{ portfolio_items|length }}</p>
+                        <p class="text-[10px] text-muted-foreground">Projets</p>
                     </div>
                 </div>
             </div>

@@ -100,7 +100,7 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">AI Profile Intelligence</h3>
-                        <p class="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">Auto-analyzes as you edit • GPT-4o powered</p>
+                        <p class="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">Auto-analyzes as you edit • AI powered</p>
                     </div>
                 </div>
 
@@ -755,7 +755,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         async removePhoto() {
-            if (!confirm('Remove your profile photo?')) return;
+            if (!await window.confirmModal({ title: 'Remove your profile photo?', description: 'Your avatar will be reset to the default.', confirmLabel: 'Remove' })) return;
 
             this.uploading = true;
             try {

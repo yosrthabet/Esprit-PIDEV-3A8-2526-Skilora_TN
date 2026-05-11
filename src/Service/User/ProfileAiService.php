@@ -24,7 +24,7 @@ use Psr\Log\LoggerInterface;
  */
 class ProfileAiService
 {
-    private const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+    private const OPENAI_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
