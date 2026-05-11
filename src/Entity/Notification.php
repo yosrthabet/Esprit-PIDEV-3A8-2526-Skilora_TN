@@ -30,7 +30,7 @@ class Notification
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $message = null;
 
-    #[ORM\Column(length: 10, nullable: true)]
+    #[ORM\Column(length: 50, nullable: true)]
     private ?string $icon = null;
 
     #[ORM\Column(name: 'is_read', type: 'boolean', options: ['default' => false])]

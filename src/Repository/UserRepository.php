@@ -97,4 +97,76 @@ class UserRepository extends ServiceEntityRepository
 
         return $users;
     }
+
+    /** @return list<User> */
+    public function searchByName(string $query, int $limit = 10): array
+    {
+        /** @var list<User> $users */
+        $users = $this->createQueryBuilder('u')
+            ->where('u.firstName LIKE :q OR u.lastName LIKE :q OR u.email LIKE :q')
+            ->setParameter('q', '%' . $query . '%')
+            ->orderBy('u.firstName', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        return $users;
+    }
+
+    /** @return list<User> */
+    public function findForAdmin(?string $query, ?string $role, ?string $status, int $limit, int $offset): array
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->orderBy('u.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset);
+
+        $this->applyAdminFilters($qb, $query, $role, $status);
+
+        /** @var list<User> $users */
+        $users = $qb->getQuery()->getResult();
+
+        return $users;
+    }
+
+    public function countForAdmin(?string $query, ?string $role, ?string $status): int
+    {
+        $qb = $this->createQueryBuilder('u')->select('COUNT(u.id)');
+        $this->applyAdminFilters($qb, $query, $role, $status);
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    public function countByRole(string $role): int
+    {
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->where('UPPER(u.role) = :role')
+            ->setParameter('role', strtoupper($role))
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    private function applyAdminFilters(\Doctrine\ORM\QueryBuilder $qb, ?string $query, ?string $role, ?string $status): void
+    {
+        if ($query !== null && trim($query) !== '') {
+            $needle = '%' . mb_strtolower(trim($query)) . '%';
+            $qb->andWhere('LOWER(u.username) LIKE :query OR LOWER(u.email) LIKE :query OR LOWER(u.fullName) LIKE :query')
+                ->setParameter('query', $needle);
+        }
+
+        if ($role !== null && $role !== '' && $role !== 'all') {
+            $qb->andWhere('UPPER(u.role) = :role')->setParameter('role', strtoupper($role));
+        }
+
+        if ($status === 'active') {
+            $qb->andWhere('u.active = true');
+        } elseif ($status === 'inactive') {
+            $qb->andWhere('u.active = false');
+        } elseif ($status === 'verified') {
+            $qb->andWhere('u.verified = true');
+        } elseif ($status === 'pending') {
+            $qb->andWhere('u.verified = false');
+        }
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\Currency;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
 use Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration;
@@ -77,6 +78,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
 
     #[ORM\Column(name: 'github_id', length: 255, nullable: true)]
     private ?string $githubId = null;
+
+    // --- Preferences ---
+
+    #[ORM\Column(name: 'color_palette', length: 20, nullable: true)]
+    private ?string $colorPalette = null;
+
+    #[ORM\Column(name: 'preferred_currency', length: 3, nullable: true, enumType: Currency::class)]
+    private ?Currency $preferredCurrency = null;
 
     // --- 2FA TOTP ---
 
@@ -215,6 +224,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
         return $this;
     }
 
+    public function getCreatedAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
     // --- Symfony Security Interface ---
 
     public function getUserIdentifier(): string
@@ -326,4 +340,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
 
     public function getTwoFactorLockedUntil(): ?\DateTimeImmutable { return $this->twoFactorLockedUntil; }
     public function lockTwoFactorUntil(?\DateTimeImmutable $until): static { $this->twoFactorLockedUntil = $until; return $this; }
+
+    // --- Preferences ---
+
+    public function getColorPalette(): ?string { return $this->colorPalette; }
+    public function setColorPalette(?string $palette): static
+    {
+        $allowed = ['mint', 'slate', 'clay', null];
+        $this->colorPalette = in_array($palette, $allowed, true) ? $palette : null;
+        return $this;
+    }
+
+    public function getPreferredCurrency(): Currency { return $this->preferredCurrency ?? Currency::TND; }
+    public function setPreferredCurrency(?Currency $currency): static { $this->preferredCurrency = $currency; return $this; }
 }
