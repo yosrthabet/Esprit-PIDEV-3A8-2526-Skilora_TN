@@ -3,7 +3,7 @@ twig:
     default_path: '%kernel.project_dir%/templates'
     form_themes: ['tailwind_2_layout.html.twig']
     globals:
-        mercure_public_url: '%env(default::MERCURE_PUBLIC_URL)%'
+        mercure_public_url: '%env(default:mercure_default_url:MERCURE_PUBLIC_URL)%'
 
 when@test:
     twig:

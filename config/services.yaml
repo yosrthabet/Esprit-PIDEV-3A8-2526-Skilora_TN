@@ -9,6 +9,8 @@ parameters:
     app.mailer_from: '%env(MAILER_FROM)%'
     app.profile_openai_key: '%env(OPENAI_PROFILE_API_KEY)%'
     app.profile_openai_model: '%env(OPENAI_PROFILE_MODEL)%'
+    mercure_default_url: 'http://localhost:3000/.well-known/mercure'
+    mercure_default_secret: '!ChangeThisMercureHubJWTSecretKey!'
 
 services:
     # default configuration for services in *this* file
@@ -22,6 +24,27 @@ services:
             $rpId: '%app.passkey_rp_id%'
             $rpName: '%app.passkey_rp_name%'
             $cvUploadDir: '%kernel.project_dir%/var/uploads/cvs'
+            $stripeSecretKey: '%env(STRIPE_SECRET_KEY)%'
+            $stripePublicKey: '%env(STRIPE_PUBLIC_KEY)%'
+            $stripeWebhookSecret: '%env(STRIPE_WEBHOOK_SECRET)%'
+            $cloudinaryUrl: '%env(CLOUDINARY_URL)%'
+            $mercureHubUrl: '%env(MERCURE_HUB_URL)%'
+            $mercureJwtSecret: '%env(MERCURE_JWT_SECRET)%'
+            $twilioSid: '%env(TWILIO_SID)%'
+            $twilioAuthToken: '%env(TWILIO_AUTH_TOKEN)%'
+            $twilioFromNumber: '%env(TWILIO_FROM_NUMBER)%'
+            $twilioAccountSid: '%env(TWILIO_SID)%'
+            $twilioWhatsappFrom: '%env(TWILIO_WHATSAPP_FROM)%'
+            $twilioSmsFrom: '%env(string:default::TWILIO_SMS_FROM)%'
+            $defaultCountryDialCode: '%env(string:default:twilio_default_dial_code:TWILIO_DEFAULT_COUNTRY_DIAL_CODE)%'
+            $skiloraMlBaseUrl: '%env(SKILORA_ML_URL)%'
+            $ocrApiUrl: '%env(default::OCR_API_URL)%'
+            $ocrApiKey: '%env(default::OCR_API_KEY)%'
+            $chatbotApiUrl: '%env(CHATBOT_API_URL)%'
+            $chatbotApiKey: '%env(CHATBOT_API_KEY)%'
+            $chatbotModel: '%env(CHATBOT_MODEL)%'
+            $signaturesRoot: '%kernel.project_dir%/var/signatures/formations'
+            $mailerFrom: '%app.mailer_from%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -31,6 +54,9 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Formation\Service\FormationSignatureStorageInterface:
+        alias: App\Formation\Service\FormationSignatureStorage
 
     App\EventSubscriber\DoctrineSessionConfigSubscriber:
         tags:
