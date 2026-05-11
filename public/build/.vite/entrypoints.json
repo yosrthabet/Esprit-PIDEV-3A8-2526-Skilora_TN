@@ -2,13 +2,9 @@
   "base": "/build/",
   "entryPoints": {
     "app": {
-      "css": [],
-      "dynamic": [],
       "js": [
-        "/build/assets/app-BES2rBVk.js"
-      ],
-      "legacy": false,
-      "preload": []
+        "http://127.0.0.1:5173/build/assets/app.js"
+      ]
     }
   },
   "legacy": false,
@@ -19,5 +15,5 @@
     2,
     4
   ],
-  "viteServer": null
+  "viteServer": "http://127.0.0.1:5173"
 }

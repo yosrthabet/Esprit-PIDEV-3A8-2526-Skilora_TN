@@ -115,44 +115,116 @@ window.initHomepage = () => {
   window.initOsmoNavbar();
   if (!window.gsap || !window.ScrollTrigger) return;
   const { gsap, ScrollTrigger } = window;
-  gsap.registerPlugin(ScrollTrigger); console.log("GSAP INIT");
+  gsap.registerPlugin(ScrollTrigger);
 
-  // Loader → hero reveal
-  const loaderTL = gsap.timeline();
+  /* ─── LOADER → HERO REVEAL ─── */
+  const loaderTL = gsap.timeline({
+      onComplete: () => {
+          gsap.set(".hero-title, .hero-subtitle, .hero-scroll-indicator", { clearProps: "all" });
+      }
+  });
   loaderTL.to("#loader-dot", { scale: 0, opacity: 0, duration: 0.5, ease: "power2.inOut" })
           .to("#loader", { opacity: 0, duration: 0.5, display: "none" }, "-=0.2");
+  loaderTL.from(".hero-title", { y: 80, opacity: 0, duration: 1.2, ease: "power4.out", stagger: 0.2 }, "-=0.2")
+          .from(".hero-subtitle", { y: 40, opacity: 0, duration: 0.8, ease: "power3.out", stagger: 0.1 }, "-=0.6")
+          .from(".hero-scroll-indicator", { opacity: 0, y: 20, duration: 0.6, ease: "power2.out" }, "-=0.3");
 
-  // Hero title + subtitle stagger (only on landing page)
-  if (document.querySelector(".hero-title")) {
-    loaderTL.from(".hero-title", { y: 60, opacity: 0, duration: 1, ease: "power4.out", stagger: 0.15 }, "-=0.2");
-    if (document.querySelector(".hero-subtitle")) {
-      loaderTL.from(".hero-subtitle", { y: 40, opacity: 0, duration: 0.8, ease: "power3.out", stagger: 0.1 }, "-=0.6");
-    }
-    if (document.querySelector(".hero-scroll-indicator")) {
-      loaderTL.from(".hero-scroll-indicator", { opacity: 0, y: 20, duration: 0.6, ease: "power2.out" }, "-=0.3");
-    }
-  }
+  /* ─── HERO PARALLAX DEPTH (3 orbs at different speeds) ─── */
+  gsap.to("#hero-blob", {
+      y: "40vh", scale: 1.5,
+      scrollTrigger: { trigger: "#hero-section", start: "top top", end: "bottom top", scrub: true }
+  });
+  gsap.to("#hero-orb-2", {
+      y: "25vh", scale: 1.3, x: "-5vw",
+      scrollTrigger: { trigger: "#hero-section", start: "top top", end: "bottom top", scrub: 0.5 }
+  });
+  gsap.to("#hero-orb-3", {
+      y: "55vh", scale: 1.8, x: "8vw",
+      scrollTrigger: { trigger: "#hero-section", start: "top top", end: "bottom top", scrub: 1.5 }
+  });
 
-  // Hero blob parallax
-  if (document.getElementById("hero-blob")) {
-    gsap.to("#hero-blob", {
-        y: "40vh", scale: 1.5,
-        scrollTrigger: { trigger: "#hero-section", start: "top top", end: "bottom top", scrub: true }
-    });
-  }
-
-  // Hero marquee
+  /* ─── HERO MARQUEE ─── */
   if (document.getElementById("hero-marquee")) {
     gsap.to("#hero-marquee", { xPercent: -50, ease: "none", duration: 20, repeat: -1 });
   }
 
-  // Companies marquee
-  const companiesTrack = document.querySelector('.companies-track');
-  if (companiesTrack) {
-      gsap.to(companiesTrack, { xPercent: -33.33, ease: "none", duration: 30, repeat: -1 });
+  /* ─── VIDEO SCROLL SCRUB (frame-by-frame on scroll) ─── */
+  const vfSection = document.getElementById("video-frame-section");
+  const vfVideo = document.getElementById("video-scrub");
+  if (vfSection && vfVideo) {
+      let vfInitialized = false;
+      const initVideoScrub = () => {
+          if (vfInitialized) return;
+          if (!vfVideo.duration || isNaN(vfVideo.duration) || vfVideo.duration === Infinity) return;
+          vfInitialized = true;
+
+          vfVideo.currentTime = 0;
+          vfVideo.pause();
+
+          const scrubObj = { frame: 0 };
+
+          const vfTl = gsap.timeline({
+              scrollTrigger: {
+                  trigger: vfSection,
+                  start: "top top",
+                  end: "+=300%",
+                  scrub: 0.5,
+                  pin: true,
+                  pinSpacing: true,
+                  anticipatePin: 1,
+              }
+          });
+
+          vfTl.to(scrubObj, {
+              frame: vfVideo.duration,
+              ease: "none",
+              duration: 2,
+              onUpdate: () => { vfVideo.currentTime = scrubObj.frame; }
+          });
+
+          const texts = document.querySelectorAll('#vf-overlay .vf-text');
+          const count = texts.length;
+          if (count > 0) {
+              const sliceDur = 2 / count;
+              texts.forEach((txt, i) => {
+                  const start = i * sliceDur;
+                  vfTl.fromTo(txt,
+                      { opacity: 0, y: 60, scale: 0.95 },
+                      { opacity: 1, y: 0, scale: 1, duration: sliceDur * 0.3, ease: "power2.out" },
+                      start
+                  );
+                  if (i < count - 1) {
+                      vfTl.to(txt, { opacity: 0, y: -30, duration: sliceDur * 0.2, ease: "power1.in" }, start + sliceDur * 0.7);
+                  }
+              });
+          }
+
+          ScrollTrigger.refresh();
+      };
+
+      vfVideo.addEventListener('loadedmetadata', initVideoScrub);
+      vfVideo.addEventListener('canplay', initVideoScrub);
+      if (vfVideo.readyState >= 1) initVideoScrub();
+      vfVideo.load();
+      // polling fallback
+      let attempts = 0;
+      const poll = setInterval(() => {
+          if (vfInitialized || ++attempts > 50) { clearInterval(poll); return; }
+          initVideoScrub();
+      }, 200);
   }
 
-  // About section
+  /* ─── CLIP-PATH TEXT REVEALS ─── */
+  document.querySelectorAll('.clip-reveal').forEach(el => {
+      ScrollTrigger.create({
+          trigger: el,
+          start: "top 85%",
+          onEnter: () => el.classList.add('revealed'),
+          once: true,
+      });
+  });
+
+  /* ─── ABOUT SECTION ─── */
   gsap.from("#about-section .space-y-8 > *", {
       y: 40, opacity: 0, stagger: 0.1, duration: 0.8, ease: "power3.out",
       scrollTrigger: { trigger: "#about-section", start: "top 70%" }
@@ -162,26 +234,38 @@ window.initHomepage = () => {
       scrollTrigger: { trigger: "#about-section .relative", start: "top 75%" }
   });
 
-  // Horizontal scroll (desktop)
+  /* ─── STAT COUNTER ANIMATION ─── */
+  document.querySelectorAll('.stat-number[data-target]').forEach(el => {
+      const target = parseInt(el.dataset.target, 10);
+      const suffix = el.dataset.suffix || '';
+      if (isNaN(target)) return;
+      ScrollTrigger.create({
+          trigger: el, start: "top 90%", once: true,
+          onEnter: () => {
+              gsap.to({ val: 0 }, {
+                  val: target, duration: 1.5, ease: "power2.out",
+                  onUpdate: function() { el.textContent = Math.round(this.targets()[0].val) + suffix; }
+              });
+          }
+      });
+  });
+
+  /* ─── HORIZONTAL SCROLL (desktop) ─── */
   const horizontalSection = document.getElementById("horizontal-section");
   const horizontalTrack = document.getElementById("horizontal-track");
   if (horizontalSection && horizontalTrack && window.innerWidth >= 768) {
-      let getScrollAmount = () => -(horizontalTrack.scrollWidth - window.innerWidth);
       gsap.to(horizontalTrack, {
-          x: getScrollAmount,
+          x: () => -(horizontalTrack.scrollWidth - window.innerWidth),
           ease: "none",
           scrollTrigger: {
-              trigger: horizontalSection,
-              start: "top top",
+              trigger: horizontalSection, start: "top top",
               end: () => `+=${horizontalTrack.scrollWidth}`,
-              scrub: 1,
-              pin: true,
-              invalidateOnRefresh: true
+              scrub: 1, pin: true, invalidateOnRefresh: true, anticipatePin: 1,
           }
       });
   }
 
-  // Process steps (How it works)
+  /* ─── PROCESS STEPS ─── */
   const featuresSection = document.getElementById("features-section");
   if (featuresSection) {
       gsap.from(".process-step", {
@@ -190,16 +274,7 @@ window.initHomepage = () => {
       });
   }
 
-  // Categories cards
-  const categoriesSection = document.querySelector(".categories-section");
-  if (categoriesSection) {
-      gsap.from(".category-card", {
-          y: 50, opacity: 0, stagger: 0.08, duration: 0.7, ease: "power3.out",
-          scrollTrigger: { trigger: categoriesSection, start: "top 85%" }
-      });
-  }
-
-  // Platform features cards
+  /* ─── PLATFORM FEATURES ─── */
   const platformSection = document.getElementById("platform-section");
   if (platformSection) {
       gsap.from("#platform-section .group", {
@@ -208,16 +283,48 @@ window.initHomepage = () => {
       });
   }
 
-  // Testimonials
-  const testimonialsSection = document.getElementById("testimonials-section");
-  if (testimonialsSection) {
-      gsap.from("#testimonials-section .group", {
-          y: 50, opacity: 0, stagger: 0.12, duration: 0.8, ease: "power3.out",
-          scrollTrigger: { trigger: testimonialsSection, start: "top 85%" }
+  /* ─── TESTIMONIALS (pinned horizontal scroll + stagger reveal) ─── */
+  const tSection = document.getElementById("testimonials-section");
+  const tTrack = document.getElementById("testimonial-track");
+  if (tSection && tTrack && window.innerWidth >= 768) {
+      const cards = tTrack.querySelectorAll('.testimonial-card');
+      gsap.set(cards, { opacity: 0.15, y: 40, scale: 0.9 });
+
+      const scrollTween = gsap.to(tTrack, {
+          x: () => -(tTrack.scrollWidth - tSection.querySelector('.max-w-7xl').offsetWidth),
+          ease: "none",
+          scrollTrigger: {
+              trigger: tSection,
+              start: "top 15%",
+              end: () => `+=${tTrack.scrollWidth}`,
+              scrub: 0.5,
+              pin: true,
+              pinSpacing: true,
+              anticipatePin: 1,
+              invalidateOnRefresh: true,
+          }
+      });
+
+      cards.forEach(card => {
+          gsap.to(card, {
+              opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power2.out",
+              scrollTrigger: {
+                  trigger: card,
+                  containerAnimation: scrollTween,
+                  start: "left 80%",
+                  end: "left 30%",
+                  scrub: true,
+              }
+          });
+      });
+  } else if (tTrack) {
+      gsap.from(".testimonial-card", {
+          y: 50, opacity: 0, stagger: 0.15, duration: 0.8, ease: "power3.out",
+          scrollTrigger: { trigger: tSection, start: "top 80%" }
       });
   }
 
-  // CTA section
+  /* ─── CTA SECTION ─── */
   const ctaSection = document.querySelector('.cta-section');
   if (ctaSection) {
       gsap.to(".cta-element", {
@@ -226,8 +333,20 @@ window.initHomepage = () => {
       });
   }
 
-  setTimeout(() => ScrollTrigger.refresh(), 300);
-  window.addEventListener('load', () => ScrollTrigger.refresh());
+  /* ─── MAGNETIC CURSOR ON CTA BUTTONS ─── */
+  document.querySelectorAll('.magnetic-btn').forEach(btn => {
+      btn.addEventListener('mousemove', (e) => {
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+          gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3, ease: "power2.out" });
+      });
+      btn.addEventListener('mouseleave', () => {
+          gsap.to(btn, { x: 0, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" });
+      });
+  });
+
+  setTimeout(() => ScrollTrigger.refresh(), 500);
 };
 
 window.bootstrapTheme();
@@ -236,7 +355,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.lucide) {
     window.lucide.createIcons();
   }
+});
 
+window.addEventListener('load', () => {
   if (document.body.dataset.page === 'home-connected') {
     window.initHomepage();
   }
