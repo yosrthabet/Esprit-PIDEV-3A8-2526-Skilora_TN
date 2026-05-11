@@ -111,10 +111,25 @@ class RegisterController extends AbstractController
             $em->persist($user);
             $em->flush();
 
-            $this->sendVerificationEmail($user);
-            $this->sendWelcomeEmail($user);
+            $mailerDsn = $_ENV['MAILER_DSN'] ?? '';
+            $canSendEmail = !str_starts_with($mailerDsn, 'null://');
 
-            $this->addFlash('success', 'Account created! Please check your email to verify your address before logging in.');
+            if ($canSendEmail) {
+                try {
+                    $this->sendVerificationEmail($user);
+                    $this->sendWelcomeEmail($user);
+                } catch (\Throwable) {
+                    $canSendEmail = false;
+                }
+            }
+
+            if (!$canSendEmail) {
+                $user->setVerified(true);
+                $em->flush();
+                $this->addFlash('success', 'Account created! You can now log in.');
+            } else {
+                $this->addFlash('success', 'Account created! Please check your email to verify your address before logging in.');
+            }
             return $this->redirectToRoute('app_login');
         }
 
@@ -173,7 +188,11 @@ class RegisterController extends AbstractController
         $user = $em->getRepository(User::class)->findOneBy(['email' => $email]);
 
         if ($user && !$user->isVerified()) {
-            $this->sendVerificationEmail($user);
+            try {
+                $this->sendVerificationEmail($user);
+            } catch (\Throwable) {
+                // SMTP may be blocked; silently continue
+            }
         }
 
         // Always show the same message to avoid user enumeration

@@ -62,4 +62,11 @@ class DevController extends AbstractController
         $this->guardDev();
         return $this->render('pages/spatial_test.html.twig');
     }
+
+    #[Route('/palette', name: 'dev_palette', methods: ['GET'])]
+    public function paletteShowcase(): Response
+    {
+        $this->guardDev();
+        return $this->render('dev/palette_showcase.html.twig');
+    }
 }

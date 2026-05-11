@@ -139,6 +139,24 @@ class SettingsController extends AppController
         return $this->redirectToRoute('app_settings');
     }
 
+    #[Route('/settings/palette', name: 'app_settings_palette', methods: ['POST'])]
+    public function updatePalette(
+        Request $request,
+        EntityManagerInterface $em,
+    ): Response {
+        if (!$this->isCsrfTokenValid('settings_palette', $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $palette = $request->request->getString('color_palette');
+        $user = $this->getAppUser();
+        $user->setColorPalette($palette ?: null);
+        $em->flush();
+
+        $this->addFlash('success', 'Color theme updated.');
+        return $this->redirectToRoute('app_settings', ['tab' => 'preferences']);
+    }
+
     #[Route('/settings/delete-account', name: 'app_settings_delete_account', methods: ['POST'])]
     public function deleteAccount(
         Request $request,
