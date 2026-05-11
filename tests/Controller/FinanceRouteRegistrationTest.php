@@ -30,6 +30,16 @@ final class FinanceRouteRegistrationTest extends KernelTestCase
         yield 'old-employer-invoices' => ['app_employer_invoices'];
         yield 'old-invoice-show' => ['app_invoice_show'];
         yield 'old-escrow' => ['app_escrow_index'];
+        yield 'wallet' => ['app_finance_wallet'];
+        yield 'old-wallet' => ['app_workspace_wallet'];
+        yield 'wallet-recharge' => ['app_finance_wallet_recharge'];
+        yield 'bank-accounts' => ['app_finance_bank_accounts'];
+        yield 'bank-account-delete' => ['app_finance_bank_account_delete'];
+        yield 'milestone-create' => ['app_contract_milestone_create'];
+        yield 'milestone-pay' => ['app_contract_milestone_pay'];
+        yield 'milestone-cancel' => ['app_contract_milestone_cancel'];
+        yield 'admin-exchange-rates' => ['app_admin_finance_exchange_rates'];
+        yield 'admin-payslips' => ['app_admin_finance_payslips'];
         yield 'contracts' => ['app_contracts'];
         yield 'contract-show' => ['app_contract_show'];
         yield 'fund' => ['app_contract_fund'];

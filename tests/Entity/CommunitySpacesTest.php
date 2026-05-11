@@ -20,9 +20,12 @@ final class CommunitySpacesTest extends TestCase
     {
         $owner = (new User())->setUsername('owner')->setRole('USER');
         $group = (new CommunityGroup())->setOwner($owner)->setName('Symfony Builders');
+        $group->setPrivacy('private')->setImagePath('uploads/community/group.png');
         $member = $group->addMember($owner, 'owner');
 
         self::assertSame('Symfony Builders', $group->getName());
+        self::assertSame('private', $group->getPrivacy());
+        self::assertSame('uploads/community/group.png', $group->getImagePath());
         self::assertSame(1, $group->getMembersCount());
         self::assertSame($group, $member->getGroup());
         self::assertSame('owner', $member->getRole());
