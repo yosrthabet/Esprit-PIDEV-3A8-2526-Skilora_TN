@@ -1,0 +1,50 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Admin Users{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="relative overflow-hidden rounded-[2rem] border border-border bg-card p-6 shadow-xl shadow-black/5 sm:p-8 lg:p-10">
+        <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary/10 blur-3xl"></div>
+        <div class="relative flex flex-wrap items-end justify-between gap-6">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.3em] text-primary">Admin control</p>
+                <h1 class="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">User management</h1>
+                <p class="mt-3 max-w-2xl text-muted-foreground">Audit accounts, verify users, adjust roles, and keep platform access under control.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                {% for label, value in {Total: stats.total, Active: stats.active, Verified: stats.verified, Employers: stats.employers, Trainers: stats.trainers} %}
+                    <div class="rounded-3xl border border-border bg-background/70 p-4"><p class="text-3xl font-light">{{ value }}</p><p class="mt-1 text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">{{ label }}</p></div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="rounded-[1.75rem] border border-border bg-card p-5 shadow-sm">
+        <form method="get" action="{{ path('app_admin_user_index') }}" class="grid gap-3 lg:grid-cols-[1fr_180px_180px_auto_auto]">
+            <input name="q" value="{{ q }}" placeholder="Search name, username, email" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <select name="role" class="h-11 rounded-xl border border-border bg-background/70 px-3 text-sm">
+                <option value="all">All roles</option>
+                {% for item in roles %}<option value="{{ item }}" {{ role == item ? 'selected' }}>{{ item|title }}</option>{% endfor %}
+            </select>
+            <select name="status" class="h-11 rounded-xl border border-border bg-background/70 px-3 text-sm">
+                {% for key, label in {all: 'All status', active: 'Active', inactive: 'Inactive', verified: 'Verified', pending: 'Pending'} %}<option value="{{ key }}" {{ status == key ? 'selected' }}>{{ label }}</option>{% endfor %}
+            </select>
+            <button class="rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground">Filter</button>
+            <a href="{{ path('app_admin_user_index') }}" class="inline-flex h-11 items-center justify-center rounded-xl border border-border px-5 text-sm font-bold hover:bg-muted">Reset</a>
+        </form>
+    </section>
+
+    <section class="rounded-[1.75rem] border border-border bg-card shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border p-5">
+            <div><h2 class="text-xl font-bold">Accounts</h2><p class="text-sm text-muted-foreground">{{ total }} results · page {{ page }} / {{ page_count }}</p></div>
+        </div>
+        {% include 'admin/user/_table.html.twig' with {users: users} %}
+    </section>
+
+    {% if page_count > 1 %}
+        <nav class="flex justify-center gap-3">
+            <a class="rounded-full border border-border px-4 py-2 text-sm {{ page <= 1 ? 'pointer-events-none opacity-40' }}" href="{{ path('app_admin_user_index', {q: q, role: role, status: status, page: page - 1}) }}">Previous</a>
+            <a class="rounded-full border border-border px-4 py-2 text-sm {{ page >= page_count ? 'pointer-events-none opacity-40' }}" href="{{ path('app_admin_user_index', {q: q, role: role, status: status, page: page + 1}) }}">Next</a>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}

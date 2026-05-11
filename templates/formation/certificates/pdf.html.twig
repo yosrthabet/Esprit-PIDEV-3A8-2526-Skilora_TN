@@ -1,2 +1,128 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans,Arial,sans-serif;color:#111827}.certificate{border:8px solid #2563eb;padding:48px;text-align:center}.eyebrow{text-transform:uppercase;letter-spacing:.18em;color:#2563eb;font-size:12px;font-weight:bold}.title{font-size:36px;margin:24px 0}.name{font-size:28px;font-weight:bold}.meta{margin-top:24px;color:#4b5563}.verify{margin-top:32px;font-size:11px;word-break:break-all}</style></head><body>{% include 'formation/certificates/_certificate_core.html.twig' with {certificate: certificate, verification_url: verification_url, pdf: true} %}</body></html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    @page { size: A4 landscape; margin: 0; }
+    body {
+        margin: 0;
+        padding: 8mm;
+        font-family: DejaVu Sans, Arial, sans-serif;
+        background: #1a1a1f;
+        color: #ffffff;
+    }
+    .card {
+        border: 1px solid #b45309;
+        padding: 6mm;
+        text-align: center;
+    }
+    .inner {
+        border: 1px solid #92400e;
+        padding: 12mm 20mm;
+    }
+    .eyebrow {
+        font-size: 9px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        color: #f59e0b;
+        margin-top: 10mm;
+    }
+    .divider {
+        width: 40mm;
+        height: 1px;
+        background: #b45309;
+        margin: 4mm auto;
+    }
+    .title {
+        font-size: 28px;
+        color: #ffffff;
+        margin-top: 4mm;
+    }
+    .label {
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        color: #a1a1aa;
+        margin-top: 6mm;
+    }
+    .name {
+        font-size: 26px;
+        font-weight: bold;
+        color: #fde68a;
+        margin-top: 2mm;
+    }
+    .meta {
+        margin-top: 5mm;
+        font-size: 10px;
+        color: #a1a1aa;
+    }
+    .sig-section {
+        margin-top: 6mm;
+    }
+    .sig-section img {
+        height: 12mm;
+        max-width: 50mm;
+    }
+    .sig-line {
+        width: 50mm;
+        height: 1px;
+        background: #b45309;
+        margin: 2mm auto 0;
+    }
+    .sig-name {
+        font-size: 9px;
+        color: #d4d4d8;
+        margin-top: 2mm;
+    }
+    .sig-title {
+        font-size: 8px;
+        color: #71717a;
+    }
+    .verify-box {
+        margin-top: 5mm;
+        display: inline-block;
+        padding: 2mm 5mm;
+        border: 1px solid #3f3f46;
+        background: #27272a;
+    }
+    .verify-label {
+        font-size: 7px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #10b981;
+        font-weight: bold;
+    }
+    .verify-id {
+        font-size: 9px;
+        font-family: monospace;
+        color: #d4d4d8;
+        margin-top: 1mm;
+    }
+</style>
+</head>
+<body>
+<div class="card">
+    <div class="inner">
+        <div class="eyebrow">Certificate of Completion</div>
+        <div class="divider"></div>
+        <div class="title">{{ certificate.enrollment.formation.title }}</div>
+        <div class="label">Awarded to</div>
+        <div class="name">{{ certificate.enrollment.user.displayName }}</div>
+        <div class="meta">{{ certificate.issuedAt|date('F d, Y') }} &middot; Trainer: {{ certificate.enrollment.formation.trainer.displayName }} &middot; {{ certificate.enrollment.formation.modules|length }} modules</div>
+        {% if signature_data_uri|default(null) %}
+        <div class="sig-section">
+            <img src="{{ signature_data_uri }}" alt="Signature">
+            <div class="sig-line"></div>
+            <div class="sig-name">{{ certificate.enrollment.formation.trainer.displayName }}</div>
+            <div class="sig-title">Director / Trainer</div>
+        </div>
+        {% endif %}
+        <div class="verify-box">
+            <div class="verify-label">&#10003; Verified</div>
+            <div class="verify-id">{{ certificate.verificationId }}</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

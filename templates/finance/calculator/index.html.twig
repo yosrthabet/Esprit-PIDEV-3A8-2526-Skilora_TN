@@ -1,0 +1,219 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Salary Calculator{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8 animate-fade-in relative z-10">
+
+    {% include 'components/_breadcrumbs.html.twig' with {items: [{label: 'Finance', route: 'app_finance'}, {label: 'Analytics', route: 'app_finance_analytics'}, {label: 'Calculator'}]} %}
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(16,185,129,.18))">
+        <div class="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-emerald-500/25 blur-3xl"></div>
+        <div class="relative">
+            <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Finance tools</p>
+            <h1 class="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">Salary & Tax<br class="hidden sm:block"> Calculator.</h1>
+            <p class="mt-3 max-w-xl text-sm leading-6 text-white/70">Simulate net salary, CNSS contributions, progressive IRPP taxes, overtime pay, and deductions — aligned with Tunisian tax law.</p>
+        </div>
+    </section>
+
+    <div x-data="salaryCalc()" class="grid gap-6 lg:grid-cols-2">
+
+        {# ── Left: Input form ── #}
+        <section class="glass-panel p-6 space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold">Salary Inputs</h2>
+                <div class="flex rounded-xl border border-border overflow-hidden text-sm font-bold">
+                    <button @click="mode = 'simple'" :class="mode === 'simple' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'" class="px-4 py-2 transition">Simple</button>
+                    <button @click="mode = 'detailed'" :class="mode === 'detailed' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'" class="px-4 py-2 transition">Detailed</button>
+                </div>
+            </div>
+
+            {# Simple mode #}
+            <div x-show="mode === 'simple'" class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Gross Monthly Salary (TND)</label>
+                    <input type="number" x-model.number="grossMonthly" @input="calculateTaxes()" min="0" step="50" class="mt-1.5 w-full rounded-xl border border-border bg-background/70 px-4 py-3 text-lg font-semibold outline-none focus:border-primary" placeholder="2000">
+                </div>
+            </div>
+
+            {# Detailed mode #}
+            <div x-show="mode === 'detailed'" x-cloak class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Base Salary (TND)</label>
+                    <input type="number" x-model.number="baseSalary" @input="calculatePayroll()" min="0" step="50" class="mt-1.5 w-full rounded-xl border border-border bg-background/70 px-4 py-3 outline-none focus:border-primary" placeholder="1800">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Overtime Hours</label>
+                        <input type="number" x-model.number="overtimeHours" @input="calculatePayroll()" min="0" step="1" class="mt-1.5 w-full rounded-xl border border-border bg-background/70 px-4 py-3 outline-none focus:border-primary" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Overtime Rate/hr</label>
+                        <input type="number" x-model.number="overtimeRate" @input="calculatePayroll()" min="0" step="1" class="mt-1.5 w-full rounded-xl border border-border bg-background/70 px-4 py-3 outline-none focus:border-primary" placeholder="15">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bonuses</label>
+                        <input type="number" x-model.number="bonuses" @input="calculatePayroll()" min="0" step="10" class="mt-1.5 w-full rounded-xl border border-border bg-background/70 px-4 py-3 outline-none focus:border-primary" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Other Deductions</label>
+                        <input type="number" x-model.number="otherDeductions" @input="calculatePayroll()" min="0" step="10" class="mt-1.5 w-full rounded-xl border border-border bg-background/70 px-4 py-3 outline-none focus:border-primary" placeholder="0">
+                    </div>
+                </div>
+            </div>
+
+            <button @click="mode === 'simple' ? calculateTaxes() : calculatePayroll()" :disabled="loading" class="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition hover:opacity-90 disabled:opacity-50">
+                <span x-show="!loading">Calculate</span>
+                <span x-show="loading" x-cloak>Calculating...</span>
+            </button>
+        </section>
+
+        {# ── Right: Results ── #}
+        <section class="space-y-6">
+
+            {# Net salary hero #}
+            <div x-show="result" x-cloak x-transition class="glass-panel p-6">
+                <div class="text-center">
+                    <p class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Net Monthly Salary</p>
+                    <p class="mt-2 text-5xl font-bold text-emerald-500" x-text="fmt(result?.net_monthly ?? result?.net ?? 0) + ' TND'"></p>
+                    <p class="mt-1 text-sm text-muted-foreground">Effective tax rate: <span class="font-bold text-foreground" x-text="(result?.effective_tax_rate_percent ?? 0) + '%'"></span></p>
+                </div>
+            </div>
+
+            {# Breakdown cards #}
+            <div x-show="result" x-cloak class="grid grid-cols-2 gap-4">
+                <div class="glass-panel p-4">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Gross</p>
+                    <p class="mt-1 text-xl font-semibold" x-text="fmt(result?.gross_monthly ?? result?.gross ?? 0)"></p>
+                </div>
+                <div class="glass-panel p-4">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">CNSS Employee</p>
+                    <p class="mt-1 text-xl font-semibold text-amber-500" x-text="fmt(result?.cnss_employee ?? 0)"></p>
+                    <p class="text-[10px] text-muted-foreground">9.18%</p>
+                </div>
+                <div class="glass-panel p-4">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">CNSS Employer</p>
+                    <p class="mt-1 text-xl font-semibold text-blue-500" x-text="fmt(result?.cnss_employer ?? 0)"></p>
+                    <p class="text-[10px] text-muted-foreground">16.5%</p>
+                </div>
+                <div class="glass-panel p-4">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">IRPP (monthly)</p>
+                    <p class="mt-1 text-xl font-semibold text-rose-500" x-text="fmt(result?.irpp_monthly ?? result?.irpp ?? 0)"></p>
+                </div>
+            </div>
+
+            {# Overtime (detailed mode) #}
+            <div x-show="result && mode === 'detailed' && (result?.overtime_total ?? 0) > 0" x-cloak class="glass-panel p-4">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Overtime Pay</p>
+                <p class="mt-1 text-xl font-semibold text-indigo-500" x-text="fmt(result?.overtime_total ?? 0) + ' TND'"></p>
+            </div>
+
+            {# IRPP bands table #}
+            <div x-show="result && (result?.irpp_breakdown ?? []).length > 0" x-cloak class="glass-panel overflow-hidden">
+                <div class="border-b border-border px-5 py-3">
+                    <h3 class="text-xs font-black uppercase tracking-[0.2em]">Progressive IRPP Breakdown</h3>
+                    <p class="text-[11px] text-muted-foreground mt-0.5">Annual taxable: <span class="font-bold text-foreground" x-text="fmt(result?.taxable_annual ?? 0) + ' TND'"></span></p>
+                </div>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-border/50 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                            <th class="px-5 py-2.5 text-left">Band</th>
+                            <th class="px-5 py-2.5 text-right">Rate</th>
+                            <th class="px-5 py-2.5 text-right">Taxable</th>
+                            <th class="px-5 py-2.5 text-right">Tax</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="band in (result?.irpp_breakdown ?? [])" :key="band.min">
+                            <tr class="border-b border-border/30 hover:bg-muted/30 transition">
+                                <td class="px-5 py-2.5 text-left" x-text="fmt(band.min) + ' – ' + (band.max ? fmt(band.max) : '∞')"></td>
+                                <td class="px-5 py-2.5 text-right font-semibold" x-text="band.rate_percent + '%'"></td>
+                                <td class="px-5 py-2.5 text-right" x-text="fmt(band.taxable_amount)"></td>
+                                <td class="px-5 py-2.5 text-right font-semibold" :class="band.tax_amount > 0 ? 'text-rose-500' : 'text-muted-foreground'" x-text="fmt(band.tax_amount)"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-muted/20 font-bold">
+                            <td colspan="3" class="px-5 py-2.5 text-right text-xs uppercase tracking-wider text-muted-foreground">Total Annual IRPP</td>
+                            <td class="px-5 py-2.5 text-right text-rose-500" x-text="fmt(result?.irpp_annual ?? 0) + ' TND'"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            {# Empty state #}
+            <div x-show="!result" class="glass-panel flex min-h-[20rem] items-center justify-center text-center">
+                <div>
+                    <i data-lucide="calculator" class="mx-auto h-12 w-12 text-muted-foreground/40"></i>
+                    <p class="mt-4 text-lg font-semibold text-foreground">Enter a salary</p>
+                    <p class="mt-1 text-sm text-muted-foreground">Results will appear here instantly.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+function salaryCalc() {
+    return {
+        mode: 'simple',
+        loading: false,
+        result: null,
+
+        grossMonthly: 2000,
+        baseSalary: 1800,
+        overtimeHours: 0,
+        overtimeRate: 15,
+        bonuses: 0,
+        otherDeductions: 0,
+
+        fmt(v) {
+            return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v || 0);
+        },
+
+        async calculateTaxes() {
+            if (this.grossMonthly <= 0) return;
+            this.loading = true;
+            try {
+                const res = await fetch('{{ path("app_finance_calculator_taxes") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ gross_monthly: this.grossMonthly })
+                });
+                this.result = await res.json();
+            } catch(e) { console.error(e); }
+            this.loading = false;
+        },
+
+        async calculatePayroll() {
+            if (this.baseSalary <= 0) return;
+            this.loading = true;
+            try {
+                const res = await fetch('{{ path("app_finance_calculator_payroll") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        base_salary: this.baseSalary,
+                        overtime_hours: this.overtimeHours,
+                        overtime_rate: this.overtimeRate,
+                        bonuses: this.bonuses,
+                        other_deductions: this.otherDeductions,
+                    })
+                });
+                const payroll = await res.json();
+                const taxRes = await fetch('{{ path("app_finance_calculator_taxes") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ gross_monthly: payroll.gross })
+                });
+                const taxes = await taxRes.json();
+                this.result = { ...payroll, ...taxes, overtime_total: payroll.overtime_total };
+            } catch(e) { console.error(e); }
+            this.loading = false;
+        }
+    }
+}
+</script>
+{% endblock %}

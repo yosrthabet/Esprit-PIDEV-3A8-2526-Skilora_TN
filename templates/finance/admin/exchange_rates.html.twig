@@ -1,0 +1,92 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Exchange Rates{% endblock %}
+{% block content %}
+<div x-data="{ showCreate: false }" class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
+
+    {% include 'components/_breadcrumbs.html.twig' with {items: [{label: 'Finance', route: 'app_admin_finance'}, {label: 'Exchange Rates'}]} %}
+
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(16,185,129,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-emerald-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative flex flex-wrap items-end justify-between gap-6">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Admin finance</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Exchange rates</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Manage currency conversion rates for multi-currency contracts.</p>
+            </div>
+            <button @click="showCreate = true" class="rounded-full bg-white px-4 py-2 text-sm font-bold text-black shadow-sm transition hover:shadow-md">
+                <i data-lucide="plus" class="mr-1.5 inline h-3.5 w-3.5"></i> Add rate
+            </button>
+        </div>
+    </section>
+
+    <section class="rounded-[1.75rem] border border-border/70 bg-card/70 shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="border-b border-border bg-muted/40">
+                <tr>
+                    <th class="px-5 py-3 text-left text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Pair</th>
+                    <th class="px-5 py-3 text-right text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Rate</th>
+                    <th class="px-5 py-3 text-right text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Effective</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border/40">
+                {% for rate in rates %}
+                <tr class="hover:bg-muted/20 transition">
+                    <td class="px-5 py-3">
+                        <span class="inline-flex items-center gap-2">
+                            <span class="rounded-lg bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{{ rate.baseCurrency.value }}</span>
+                            <i data-lucide="arrow-right" class="h-3.5 w-3.5 text-muted-foreground"></i>
+                            <span class="rounded-lg bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">{{ rate.quoteCurrency.value }}</span>
+                        </span>
+                    </td>
+                    <td class="px-5 py-3 text-right font-bold">{{ rate.rate }}</td>
+                    <td class="px-5 py-3 text-right text-muted-foreground">{{ rate.effectiveAt|date('M d, Y H:i') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3">
+                    {% include 'components/_empty_state.html.twig' with {icon: 'refresh-cw', title: 'No exchange rates', description: 'Add your first rate to enable multi-currency conversions.'} %}
+                </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    {# ── Create Rate Modal ── #}
+    <template x-teleport="body">
+        <div x-show="showCreate" x-transition.opacity class="fixed inset-0 z-[9999] flex items-center justify-center p-4" @keydown.escape.window="showCreate = false">
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="showCreate = false"></div>
+            <div x-show="showCreate" x-transition class="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-lg font-semibold">Add exchange rate</h3>
+                    <button @click="showCreate = false" class="rounded-lg p-1.5 hover:bg-muted transition"><i data-lucide="x" class="h-4 w-4"></i></button>
+                </div>
+                <form method="post" class="space-y-4">
+                    <input type="hidden" name="_token" value="{{ csrf_token('exchange_rate_new') }}">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-label text-muted-foreground mb-1.5">Base currency</label>
+                            <select name="base_currency" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+                                {% for currency in currencies %}<option value="{{ currency.value }}">{{ currency.value }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-label text-muted-foreground mb-1.5">Quote currency</label>
+                            <select name="quote_currency" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+                                {% for currency in currencies %}<option value="{{ currency.value }}">{{ currency.value }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-label text-muted-foreground mb-1.5">Rate</label>
+                        <input name="rate" required inputmode="decimal" placeholder="1.0000" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+                    </div>
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" @click="showCreate = false" class="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition">Cancel</button>
+                        <button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition hover:bg-primary/90">Add rate</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+</div>
+{% endblock %}

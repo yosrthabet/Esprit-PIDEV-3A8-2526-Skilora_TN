@@ -1,0 +1,38 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Quiz Result{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="glass-panel p-8 text-center">
+        <p class="text-xs font-bold uppercase tracking-label {{ result.passed ? 'text-green-500' : 'text-destructive' }}">{{ result.passed ? 'PASSED' : 'NOT PASSED' }}</p>
+        <h1 class="mt-3 text-5xl font-light tracking-holographic">{{ result.scorePercent }}%</h1>
+        <p class="mt-2 text-muted-foreground">{{ result.earnedPoints }} / {{ result.totalPoints }} points</p>
+        <p class="mt-1 text-sm text-muted-foreground">Required: {{ quiz.passingScore }}%</p>
+        <div class="mt-6 flex justify-center gap-3">
+            <a href="{{ path('app_formation_quizzes', {id: quiz.formation.id}) }}" class="rounded-xl border border-border px-5 py-3 text-sm font-bold hover:bg-muted">Back to quizzes</a>
+            {% if not result.passed %}
+                <a href="{{ path('app_quiz_take', {id: quiz.id}) }}" class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Retry</a>
+            {% endif %}
+        </div>
+    </section>
+    <section class="glass-panel p-6">
+        <h2 class="font-semibold">Review answers</h2>
+        <div class="mt-4 space-y-4">
+            {% for question in quiz.questions %}
+                {% set selected = result.answers[question.id] ?? -1 %}
+                {% set correct = question.isCorrect(selected) %}
+                <div class="rounded-xl border p-4 {{ correct ? 'border-green-500/30 bg-green-500/5' : 'border-destructive/30 bg-destructive/5' }}">
+                    <p class="font-bold text-sm">{{ loop.index }}. {{ question.questionText }}</p>
+                    <ul class="mt-2 space-y-1">
+                        {% for choice in question.choices %}
+                            <li class="text-sm {{ loop.index0 == question.correctIndex ? 'font-bold text-green-600' : '' }} {{ loop.index0 == selected and not question.isCorrect(selected) ? 'line-through text-destructive' : '' }}">
+                                {{ loop.index0 == selected ? '→ ' : '  ' }}{{ choice }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    {% if question.explanation %}<p class="mt-2 text-xs text-muted-foreground italic">{{ question.explanation }}</p>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

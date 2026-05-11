@@ -6,70 +6,97 @@
 {% set contract = invoice.contract %}
 {% set application = contract.hireOffer.application %}
 <div class="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel p-8 print:border-0 print:shadow-none">
-        <div class="flex flex-wrap items-start justify-between gap-4">
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10 print:border-0 print:shadow-none print:bg-white print:text-black" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(99,102,241,.18))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-indigo-500/25 blur-3xl print:hidden"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl print:hidden"></div>
+        <div class="relative flex flex-wrap items-start justify-between gap-4">
             <div>
-                <a href="{{ path('app_finance_invoices') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"><i data-lucide="arrow-left" class="h-4 w-4"></i>Back to invoices</a>
-                <p class="mt-6 text-xs font-bold uppercase tracking-label text-primary">Invoice</p>
-                <h1 class="mt-2 text-4xl font-light tracking-holographic">{{ invoice.number }}</h1>
-                <p class="mt-2 text-sm text-muted-foreground">Generated from contract <a href="{{ path('app_contract_show', {id: contract.id}) }}" class="font-semibold text-primary hover:underline">{{ application.jobOffer.title }}</a>.</p>
+                <a href="{{ path('app_finance_invoices') }}" class="inline-flex items-center gap-2 text-sm font-bold text-white/60 hover:text-white transition print:text-black"><i data-lucide="arrow-left" class="h-4 w-4"></i>Back to invoices</a>
+                <p class="mt-6 text-xs font-black uppercase tracking-[0.35em] text-white/60">Invoice</p>
+                <h1 class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">{{ invoice.number }}</h1>
+                <p class="mt-3 text-base text-white/70">Generated from contract <a href="{{ path('app_contract_show', {id: contract.id}) }}" class="font-bold text-white hover:underline">{{ application.jobOffer.title }}</a>.</p>
             </div>
-            <button type="button" onclick="window.print()" class="rounded-xl border border-border px-4 py-2 text-sm font-bold print:hidden">Print</button>
+            <div class="flex gap-2 print:hidden">
+                <a href="{{ path('app_finance_invoice_pdf', {id: invoice.id}) }}" class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-lg transition hover:shadow-xl hover:scale-105">
+                    <i data-lucide="download" class="h-4 w-4"></i>
+                    Download PDF
+                </a>
+                <button type="button" onclick="window.print()" class="rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15">
+                    <i data-lucide="printer" class="h-4 w-4"></i>
+                </button>
+            </div>
         </div>
 
-        <div class="mt-8 grid gap-4 md:grid-cols-3">
-            <div class="rounded-2xl border border-border/60 bg-background/60 p-4">
-                <p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Status</p>
+        <div class="relative mt-8 grid grid-cols-3 gap-3">
+            <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Status</p>
                 <p class="mt-2 text-2xl font-light">{{ invoice.status.label }}</p>
             </div>
-            <div class="rounded-2xl border border-border/60 bg-background/60 p-4">
-                <p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Issued</p>
+            <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Issued</p>
                 <p class="mt-2 text-2xl font-light">{{ invoice.issuedAt|date('M d, Y') }}</p>
             </div>
-            <div class="rounded-2xl border border-border/60 bg-background/60 p-4">
-                <p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Paid</p>
+            <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Paid</p>
                 <p class="mt-2 text-2xl font-light">{{ invoice.paidAt ? invoice.paidAt|date('M d, Y') : 'Not paid' }}</p>
             </div>
         </div>
-
-        <div class="mt-8 grid gap-6 md:grid-cols-2">
-            <section class="rounded-2xl border border-border/60 bg-background/60 p-5">
-                <p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Issuer</p>
-                <p class="mt-3 font-semibold">{{ invoice.issuer.displayName }}</p>
-                <p class="mt-1 text-sm text-muted-foreground">{{ invoice.issuer.email }}</p>
-            </section>
-            <section class="rounded-2xl border border-border/60 bg-background/60 p-5">
-                <p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Recipient</p>
-                <p class="mt-3 font-semibold">{{ invoice.recipient.displayName }}</p>
-                <p class="mt-1 text-sm text-muted-foreground">{{ invoice.recipient.email }}</p>
-            </section>
-        </div>
-
-        <section class="mt-8 overflow-hidden rounded-2xl border border-border/60">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="border-b border-border bg-background/60 text-left text-xs uppercase tracking-label text-muted-foreground">
-                        <th class="px-4 py-3 font-semibold">Description</th>
-                        <th class="px-4 py-3 text-right font-semibold">Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="px-4 py-4">
-                            <p class="font-medium">Service delivery for {{ application.jobOffer.title }}</p>
-                            <p class="mt-1 text-xs text-muted-foreground">Contract #{{ contract.id }} · {{ application.jobOffer.companyLabel }}</p>
-                        </td>
-                        <td class="px-4 py-4 text-right font-semibold">{{ invoice.amount ?: '0.00' }} {{ invoice.currency.value }}</td>
-                    </tr>
-                </tbody>
-                <tfoot>
-                    <tr class="border-t border-border bg-background/60">
-                        <td class="px-4 py-4 text-right text-xs font-bold uppercase tracking-label text-muted-foreground">Total</td>
-                        <td class="px-4 py-4 text-right text-lg font-bold">{{ invoice.amount ?: '0.00' }} {{ invoice.currency.value }}</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </section>
     </section>
+
+    {# ── Parties ── #}
+    <div class="grid gap-4 md:grid-cols-2">
+        <section class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+            <p class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">From</p>
+            <p class="mt-3 font-bold">{{ invoice.issuer.displayName }}</p>
+            <p class="mt-1 text-sm text-muted-foreground">{{ invoice.issuer.email }}</p>
+        </section>
+        <section class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+            <p class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Bill To</p>
+            <p class="mt-3 font-bold">{{ invoice.recipient.displayName }}</p>
+            <p class="mt-1 text-sm text-muted-foreground">{{ invoice.recipient.email }}</p>
+        </section>
+    </div>
+
+    {# ── Line items ── #}
+    <section class="rounded-[1.75rem] border border-border/70 bg-card/70 shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-border bg-muted/40 text-left text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+                    <th class="px-5 py-3">Description</th>
+                    <th class="px-5 py-3">Contract</th>
+                    <th class="px-5 py-3 text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="px-5 py-4">
+                        <p class="font-bold">Service delivery</p>
+                        <p class="mt-1 text-[11px] text-muted-foreground">{{ application.jobOffer.title }} — {{ application.jobOffer.companyLabel }}</p>
+                    </td>
+                    <td class="px-5 py-4 text-sm text-muted-foreground">#{{ contract.id }}</td>
+                    <td class="px-5 py-4 text-right font-bold">{{ invoice.amount ?: '0.00' }} {{ invoice.currency.value }}</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class="border-t-2 border-foreground/10 bg-muted/40">
+                    <td colspan="2" class="px-5 py-4 text-right text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Total Due</td>
+                    <td class="px-5 py-4 text-right text-xl font-bold">{{ invoice.amount ?: '0.00' }} {{ invoice.currency.value }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </section>
+
+    {# ── Payment Info ── #}
+    <section class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+        <h3 class="text-xs font-black uppercase tracking-[0.15em] text-muted-foreground">Payment Information</h3>
+        <div class="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+            <div><span class="text-xs text-muted-foreground">Reference</span><p class="font-semibold">{{ invoice.number }}</p></div>
+            <div><span class="text-xs text-muted-foreground">Method</span><p class="font-semibold">Skilora Wallet</p></div>
+            <div><span class="text-xs text-muted-foreground">Currency</span><p class="font-semibold">{{ invoice.currency.value }} (Tunisian Dinar)</p></div>
+        </div>
+    </section>
+
 </div>
 {% endblock %}

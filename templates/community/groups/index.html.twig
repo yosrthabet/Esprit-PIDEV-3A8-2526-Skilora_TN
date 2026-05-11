@@ -1,25 +1,75 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Community Groups{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel flex flex-wrap items-center justify-between gap-4 p-8">
-        <div>
-            <p class="text-xs font-bold uppercase tracking-label text-primary">Community groups</p>
-            <h1 class="mt-2 text-4xl font-light tracking-holographic">Join focused circles.</h1>
+{% set total_members = groups|reduce((c, g) => c + g.membersCount, 0) %}
+
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(168,85,247,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-purple-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[1fr_20rem] lg:items-end">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Community groups</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Join focused<br class="hidden sm:block"> circles.</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Topic-based groups to discuss, learn, and collaborate with like-minded members.</p>
+                <div class="mt-6 flex flex-wrap gap-2">
+                    {% if not app.user.admin %}
+                        <a href="{{ path('app_community_group_new') }}" class="rounded-full bg-white px-4 py-2 text-sm font-bold text-black shadow-sm transition hover:shadow-md">
+                            <i data-lucide="users" class="mr-1.5 inline h-3.5 w-3.5"></i> New group
+                        </a>
+                    {% endif %}
+                    <a href="{{ path('app_community') }}" class="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15">Feed</a>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ groups|length }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Groups</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ total_members }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Members</p>
+                </div>
+            </div>
         </div>
-        {% if not app.user.admin %}<a href="{{ path('app_community_group_new') }}" class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">New group</a>{% endif %}
-        <div class="w-full">{% include 'community/_tabs.html.twig' %}</div>
     </section>
+
+    {# ── Tabs ── #}
+    <section class="flex flex-wrap items-center gap-3">
+        {% include 'community/_tabs.html.twig' %}
+    </section>
+
+    {# ── Groups grid ── #}
     <section class="grid gap-4 lg:grid-cols-3">
         {% for group in groups %}
-            <a href="{{ path('app_community_group_show', {id: group.id}) }}" class="glass-panel p-5 transition hover:border-primary/40">
-                <p class="text-xs text-muted-foreground">{{ group.membersCount }} members</p>
-                <h2 class="mt-3 text-xl font-semibold">{{ group.name }}</h2>
+            <a href="{{ path('app_community_group_show', {id: group.id}) }}" class="group/card rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="text-lg font-bold text-foreground group-hover/card:text-primary transition-colors">{{ group.name }}</h2>
+                    <span class="rounded-full bg-muted px-2.5 py-1 text-[11px] font-black shrink-0">{{ group.membersCount }}</span>
+                </div>
                 <p class="mt-2 line-clamp-3 text-sm text-muted-foreground">{{ group.description ?: 'No description yet.' }}</p>
-                <p class="mt-4 text-xs text-muted-foreground">Owner: {{ group.owner.displayName }}</p>
+                <div class="mt-4 flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                    {% set o_initials = group.owner.displayName|split(' ')|map(w => w|first)|join('')|upper %}
+                    <div class="flex items-center gap-2">
+                        <div class="flex h-6 w-6 items-center justify-center rounded-lg bg-muted text-[8px] font-black">{{ o_initials }}</div>
+                        <span>{{ group.owner.displayName }}</span>
+                    </div>
+                    <span>Open →</span>
+                </div>
             </a>
         {% else %}
-            <div class="glass-panel col-span-full p-12 text-center text-muted-foreground">No groups yet.</div>
+            <div class="col-span-full rounded-[1.75rem] border border-dashed border-border bg-card/50 p-12 text-center">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                    <i data-lucide="users" class="h-8 w-8 text-muted-foreground/50"></i>
+                </div>
+                <p class="mt-4 text-sm font-bold">No groups yet</p>
+                <p class="mt-1.5 text-xs text-muted-foreground">Create the first group and start a focused community.</p>
+                {% if not app.user.admin %}
+                    <a href="{{ path('app_community_group_new') }}" class="mt-4 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm">New group</a>
+                {% endif %}
+            </div>
         {% endfor %}
     </section>
 </div>

@@ -1,42 +1,709 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Community{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel flex flex-wrap items-center justify-between gap-4 p-8">
-        <div>
-            <p class="text-xs font-bold uppercase tracking-label text-primary">Community feed</p>
-            <h1 class="mt-2 text-4xl font-light tracking-holographic">Share progress, ask questions, find collaborators.</h1>
-        </div>
-        {% if not app.user.admin %}
-            <a href="{{ path('app_community_post_new') }}" class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">New post</a>
-        {% endif %}
-        <div class="w-full">{% include 'community/_tabs.html.twig' %}</div>
-    </section>
+{% set total_posts = posts|length %}
+{% set total_reactions = posts|reduce((c, p) => c + p.likesCount, 0) %}
+{% set total_comments = posts|reduce((c, p) => c + p.commentsCount, 0) %}
 
-    <section class="space-y-4">
-        {% for post in posts %}
-            <article class="glass-panel p-5">
-                <div class="flex items-center justify-between gap-3">
-                    <div>
-                        <p class="font-semibold">{{ post.author.displayName }}</p>
-                        <p class="text-xs text-muted-foreground">{{ post.createdAt|date('M d, Y H:i') }}</p>
-                    </div>
-                    <span class="rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">{{ post.likesCount }} likes · {{ post.commentsCount }} comments</span>
+<div class="mx-auto max-w-4xl space-y-6 animate-fade-in pb-8 px-4">
+    {% include 'community/_tabs.html.twig' %}
+
+    {# ── Hero ── #}
+    <div class="glass-panel overflow-hidden p-8 sm:p-10">
+        <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-primary/5 blur-3xl"></div>
+        <div class="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-accent/10 blur-2xl"></div>
+        <div class="relative grid gap-6 lg:grid-cols-[1fr_20rem] lg:items-end">
+            <div>
+                <div class="inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-sm">
+                    <span class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                    Community active
                 </div>
-                <p class="mt-4 whitespace-pre-line text-sm leading-6 text-foreground">{{ post.content }}</p>
+                <h2 class="mt-4 text-3xl font-light tracking-holographic text-foreground sm:text-4xl">Community feed</h2>
+                <p class="mt-2 max-w-xl text-base text-muted-foreground">Share work, ask for help, meet collaborators &amp; keep the community useful with AI tone checks.</p>
                 <div class="mt-5 flex flex-wrap gap-2">
-                    <a href="{{ path('app_community_post_show', {id: post.id}) }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Open thread</a>
-                    {% if not app.user.admin %}
-                        <form method="post" action="{{ path('app_community_post_like', {id: post.id}) }}">
-                            <input type="hidden" name="_token" value="{{ csrf_token('community_like_' ~ post.id) }}">
-                            <button class="rounded-xl border border-border px-4 py-2 text-sm font-bold">{{ post.id in liked_post_ids ? 'Unlike' : 'Like' }}</button>
-                        </form>
-                    {% endif %}
+                    <a href="{{ path('app_community') }}" class="rounded-full border border-border px-4 py-2 text-sm font-semibold {{ active_feed|default('latest') == 'latest' ? 'bg-foreground text-background' : 'bg-background/60 text-foreground hover:bg-muted' }}">Latest</a>
+                    <a href="{{ path('app_community_for_you') }}" class="rounded-full border border-border px-4 py-2 text-sm font-semibold {{ active_feed|default('latest') == 'for_you' ? 'bg-foreground text-background' : 'bg-background/60 text-foreground hover:bg-muted' }}">For you</a>
+                    <a href="{{ path('app_community_following') }}" class="rounded-full border border-border px-4 py-2 text-sm font-semibold {{ active_feed|default('latest') == 'following' ? 'bg-foreground text-background' : 'bg-background/60 text-foreground hover:bg-muted' }}">Connections</a>
+                    <a href="{{ path('app_community_saved') }}" class="rounded-full border border-border px-4 py-2 text-sm font-semibold {{ active_feed|default('latest') == 'saved' ? 'bg-foreground text-background' : 'bg-background/60 text-foreground hover:bg-muted' }}">Saved</a>
                 </div>
-            </article>
-        {% else %}
-            <div class="glass-panel p-12 text-center text-muted-foreground">No community posts yet. Start the first discussion.</div>
-        {% endfor %}
-    </section>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="rounded-xl border border-border bg-background/60 p-3 text-center backdrop-blur"><p class="text-2xl font-light">{{ total_posts }}</p><p class="mt-1 text-[10px] font-semibold uppercase tracking-label text-muted-foreground">Posts</p></div>
+                <div class="rounded-xl border border-border bg-background/60 p-3 text-center backdrop-blur"><p class="text-2xl font-light">{{ total_reactions }}</p><p class="mt-1 text-[10px] font-semibold uppercase tracking-label text-muted-foreground">Reactions</p></div>
+                <div class="rounded-xl border border-border bg-background/60 p-3 text-center backdrop-blur"><p class="text-2xl font-light">{{ total_comments }}</p><p class="mt-1 text-[10px] font-semibold uppercase tracking-label text-muted-foreground">Replies</p></div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Search ── #}
+    <form method="get" action="{{ path('app_community_search') }}" class="flex h-11 items-center gap-2 rounded-xl border border-border bg-card/80 px-4 shadow-sm">
+        <i data-lucide="search" class="h-4 w-4 text-muted-foreground"></i>
+        <input name="q" value="{{ search_query|default(app.request.query.get('q')) }}" placeholder="Search posts…" class="h-full min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground focus:ring-0">
+    </form>
+
+    {# ── Grid: Feed + Sidebar ── #}
+    <div class="grid gap-6 lg:grid-cols-[1fr_18rem]">
+        <div class="space-y-4">
+
+            {# ── Facebook-style Composer ── #}
+            {% if not app.user.admin %}
+            <div class="rounded-xl border border-border bg-card shadow-sm" x-data="communityComposer()">
+                <form method="post" action="{{ path('app_community_post_new') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="_token" value="{{ csrf_token('community_post_new') }}">
+
+                    {# Top tabs #}
+                    <div class="flex items-center border-b border-border px-3 py-2 gap-1">
+                        <button type="button" class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-muted transition-colors">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
+                            Create a post
+                        </button>
+                        <button type="button" @click="$refs.fileInput.click()" class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+                            Photo / Video
+                        </button>
+                    </div>
+
+                    {# Input area with avatar #}
+                    <div class="flex items-start gap-3 px-4 pt-4 pb-2">
+                        {% set u = app.user %}
+                        {% set my_initials = u.displayName|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">{{ my_initials }}</div>
+                        <div class="flex-1">
+                            <textarea x-model="content" name="content" rows="1" id="post-content-field"
+                                @focus="expanded = true"
+                                @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
+                                placeholder="What are you building, learning, or looking for?"
+                                class="w-full resize-none rounded-full bg-muted/50 border-0 px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 focus:bg-background transition-all"></textarea>
+                        </div>
+                    </div>
+
+                    {# Expanded area #}
+                    <div x-show="expanded" x-cloak class="px-4 pb-2 space-y-3" x-transition>
+                        {# Tone result #}
+                        <div x-show="tone" x-cloak class="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+                            <span class="font-bold text-foreground" x-text="tone && tone.sentiment"></span>
+                            <span> tone:</span> <span x-text="tone && tone.tone"></span>
+                            <span x-show="tone && tone.toxic" class="ml-2 text-destructive">May be perceived as toxic.</span>
+                            <p class="mt-1" x-text="tone && tone.summary"></p>
+                        </div>
+
+                        {# Emoji picker #}
+                        <div class="relative" x-data="{ showEmoji: false }">
+                            <button type="button" @click="showEmoji = !showEmoji"
+                                    class="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted" title="Emoji">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z"/></svg>
+                            </button>
+                            <div x-show="showEmoji" @click.away="showEmoji = false" x-transition
+                                 class="absolute bottom-8 left-0 z-20 grid grid-cols-8 gap-1 rounded-lg border border-border bg-popover p-2 shadow-lg">
+                                {% for emoji in ['😀','😂','😍','🥳','👍','👏','🔥','💡','🎉','❤️','👋','🤔','😎','🙌','✨','💪','🚀','🎯','💼','📚','🏆','💬','📣','🤝','😊','🙏','⭐','💎','🌟','📝'] %}
+                                <button type="button" class="rounded p-1 text-lg hover:bg-muted transition-colors"
+                                        @click="content += '{{ emoji }}'; document.getElementById('post-content-field').value = content; showEmoji = false">{{ emoji }}</button>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        {# Image preview #}
+                        <template x-if="imagePreview">
+                            <div class="relative rounded-lg overflow-hidden border border-border bg-muted/30">
+                                <img :src="imagePreview" class="w-full max-h-64 object-cover" alt="Preview">
+                                <button type="button"
+                                        @click="imagePreview = null; $refs.fileInput.value = ''"
+                                        class="absolute top-2 right-2 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80 transition-colors">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                        </template>
+
+                        {# Hidden file input #}
+                        <input type="file" name="media" accept="image/*" class="hidden" x-ref="fileInput"
+                               @change="const file = $event.target.files[0]; if(file) { imagePreview = URL.createObjectURL(file); expanded = true; }">
+
+                        {# Visibility #}
+                        <select name="visibility" class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 focus:outline-none">
+                            <option value="public">Public</option>
+                            <option value="connections">Connections only</option>
+                            <option value="private">Only me</option>
+                        </select>
+                    </div>
+
+                    {# Bottom action bar #}
+                    <div class="flex items-center justify-between border-t border-border px-4 py-2.5">
+                        <div class="flex items-center gap-1">
+                            <button type="button" @click="expanded = true; $refs.fileInput.click()"
+                                    class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
+                                <svg class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+                                Photos
+                            </button>
+                            <button type="button" @click="expanded = true; checkTone('{{ path('app_community_ai_tone_check') }}', '{{ csrf_token('community_ai') }}')"
+                                    class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
+                                <svg class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                                Check tone
+                            </button>
+                            <button type="button" @click="expanded = true; improve('{{ path('app_community_ai_improve') }}', '{{ csrf_token('community_ai') }}')"
+                                    class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
+                                <svg class="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>
+                                AI improve
+                            </button>
+                            <button type="button" @click="expanded = !expanded"
+                                    class="flex items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors">
+                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                            </button>
+                        </div>
+                        <button type="submit" class="rounded-lg bg-primary px-5 py-1.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors">
+                            Post
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+            {# ── Post Feed ── #}
+            {% for post in posts %}
+                {% set post_counts = reaction_counts[post.id]|default({}) %}
+                {% set my_reaction = my_reactions[post.id]|default(null) %}
+                {% set a_initials = post.author.displayName|split(' ')|map(w => w|first)|join('')|upper|slice(0, 2) %}
+                <article id="post-{{ post.id }}" class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+                    <div class="flex gap-3 p-4">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">{{ a_initials }}</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-start justify-between gap-2">
+                                <div>
+                                    <p class="font-semibold leading-none">{{ post.author.displayName }}</p>
+                                    <p class="mt-1 text-xs text-muted-foreground">
+                                        {{ post.createdAt|date('M d, Y · H:i') }} · {{ post.visibility.value|replace({'_':' '})|title }}
+                                        {% if post.updatedAt > post.createdAt %}<span>· edited</span>{% endif %}
+                                    </p>
+                                </div>
+                                <div class="flex shrink-0 items-center gap-1" x-data="{ menu: false }">
+                                    <button @click="menu = !menu" @click.away="menu = false" type="button"
+                                            class="rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                                    </button>
+                                    <div x-show="menu" x-transition x-cloak
+                                         class="absolute right-4 top-12 z-30 w-44 rounded-xl border border-border bg-popover py-1.5 shadow-lg">
+                                        <form method="post" action="{{ path('app_community_post_bookmark', {id: post.id}) }}" data-ajax="bookmark" data-post-id="{{ post.id }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('community_bookmark_' ~ post.id) }}">
+                                            <button type="submit" class="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors">
+                                                <i data-lucide="{{ post.id in bookmarked_post_ids|default([]) ? 'bookmark-check' : 'bookmark' }}" class="h-4 w-4"></i>
+                                                {{ post.id in bookmarked_post_ids|default([]) ? 'Unsave' : 'Save post' }}
+                                            </button>
+                                        </form>
+                                        <a href="{{ path('app_community_post_show', {id: post.id}) }}" class="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors">
+                                            <i data-lucide="maximize-2" class="h-4 w-4"></i>
+                                            Open thread
+                                        </a>
+                                        {% if post.author.id == app.user.id %}
+                                        <div class="my-1 border-t border-border"></div>
+                                        <a href="{{ path('app_community_post_edit', { id: post.id }) }}" class="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors">
+                                            <i data-lucide="pencil" class="h-4 w-4"></i>
+                                            Edit post
+                                        </a>
+                                        <button type="button" @click="menu = false; $dispatch('open-delete-{{ post.id }}')" class="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/5 transition-colors">
+                                            <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                            Delete post
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    {% if post.author.id == app.user.id %}
+                                    <div x-data="{ openDel: false }" @open-delete-{{ post.id }}.window="openDel = true" class="hidden">
+                                        <template x-teleport="body">
+                                            <div x-show="openDel" x-transition.opacity x-cloak class="fixed inset-0 z-[9999] flex items-center justify-center p-4" @keydown.escape.window="openDel = false">
+                                                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="openDel = false"></div>
+                                                <div x-show="openDel" x-transition class="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+                                                    <div class="flex items-start gap-4">
+                                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/50 text-red-600"><i data-lucide="alert-triangle" class="h-5 w-5"></i></div>
+                                                        <div>
+                                                            <h3 class="text-lg font-semibold">Delete this post?</h3>
+                                                            <p class="mt-1 text-sm text-muted-foreground">This post and all its comments will be permanently removed.</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mt-6 flex justify-end gap-3">
+                                                        <button @click="openDel = false" type="button" class="rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">Cancel</button>
+                                                        <form method="post" action="{{ path('app_community_post_delete', { id: post.id }) }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('community_delete_' ~ post.id) }}">
+                                                            <button type="submit" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700">Yes, delete</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{{ post.content }}</div>
+
+                            {% if post.mediaPath %}
+                            <div class="mt-3 overflow-hidden rounded-lg border border-border bg-muted/30">
+                                <img src="{{ asset(post.mediaPath) }}" alt="" class="max-h-80 w-full object-cover" loading="lazy">
+                            </div>
+                            {% endif %}
+
+                            {# Reaction summary (shows which reactions exist) #}
+                            {% set total_reactions = 0 %}
+                            {% for type in reaction_types %}
+                                {% set total_reactions = total_reactions + post_counts[type.value]|default(0) %}
+                            {% endfor %}
+                            {% if total_reactions > 0 %}
+                            <div class="reaction-summary mt-3 flex items-center gap-1 text-xs text-muted-foreground">
+                                <span class="flex items-center -space-x-1">
+                                    {% for type in reaction_types %}
+                                        {% if post_counts[type.value]|default(0) > 0 %}
+                                        <span class="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-card
+                                            {{ type.value == 'like' ? 'bg-blue-500' : '' }}
+                                            {{ type.value == 'heart' ? 'bg-red-500' : '' }}
+                                            {{ type.value == 'laugh' ? 'bg-amber-400' : '' }}
+                                            {{ type.value == 'fire' ? 'bg-orange-500' : '' }}
+                                            {{ type.value == 'clap' ? 'bg-green-500' : '' }}
+                                            {{ type.value == 'wow' ? 'bg-purple-500' : '' }}
+                                            text-white" title="{{ type.value|title }}">
+                                            <i data-lucide="{{ type.value == 'like' ? 'thumbs-up' : '' }}{{ type.value == 'heart' ? 'heart' : '' }}{{ type.value == 'laugh' ? 'laugh' : '' }}{{ type.value == 'fire' ? 'flame' : '' }}{{ type.value == 'clap' ? 'hand-metal' : '' }}{{ type.value == 'wow' ? 'star' : '' }}" class="h-3 w-3"></i>
+                                        </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                <span class="ml-1">{{ total_reactions }}</span>
+                                {% if my_reaction %}<span>· You reacted</span>{% endif %}
+                            </div>
+                            {% endif %}
+
+                            {# Action bar — LinkedIn style #}
+                            <div class="action-bar mt-2 flex items-center border-t border-border pt-1">
+                                {# Like button with reaction picker #}
+                                <div class="reaction-wrapper group/react relative flex-1"
+                                     x-data="{ flyout: false, holdTimer: null }"
+                                     @mouseenter="holdTimer = setTimeout(() => { flyout = true }, 500)"
+                                     @mouseleave="clearTimeout(holdTimer); flyout = false"
+                                     @touchstart.passive="holdTimer = setTimeout(() => { flyout = true }, 400)"
+                                     @touchend="clearTimeout(holdTimer)">
+
+                                    {# Quick-click like form (default action) #}
+                                    <form method="post" action="{{ path('app_community_post_react', {id: post.id, type: 'like'}) }}" data-ajax="react" data-post-id="{{ post.id }}" data-react-type="like">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('community_react_' ~ post.id) }}">
+                                        <button type="submit"
+                                                class="like-main-btn inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors
+                                                       {{ my_reaction == 'like' ? 'text-blue-600 dark:text-blue-400' : '' }}
+                                                       {{ my_reaction == 'heart' ? 'text-red-500' : '' }}
+                                                       {{ my_reaction == 'laugh' ? 'text-amber-500' : '' }}
+                                                       {{ my_reaction == 'fire' ? 'text-orange-500' : '' }}
+                                                       {{ my_reaction == 'clap' ? 'text-green-600 dark:text-green-400' : '' }}
+                                                       {{ my_reaction == 'wow' ? 'text-purple-500' : '' }}
+                                                       {{ not my_reaction ? 'text-muted-foreground' : '' }}
+                                                       hover:bg-muted">
+                                            {% if my_reaction == 'like' %}<i data-lucide="thumbs-up" class="h-4 w-4"></i> Like
+                                            {% elseif my_reaction == 'heart' %}<i data-lucide="heart" class="h-4 w-4 fill-current"></i> Love
+                                            {% elseif my_reaction == 'laugh' %}<i data-lucide="laugh" class="h-4 w-4"></i> Haha
+                                            {% elseif my_reaction == 'fire' %}<i data-lucide="flame" class="h-4 w-4 fill-current"></i> Fire
+                                            {% elseif my_reaction == 'clap' %}<i data-lucide="hand-metal" class="h-4 w-4"></i> Clap
+                                            {% elseif my_reaction == 'wow' %}<i data-lucide="star" class="h-4 w-4"></i> Wow
+                                            {% else %}<i data-lucide="thumbs-up" class="h-4 w-4"></i> Like
+                                            {% endif %}
+                                        </button>
+                                    </form>
+
+                                    {# Reaction flyout (hover / long-press) #}
+                                    <div x-show="flyout" x-transition x-cloak @click.away="flyout = false"
+                                         class="absolute -top-14 left-0 z-40 flex items-center gap-1 rounded-full border border-border bg-popover px-2 py-1.5 shadow-xl">
+                                        {% for type in reaction_types %}
+                                        <form method="post" action="{{ path('app_community_post_react', {id: post.id, type: type.value}) }}" class="inline" data-ajax="react" data-post-id="{{ post.id }}" data-react-type="{{ type.value }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('community_react_' ~ post.id) }}">
+                                            <button type="submit" @click="flyout = false"
+                                                    title="{{ type.value|title }}"
+                                                    class="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:scale-125 hover:bg-muted
+                                                           {{ my_reaction == type.value ? 'scale-110 ring-2 ring-primary/30 bg-primary/10' : '' }}
+                                                           {{ type.value == 'like' ? 'text-blue-600 dark:text-blue-400' : '' }}
+                                                           {{ type.value == 'heart' ? 'text-red-500' : '' }}
+                                                           {{ type.value == 'laugh' ? 'text-amber-500' : '' }}
+                                                           {{ type.value == 'fire' ? 'text-orange-500' : '' }}
+                                                           {{ type.value == 'clap' ? 'text-green-600 dark:text-green-400' : '' }}
+                                                           {{ type.value == 'wow' ? 'text-purple-500' : '' }}">
+                                                <i data-lucide="{{ type.value == 'like' ? 'thumbs-up' : '' }}{{ type.value == 'heart' ? 'heart' : '' }}{{ type.value == 'laugh' ? 'laugh' : '' }}{{ type.value == 'fire' ? 'flame' : '' }}{{ type.value == 'clap' ? 'hand-metal' : '' }}{{ type.value == 'wow' ? 'star' : '' }}" class="h-5 w-5"></i>
+                                            </button>
+                                        </form>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                {# Comment button #}
+                                <button type="button"
+                                        class="btn-toggle-comments inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors"
+                                        data-post-id="{{ post.id }}">
+                                    <i data-lucide="message-circle" class="h-4 w-4"></i>
+                                    Comment
+                                    {% if post.commentsCount > 0 %}<span class="comment-count text-xs font-normal">{{ post.commentsCount }}</span>{% endif %}
+                                </button>
+
+                                {# Share button #}
+                                {% set already_shared = post.id in shared_post_ids|default([]) %}
+                                <form method="post" action="{{ path('app_community_post_share', {id: post.id}) }}" class="flex-1" data-ajax="share" data-post-id="{{ post.id }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('community_share_' ~ post.id) }}">
+                                    <button class="inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors hover:bg-muted {{ already_shared ? 'text-primary' : 'text-muted-foreground' }}" {{ already_shared ? 'disabled' : '' }}>
+                                        <i data-lucide="{{ already_shared ? 'check-circle' : 'repeat-2' }}" class="h-4 w-4"></i>
+                                        <span class="share-label">{{ already_shared ? 'Shared' : 'Share' }}{{ post.sharesCount > 0 ? ' · ' ~ post.sharesCount : '' }}</span>
+                                    </button>
+                                </form>
+
+                            </div>
+
+                            {# Expandable comments (Facebook-style) #}
+                            <div class="comments-section hidden mt-3 space-y-3 border-t border-border pt-3" data-post-id="{{ post.id }}">
+                                {% for comment in post.comments|slice(0, 5) %}
+                                <div class="comment-item group flex gap-2 text-sm rounded-lg px-2 py-1 -mx-2 hover:bg-muted/50 transition-colors" data-comment-id="{{ comment.id }}"
+                                     x-data="{ editing: false, editContent: '{{ comment.content|e('js') }}' }">
+                                    <div class="shrink-0 font-semibold text-primary">{{ comment.author.displayName }}</div>
+                                    <div class="min-w-0 flex-1">
+                                        <div x-show="!editing">
+                                            <span class="comment-text">{{ comment.content }}</span>
+                                            {% if comment.updatedAt is defined and comment.updatedAt %}<span class="ml-1 text-[10px] text-muted-foreground italic">edited</span>{% endif %}
+                                            <span class="ml-2 text-xs text-muted-foreground">{{ comment.createdAt|date('M d, H:i') }}</span>
+                                        </div>
+                                        <form x-show="editing" x-cloak class="comment-edit-form flex gap-1" data-comment-id="{{ comment.id }}"
+                                              data-url="{{ path('app_community_comment_edit', {id: comment.id}) }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('community_comment_edit_' ~ comment.id) }}">
+                                            <input type="text" name="content" x-model="editContent" required maxlength="2000"
+                                                   class="min-w-0 flex-1 rounded-full border border-primary bg-muted/50 px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30">
+                                            <button type="submit" class="shrink-0 rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground">Save</button>
+                                            <button type="button" @click="editing = false" class="shrink-0 rounded-full border border-border px-2.5 py-1 text-xs">Cancel</button>
+                                        </form>
+                                    </div>
+                                    {% if comment.author.id is same as(app.user.id) %}
+                                    <div class="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button type="button" @click="editing = true" class="rounded p-0.5 text-muted-foreground hover:text-primary hover:bg-muted" title="Edit">
+                                            <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+                                        </button>
+                                        <button type="button" class="comment-delete-btn rounded p-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                                data-comment-id="{{ comment.id }}"
+                                                data-url="{{ path('app_community_comment_delete', {id: comment.id}) }}"
+                                                data-token="{{ csrf_token('community_comment_delete_' ~ comment.id) }}"
+                                                data-post-id="{{ post.id }}" title="Delete">
+                                            <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                                        </button>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                                {% if post.commentsCount > 5 %}
+                                <a href="{{ path('app_community_post_show', {id: post.id}) }}" class="text-xs font-medium text-primary hover:underline">View all {{ post.commentsCount }} replies →</a>
+                                {% endif %}
+
+                                {% if not app.user.admin %}
+                                <form class="comment-form flex gap-2" data-post-id="{{ post.id }}" data-url="{{ path('app_community_post_comment', { id: post.id }) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('community_comment_' ~ post.id) }}">
+                                    <input type="text" name="content" placeholder="Write a comment…" required maxlength="2000"
+                                           class="min-w-0 flex-1 rounded-full border border-border bg-muted/50 px-4 py-1.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30">
+                                    <button type="submit" class="shrink-0 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+                                        Reply
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            {% else %}
+                <div class="rounded-xl border border-dashed border-border bg-card/50 py-12 text-center">
+                    <svg class="mx-auto h-10 w-10 text-muted-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+                    <p class="mt-4 text-sm font-semibold">No posts here yet</p>
+                    <p class="mt-1.5 text-xs text-muted-foreground">Start a discussion or connect with more members.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        {# ── Sidebar ── #}
+        <aside class="hidden lg:block space-y-4">
+            <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+                <p class="text-sm font-bold">Community prompts</p>
+                <ul class="mt-3 space-y-2.5 text-xs text-muted-foreground">
+                    <li class="flex items-start gap-2"><span class="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"></span>Share a win from this week.</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"></span>Ask for feedback on a project.</li>
+                    <li class="flex items-start gap-2"><span class="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"></span>Offer help in your strongest skill.</li>
+                </ul>
+            </div>
+            <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
+                <p class="text-sm font-bold">Explore</p>
+                <div class="mt-3 flex flex-col gap-2.5 text-sm">
+                    <a href="{{ path('app_community_groups') }}" class="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"><i data-lucide="users" class="h-4 w-4"></i>Groups</a>
+                    <a href="{{ path('app_community_events') }}" class="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"><i data-lucide="calendar" class="h-4 w-4"></i>Events</a>
+                    <a href="{{ path('app_community_network') }}" class="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"><i data-lucide="globe" class="h-4 w-4"></i>People</a>
+                    <a href="{{ path('app_community_blog') }}" class="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"><i data-lucide="book-open" class="h-4 w-4"></i>Blog</a>
+                </div>
+            </div>
+        </aside>
+    </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+function communityComposer() {
+    return {
+        content: '',
+        tone: null,
+        expanded: false,
+        imagePreview: null,
+        async postForm(url, token) {
+            const body = new FormData();
+            body.append('_token', token);
+            body.append('content', this.content);
+            const response = await fetch(url, { method: 'POST', body, headers: { Accept: 'application/json' } });
+            return response.json();
+        },
+        async checkTone(url, token) { this.tone = await this.postForm(url, token); },
+        async improve(url, token) { const data = await this.postForm(url, token); if (data.content) { this.content = data.content; document.getElementById('post-content-field').value = this.content; } }
+    }
+}
+
+const REACTION_META = {
+    like:  { icon: 'thumbs-up',  label: 'Like',  color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500' },
+    heart: { icon: 'heart',      label: 'Love',  color: 'text-red-500', bg: 'bg-red-500' },
+    laugh: { icon: 'laugh',      label: 'Haha',  color: 'text-amber-500', bg: 'bg-amber-400' },
+    fire:  { icon: 'flame',      label: 'Fire',  color: 'text-orange-500', bg: 'bg-orange-500' },
+    clap:  { icon: 'hand-metal', label: 'Clap',  color: 'text-green-600 dark:text-green-400', bg: 'bg-green-500' },
+    wow:   { icon: 'star',       label: 'Wow',   color: 'text-purple-500', bg: 'bg-purple-500' },
+};
+
+async function ajaxPost(url, token) {
+    const body = new FormData();
+    body.append('_token', token);
+    const resp = await fetch(url, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } });
+    return resp.json();
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function updateReactionSummary(article, counts, myType) {
+    let container = article.querySelector('.reaction-summary');
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    if (total === 0) {
+        if (container) container.remove();
+        return;
+    }
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'reaction-summary mt-3 flex items-center gap-1 text-xs text-muted-foreground';
+        const actionBar = article.querySelector('.action-bar');
+        if (actionBar) actionBar.parentNode.insertBefore(container, actionBar);
+        else return;
+    }
+    let pills = '';
+    for (const [type, meta] of Object.entries(REACTION_META)) {
+        if ((counts[type] || 0) > 0) {
+            pills += '<span class="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-card ' + meta.bg + ' text-white" title="' + type + '"><i data-lucide="' + meta.icon + '" class="h-3 w-3"></i></span>';
+        }
+    }
+    container.innerHTML = '<span class="flex items-center -space-x-1">' + pills + '</span><span class="ml-1">' + total + '</span>' + (myType ? '<span>· You reacted</span>' : '');
+    if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: container.querySelectorAll('[data-lucide]') });
+}
+
+function updateLikeButton(article, myType) {
+    const btn = article.querySelector('.like-main-btn');
+    if (!btn) return;
+    const meta = myType ? REACTION_META[myType] : REACTION_META.like;
+    const active = !!myType;
+    btn.className = btn.className.replace(/text-\S+/g, '');
+    btn.classList.add(...(active ? meta.color.split(' ') : ['text-muted-foreground']), 'inline-flex', 'w-full', 'items-center', 'justify-center', 'gap-2', 'rounded-lg', 'px-3', 'py-2', 'text-sm', 'font-semibold', 'transition-colors', 'hover:bg-muted');
+    btn.innerHTML = '<i data-lucide="' + meta.icon + '" class="h-4 w-4"></i> ' + meta.label;
+    if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: btn.querySelectorAll('[data-lucide]') });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // ── Reaction AJAX (quick-click + flyout) ──
+    document.querySelectorAll('form[data-ajax="react"]').forEach(function(form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const postId = form.dataset.postId;
+            const article = document.getElementById('post-' + postId);
+            const url = form.action;
+            const token = form.querySelector('input[name="_token"]').value;
+            const btn = form.querySelector('button');
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.5';
+            try {
+                const data = await ajaxPost(url, token);
+                if (data.counts !== undefined) {
+                    const myType = data.active ? (data.type || form.dataset.reactType) : null;
+                    updateReactionSummary(article, data.counts, myType);
+                    updateLikeButton(article, myType);
+                    article.dataset.myReaction = myType || '';
+                    // Update flyout active states
+                    article.querySelectorAll('form[data-ajax="react"]').forEach(function(f) {
+                        const fBtn = f.querySelector('button');
+                        if (!fBtn || !f.dataset.reactType) return;
+                        if (f.dataset.reactType === myType) {
+                            fBtn.classList.add('scale-110', 'ring-2', 'ring-primary/30', 'bg-primary/10');
+                        } else {
+                            fBtn.classList.remove('scale-110', 'ring-2', 'ring-primary/30', 'bg-primary/10');
+                        }
+                    });
+                }
+            } catch (err) { console.error('React error:', err); }
+            btn.style.pointerEvents = '';
+            btn.style.opacity = '';
+        });
+    });
+
+    // ── Share AJAX (once per user) ──
+    document.querySelectorAll('form[data-ajax="share"]').forEach(function(form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = form.querySelector('button');
+            if (btn.disabled) return;
+            const url = form.action;
+            const token = form.querySelector('input[name="_token"]').value;
+            const label = form.querySelector('.share-label');
+            btn.disabled = true;
+            if (label) label.textContent = 'Sharing…';
+            try {
+                const data = await ajaxPost(url, token);
+                if (data.alreadyShared) {
+                    if (label) label.textContent = 'Shared' + (data.shares > 0 ? ' · ' + data.shares : '');
+                    btn.classList.remove('text-muted-foreground');
+                    btn.classList.add('text-primary');
+                } else {
+                    if (label) label.textContent = 'Shared' + (data.shares > 0 ? ' · ' + data.shares : '');
+                    btn.classList.remove('text-muted-foreground');
+                    btn.classList.add('text-primary');
+                    const icon = btn.querySelector('[data-lucide]');
+                    if (icon) { icon.setAttribute('data-lucide', 'check-circle'); }
+                    if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: btn.querySelectorAll('[data-lucide]') });
+                }
+            } catch (err) { console.error('Share error:', err); btn.disabled = false; if (label) label.textContent = 'Share'; }
+        });
+    });
+
+    // ── Bookmark AJAX (via dropdown) ──
+    document.querySelectorAll('form[data-ajax="bookmark"]').forEach(function(form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const url = form.action;
+            const token = form.querySelector('input[name="_token"]').value;
+            const btn = form.querySelector('button');
+            const origHTML = btn.innerHTML;
+            try {
+                const data = await ajaxPost(url, token);
+                const icon = data.active ? 'bookmark-check' : 'bookmark';
+                const text = data.active ? 'Unsave' : 'Save post';
+                btn.innerHTML = '<i data-lucide="' + icon + '" class="h-4 w-4"></i> ' + text;
+                if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: btn.querySelectorAll('[data-lucide]') });
+            } catch (err) { console.error('Bookmark error:', err); btn.innerHTML = origHTML; }
+        });
+    });
+
+    // ── Comment toggle ──
+    document.querySelectorAll('.btn-toggle-comments').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var section = document.querySelector('.comments-section[data-post-id="' + btn.dataset.postId + '"]');
+            if (section) {
+                section.classList.toggle('hidden');
+                if (!section.classList.contains('hidden')) {
+                    var input = section.querySelector('input[name="content"]');
+                    if (input) input.focus();
+                }
+            }
+        });
+    });
+
+    // ── Comment post AJAX ──
+    document.querySelectorAll('.comment-form').forEach(function(form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var submitBtn = form.querySelector('button[type="submit"]');
+            var input = form.querySelector('input[name="content"]');
+            if (!input.value.trim()) return;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '…';
+            try {
+                var formData = new FormData(form);
+                var resp = await fetch(form.dataset.url, { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } });
+                var data = await resp.json();
+                if (data.success) {
+                    input.value = '';
+                    updateCommentCount(form.dataset.postId, data.commentsCount);
+                    var html = '<div class="flex gap-2 text-sm animate-fade-in"><div class="shrink-0 font-semibold text-primary">' + esc(data.comment.author) + '</div><div class="min-w-0 flex-1"><span class="comment-text">' + esc(data.comment.content) + '</span><span class="ml-2 text-xs text-muted-foreground">' + esc(data.comment.createdAt) + '</span></div></div>';
+                    form.insertAdjacentHTML('beforebegin', html);
+                    input.focus();
+                }
+            } catch (err) { console.error('Comment error:', err); }
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Reply';
+        });
+    });
+
+    // ── Comment edit AJAX ──
+    document.addEventListener('submit', async function(e) {
+        const form = e.target.closest('.comment-edit-form');
+        if (!form) return;
+        e.preventDefault();
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = '…';
+        try {
+            const formData = new FormData(form);
+            const resp = await fetch(form.dataset.url, { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } });
+            const data = await resp.json();
+            if (data.success) {
+                const commentEl = form.closest('.comment-item');
+                if (commentEl) {
+                    const alpineData = Alpine.$data(commentEl);
+                    if (alpineData) {
+                        alpineData.editContent = data.content;
+                        alpineData.editing = false;
+                    }
+                    const textSpan = commentEl.querySelector('.comment-text');
+                    if (textSpan) textSpan.textContent = data.content;
+                    // Add "edited" badge if not present
+                    const contentDiv = commentEl.querySelector('.min-w-0');
+                    if (contentDiv && !contentDiv.querySelector('.italic')) {
+                        const badge = document.createElement('span');
+                        badge.className = 'ml-1 text-[10px] text-muted-foreground italic';
+                        badge.textContent = 'edited';
+                        const textEl = contentDiv.querySelector('.comment-text');
+                        if (textEl) textEl.after(badge);
+                    }
+                }
+            }
+        } catch (err) { console.error('Edit error:', err); }
+        btn.disabled = false;
+        btn.textContent = 'Save';
+    });
+
+    // ── Comment delete AJAX ──
+    document.addEventListener('click', async function(e) {
+        const btn = e.target.closest('.comment-delete-btn');
+        if (!btn) return;
+        if (!await window.confirmModal({ title: 'Delete this comment?', description: 'This action cannot be undone.', confirmLabel: 'Delete' })) return;
+        const commentEl = btn.closest('.comment-item');
+        if (commentEl) commentEl.style.opacity = '0.3';
+        try {
+            const data = await ajaxPost(btn.dataset.url, btn.dataset.token);
+            if (data.success) {
+                if (commentEl) commentEl.remove();
+                updateCommentCount(btn.dataset.postId, data.commentsCount);
+            } else {
+                if (commentEl) commentEl.style.opacity = '';
+            }
+        } catch (err) {
+            console.error('Delete error:', err);
+            if (commentEl) commentEl.style.opacity = '';
+        }
+    });
+});
+
+function updateCommentCount(postId, count) {
+    var countEl = document.querySelector('.btn-toggle-comments[data-post-id="' + postId + '"] .comment-count');
+    if (countEl) {
+        countEl.textContent = count;
+    } else if (count > 0) {
+        var toggleBtn = document.querySelector('.btn-toggle-comments[data-post-id="' + postId + '"]');
+        if (toggleBtn) {
+            var span = document.createElement('span');
+            span.className = 'comment-count text-xs font-normal';
+            span.textContent = count;
+            toggleBtn.appendChild(span);
+        }
+    }
+}
+</script>
 {% endblock %}

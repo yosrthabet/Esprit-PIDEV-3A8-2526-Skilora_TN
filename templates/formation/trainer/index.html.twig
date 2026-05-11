@@ -2,6 +2,14 @@
 {% block page_title %}Trainer Formations{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+    {# Flash messages #}
+    {% for type in ['success', 'error'] %}
+        {% for msg in app.flashes(type) %}
+            <div class="rounded-xl border p-4 text-sm {{ type == 'success' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-destructive/30 bg-destructive/10 text-destructive' }}">{{ msg }}</div>
+        {% endfor %}
+    {% endfor %}
+
     <section class="glass-panel flex flex-wrap items-center justify-between gap-4 p-8">
         <div>
             <p class="text-xs font-bold uppercase tracking-label text-primary">Trainer studio</p>
@@ -17,19 +25,31 @@
     <section class="grid gap-4 lg:grid-cols-2">
         {% for formation in formations %}
             <article class="glass-panel p-5">
-                <span class="rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">{{ formation.status.value|title }}</span>
-                <h2 class="mt-4 text-xl font-semibold">{{ formation.title ?: 'Untitled formation' }}</h2>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold {{ formation.status.badgeClass }}">{{ formation.status.label }}</span>
+                    {% if formation.reviewScore %}
+                        <span class="text-xs text-muted-foreground">AI score: {{ formation.reviewScore }}%</span>
+                    {% endif %}
+                </div>
+                <h2 class="mt-3 text-xl font-semibold">{{ formation.title ?: 'Untitled formation' }}</h2>
                 <p class="mt-2 text-sm text-muted-foreground">{{ formation.modules|length }} modules · {{ formation.enrollments|length }} students</p>
+                {% if formation.status.value == 'refused' and formation.reviewNote %}
+                    <p class="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 p-2 text-xs text-destructive">{{ formation.reviewNote }}</p>
+                {% endif %}
                 <div class="mt-5 flex flex-wrap gap-2">
-                    <a href="{{ path('app_trainer_formation_edit', {id: formation.id}) }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Edit</a>
+                    {% if formation.status.value in ['draft', 'refused', 'published'] %}
+                        <a href="{{ path('app_trainer_formation_edit', {id: formation.id}) }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Edit</a>
+                    {% endif %}
                     <a href="{{ path('app_trainer_formation_modules', {id: formation.id}) }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Modules</a>
                     <a href="{{ path('app_trainer_formation_materials', {id: formation.id}) }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Materials</a>
                     <a href="{{ path('app_trainer_formation_students', {id: formation.id}) }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Students</a>
                     <a href="{{ path('app_formation_show', {id: formation.id}) }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold">Preview</a>
-                    <form method="post" action="{{ path('app_trainer_formation_delete', {id: formation.id}) }}" onsubmit="return confirm('Delete this formation?')">
+                    {% if formation.status.value in ['draft', 'refused'] %}
+                    <form method="post" action="{{ path('app_trainer_formation_delete', {id: formation.id}) }}" data-confirm="Delete this formation?" data-confirm-label="Delete">
                         <input type="hidden" name="_token" value="{{ csrf_token('trainer_formation_delete_' ~ formation.id) }}">
                         <button class="rounded-xl border border-border px-4 py-2 text-sm font-bold text-destructive">Delete</button>
                     </form>
+                    {% endif %}
                 </div>
             </article>
         {% else %}

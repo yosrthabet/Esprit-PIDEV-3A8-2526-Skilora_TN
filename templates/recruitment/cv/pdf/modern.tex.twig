@@ -1,0 +1,134 @@
+{% verbatim %}\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=0pt]{geometry}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+\definecolor{sidebar}{HTML}{1E3A5F}
+\definecolor{sidetext}{HTML}{CBD5E1}
+\definecolor{accent}{HTML}{3B82F6}
+\definecolor{mainbg}{HTML}{FFFFFF}
+\definecolor{dark}{HTML}{0F172A}
+\definecolor{muted}{HTML}{64748B}
+\definecolor{chipbg}{HTML}{E0F2FE}
+\definecolor{chiptext}{HTML}{0369A1}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+\newcommand{\sidesection}[1]{%
+  \vspace{10pt}{\color{white}\large\bfseries #1}\par\vspace{4pt}%
+  {\color{accent}\rule{40pt}{2pt}}\par\vspace{6pt}%
+}
+
+\newcommand{\mainsection}[1]{%
+  \vspace{14pt}{\color{dark}\Large\bfseries #1}\par\vspace{2pt}%
+  {\color{accent}\rule{50pt}{2.5pt}}\par\vspace{6pt}%
+}
+
+\newcommand{\chip}[1]{%
+  \tikz[baseline=(char.base)]\node[fill=chipbg,text=chiptext,rounded corners=3pt,inner sep=4pt,font=\footnotesize\bfseries](char){#1};~%
+}
+
+\begin{document}
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[sidebar] (current page.north west) rectangle ([xshift=6.8cm]current page.south west);
+\end{tikzpicture}
+
+\noindent
+\begin{minipage}[t]{6.3cm}
+\vspace{0pt}
+\hspace{0.5cm}
+\begin{minipage}[t]{5.5cm}
+\color{sidetext}
+\vspace{24pt}
+
+% ── Contact ──
+\sidesection{Contact}
+
+{% endverbatim %}{% if cv.email %}{% verbatim %}
+{\small\faIcon{envelope}~~{% endverbatim %}{{ cv.email|latex_escape }}{% verbatim %}}\\[4pt]
+{% endverbatim %}{% endif %}{% if cv.phone %}{% verbatim %}
+{\small\faIcon{phone}~~{% endverbatim %}{{ cv.phone|latex_escape }}{% verbatim %}}\\[4pt]
+{% endverbatim %}{% endif %}{% if cv.address %}{% verbatim %}
+{\small\faIcon{map-marker-alt}~~{% endverbatim %}{{ cv.address|latex_escape }}{% verbatim %}}\\[4pt]
+{% endverbatim %}{% endif %}{% verbatim %}
+
+% ── Skills ──
+{% endverbatim %}{% if cv.skillsAsList() is not empty %}{% verbatim %}
+\sidesection{Skills}
+{% endverbatim %}{% for skill in cv.skillsAsList() %}{% verbatim %}
+{\small\faIcon{check-circle}~~{% endverbatim %}{{ skill|latex_escape }}{% verbatim %}}\\[3pt]
+{% endverbatim %}{% endfor %}{% endif %}{% verbatim %}
+
+% ── Languages ──
+{% endverbatim %}{% if cv.languagesAsList() is not empty %}{% verbatim %}
+\sidesection{Languages}
+{% endverbatim %}{% for lang in cv.languagesAsList() %}{% verbatim %}
+{\small\faIcon{globe}~~{% endverbatim %}{{ lang|latex_escape }}{% verbatim %}}\\[3pt]
+{% endverbatim %}{% endfor %}{% endif %}{% verbatim %}
+
+\end{minipage}
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{12.8cm}
+\vspace{0pt}
+
+% ── Header ──
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[dark] (0,0) rectangle (13.2cm,-3.2cm);
+\end{tikzpicture}
+\vspace{8pt}
+\hspace{0.6cm}
+\begin{minipage}[t]{11.5cm}
+\color{white}
+\vspace{8pt}
+{\fontsize{26pt}{30pt}\selectfont\bfseries {% endverbatim %}{{ cv.fullName|latex_escape }}{% verbatim %}}\par
+\vspace{4pt}
+{\large\color{sidetext} {% endverbatim %}{{ cv.professionalTitle|latex_escape }}{% verbatim %}}\par
+\vspace{20pt}
+\end{minipage}
+
+\vspace{16pt}
+\hspace{0.6cm}
+\begin{minipage}[t]{11.5cm}
+\color{dark}
+
+% ── Profile ──
+\mainsection{Profile}
+{\color{muted}\small {% endverbatim %}{{ cv.professionalSummary|latex_escape }}{% verbatim %}}
+
+% ── Experience ──
+{% endverbatim %}{% if cv.experience is not empty %}{% verbatim %}
+\mainsection{Experience}
+{% endverbatim %}{% for item in cv.experience %}{% verbatim %}
+\textbf{ {% endverbatim %}{{ item.jobTitle|latex_escape }}{% verbatim %}}{% endverbatim %}{% if item.duration %}{% verbatim %}\hfill{\small\color{muted}\itshape {% endverbatim %}{{ item.duration|latex_escape }}{% verbatim %}}{% endverbatim %}{% endif %}{% verbatim %}\\
+{% endverbatim %}{% if item.company %}{% verbatim %}{\small\color{muted}\itshape {% endverbatim %}{{ item.company|latex_escape }}{% verbatim %}}\\{% endverbatim %}{% endif %}
+{% if item.description %}{% verbatim %}{\small\color{muted} {% endverbatim %}{{ item.description|latex_escape }}{% verbatim %}}{% endverbatim %}{% endif %}{% verbatim %}
+\vspace{6pt}
+{% endverbatim %}{% endfor %}{% endif %}{% verbatim %}
+
+% ── Education ──
+{% endverbatim %}{% if cv.education is not empty %}{% verbatim %}
+\mainsection{Education}
+{% endverbatim %}{% for item in cv.education %}{% verbatim %}
+\textbf{ {% endverbatim %}{{ item.degree|latex_escape }}{% verbatim %}}{% endverbatim %}{% if item.year %}{% verbatim %}\hfill{\small\color{muted}\itshape {% endverbatim %}{{ item.year|latex_escape }}{% verbatim %}}{% endverbatim %}{% endif %}{% verbatim %}\\
+{% endverbatim %}{% if item.institution %}{% verbatim %}{\small\color{muted}\itshape {% endverbatim %}{{ item.institution|latex_escape }}{% verbatim %}}{% endverbatim %}{% endif %}{% verbatim %}
+\vspace{6pt}
+{% endverbatim %}{% endfor %}{% endif %}{% verbatim %}
+
+% ── Key Skills ──
+{% endverbatim %}{% if cv.skillsAsList() is not empty %}{% verbatim %}
+\mainsection{Key Skills}
+{% endverbatim %}{% for skill in cv.skillsAsList() %}{% verbatim %}\chip{ {% endverbatim %}{{ skill|latex_escape }}{% verbatim %}}{% endverbatim %}{% endfor %}{% endif %}{% verbatim %}
+
+\end{minipage}
+\end{minipage}
+
+\end{document}{% endverbatim %}

@@ -1,21 +1,62 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}{{ event.title }}{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel p-8">
-        <p class="text-xs font-bold uppercase tracking-label text-primary">Community event</p>
-        <h1 class="mt-2 text-4xl font-light tracking-holographic">{{ event.title }}</h1>
-        <p class="mt-3 text-muted-foreground">{{ event.description ?: 'No description yet.' }}</p>
-        <p class="mt-4 text-sm text-muted-foreground">{{ event.startsAt|date('M d, Y H:i') }} · {{ event.location ?: 'Online' }} · Hosted by {{ event.host.displayName }}</p>
-        {% if event.onlineUrl %}<a href="{{ event.onlineUrl }}" target="_blank" rel="noopener noreferrer" class="mt-3 inline-flex text-sm font-bold text-primary">Open event link</a>{% endif %}
-        {% if not app.user.admin and not rsvp %}
-            <form method="post" action="{{ path('app_community_event_rsvp', {id: event.id}) }}" class="mt-5">
-                <input type="hidden" name="_token" value="{{ csrf_token('community_event_rsvp_' ~ event.id) }}">
-                <button class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">I'm going</button>
-            </form>
-        {% elseif rsvp %}
-            <span class="mt-5 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">You're going</span>
-        {% endif %}
+<div class="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
+
+    {% include 'components/_breadcrumbs.html.twig' with {items: [{label: 'Community', route: 'app_community'}, {label: 'Events', route: 'app_community_events'}, {label: event.title}]} %}
+
+    <section class="glass-panel relative overflow-hidden p-0">
+        <div class="h-36 sm:h-44 bg-gradient-to-br from-sky-600/20 via-emerald-500/10 to-teal-500/10 relative">
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i data-lucide="calendar-days" class="h-16 w-16 text-foreground/5"></i>
+            </div>
+        </div>
+        <div class="px-8 pb-8 -mt-8 relative z-10 flex flex-col sm:flex-row sm:items-end gap-5">
+            <div class="flex h-20 w-20 flex-col items-center justify-center rounded-2xl border-4 border-card bg-card shadow-lg">
+                <span class="text-xs font-bold uppercase text-primary">{{ event.startsAt|date('M') }}</span>
+                <span class="text-2xl font-light text-foreground -mt-0.5">{{ event.startsAt|date('d') }}</span>
+                <span class="text-[10px] text-muted-foreground">{{ event.startsAt|date('Y') }}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h1 class="text-3xl font-light tracking-holographic">{{ event.title }}</h1>
+                <div class="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <span class="inline-flex items-center gap-1.5"><i data-lucide="clock" class="h-3.5 w-3.5"></i> {{ event.startsAt|date('H:i') }}</span>
+                    <span class="inline-flex items-center gap-1.5"><i data-lucide="map-pin" class="h-3.5 w-3.5"></i> {{ event.location ?: 'Online' }}</span>
+                    <span class="inline-flex items-center gap-1.5"><i data-lucide="user" class="h-3.5 w-3.5"></i> {{ event.host.displayName }}</span>
+                </div>
+            </div>
+        </div>
     </section>
+
+    <div class="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+        <section class="glass-panel p-6">
+            <h2 class="text-sm font-semibold text-foreground mb-3">About this event</h2>
+            <p class="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{{ event.description ?: 'No description provided.' }}</p>
+
+            {% if event.onlineUrl %}
+            <a href="{{ event.onlineUrl }}" target="_blank" rel="noopener noreferrer" class="mt-5 inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm font-bold text-primary transition hover:bg-primary/10">
+                <i data-lucide="video" class="h-4 w-4"></i> Open event link
+            </a>
+            {% endif %}
+        </section>
+
+        <section class="glass-panel p-6 flex flex-col items-center justify-center text-center">
+            {% if not app.user.admin and not rsvp %}
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4"><i data-lucide="calendar-check" class="h-7 w-7"></i></div>
+                <p class="text-sm font-semibold text-foreground">Interested?</p>
+                <p class="text-xs text-muted-foreground mt-1 mb-4">Let others know you're attending.</p>
+                <form method="post" action="{{ path('app_community_event_rsvp', {id: event.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('community_event_rsvp_' ~ event.id) }}">
+                    <button class="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 hover:scale-[1.02]">
+                        <i data-lucide="check" class="h-4 w-4"></i> I'm going
+                    </button>
+                </form>
+            {% elseif rsvp %}
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 mb-4"><i data-lucide="check-circle" class="h-7 w-7"></i></div>
+                <p class="text-sm font-semibold text-foreground">You're going!</p>
+                <p class="text-xs text-muted-foreground mt-1">We'll see you there.</p>
+            {% endif %}
+        </section>
+    </div>
 </div>
 {% endblock %}

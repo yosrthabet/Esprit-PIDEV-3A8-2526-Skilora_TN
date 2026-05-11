@@ -3,7 +3,7 @@
 {% block content %}
 <div class="mx-auto grid max-w-[90rem] gap-6 px-4 py-6 lg:grid-cols-[1fr_22rem] sm:px-6 lg:px-8" x-data="supportChat({ ticketId: {{ ticket.id }}, admin: {{ admin ? 'true' : 'false' }}, endpoint: '{{ admin ? path('app_admin_support_messages', {id: ticket.id}) : path('app_support_messages', {id: ticket.id}) }}', token: '{{ csrf_token('support_message_' ~ ticket.id) }}', me: {{ app.user.id }} })" x-init="init()">
     <section class="glass-panel overflow-hidden">
-        <header class="border-b border-border/50 p-6"><div class="flex flex-wrap items-center justify-between gap-3"><a href="{{ admin ? path('app_admin_support') : path('app_support') }}" class="text-sm font-semibold text-muted-foreground hover:text-foreground">← Back</a><a href="{{ admin ? path('app_admin_support_export_pdf', {id: ticket.id}) : path('app_support_export_pdf', {id: ticket.id}) }}" class="inline-flex rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-muted/50">Export PDF</a></div><div class="mt-4 flex flex-wrap items-center gap-2"><span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ ticket.status.label }}</span><span class="text-xs text-muted-foreground">{{ ticket.category.label }} · {{ ticket.priority.label }}</span></div><h1 class="mt-3 text-3xl font-light tracking-holographic">{{ ticket.subject }}</h1><p class="mt-2 text-muted-foreground">{{ ticket.description }}</p></header>
+        <header class="border-b border-border/50 p-6"><div class="flex flex-wrap items-center justify-between gap-3"><a href="{{ admin ? path('app_admin_support') : path('app_support') }}" class="text-sm font-semibold text-muted-foreground hover:text-foreground">← Back</a><div class="flex flex-wrap gap-2">{% if not admin and ticket.status.value in ['open', 'in_progress'] %}<a href="{{ path('app_support_edit', {id: ticket.id}) }}" class="inline-flex rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-muted/50">Edit</a><form method="post" action="{{ path('app_support_close', {id: ticket.id}) }}" class="inline"><input type="hidden" name="_token" value="{{ csrf_token('support_ticket_close_' ~ ticket.id) }}"><button class="rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-muted/50" data-confirm-click="Close this ticket?" data-confirm-label="Close">Close ticket</button></form>{% endif %}<a href="{{ admin ? path('app_admin_support_export_pdf', {id: ticket.id}) : path('app_support_export_pdf', {id: ticket.id}) }}" class="inline-flex rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-muted/50">Export PDF</a></div></div><div class="mt-4 flex flex-wrap items-center gap-2"><span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ ticket.status.label }}</span><span class="text-xs text-muted-foreground">{{ ticket.category.label }} · {{ ticket.priority.label }}</span></div><h1 class="mt-3 text-3xl font-light tracking-holographic">{{ ticket.subject }}</h1><p class="mt-2 text-muted-foreground">{{ ticket.description }}</p></header>
         <div id="support-messages" class="max-h-[560px] min-h-[360px] space-y-4 overflow-y-auto p-6">
             {% for message in messages %}
                 <div class="flex {{ message.sender.id == app.user.id ? 'justify-end' : 'justify-start' }}" data-message-id="{{ message.id }}"><div class="max-w-[75%] rounded-2xl px-4 py-3 {{ message.sender.id == app.user.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground' }}"><p class="whitespace-pre-line text-sm">{{ message.body }}</p><p class="mt-2 text-[10px] opacity-70">{{ message.sender.displayName }} · {{ message.createdAt|date('M d, H:i') }}</p></div></div>
@@ -11,23 +11,60 @@
                 <p class="py-16 text-center text-sm text-muted-foreground">No messages yet. Start the conversation below.</p>
             {% endfor %}
         </div>
-        <form @submit.prevent="send" class="border-t border-border/50 p-4"><div class="flex gap-3"><textarea x-model="body" rows="1" placeholder="Write a message..." class="min-h-12 flex-1 rounded-2xl border border-border bg-background/70 p-3 text-sm"></textarea><button class="h-12 rounded-2xl bg-primary px-5 text-sm font-bold text-primary-foreground">Send</button></div>{% if admin %}<label class="mt-2 flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" x-model="internal"> internal note</label>{% endif %}</form>
+        <form @submit.prevent="send" class="border-t border-border/50 p-4"><div class="flex gap-3"><textarea x-model="body" rows="1" placeholder="Write a message..." class="min-h-12 flex-1 rounded-2xl border border-border bg-background/70 p-3 text-sm"></textarea><button type="button" @click="aiFixMsg()" :disabled="aiFixing || !body.trim()" class="h-12 rounded-2xl border border-border px-3 text-xs font-bold text-primary hover:bg-muted transition disabled:opacity-40" title="AI correct grammar"><i data-lucide="spell-check" class="h-3.5 w-3.5 inline"></i> <span x-text="aiFixing ? '...' : 'Fix'"></span></button><button class="h-12 rounded-2xl bg-primary px-5 text-sm font-bold text-primary-foreground">Send</button></div>{% if admin %}<label class="mt-2 flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" x-model="internal"> internal note</label>{% endif %}</form>
     </section>
+    {% if not admin and ticket.status.value in ['resolved', 'closed'] and not ticket.hasFeedback %}
+        <section class="glass-panel p-6">
+            <h2 class="font-semibold">How was your experience?</h2>
+            <form method="post" action="{{ path('app_support_feedback', {id: ticket.id}) }}" class="mt-4 space-y-3">
+                <input type="hidden" name="_token" value="{{ csrf_token('support_feedback_' ~ ticket.id) }}">
+                <div class="flex gap-2">{% for i in 1..5 %}<label class="cursor-pointer"><input type="radio" name="rating" value="{{ i }}" class="peer sr-only" required><span class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-sm font-bold transition peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground hover:bg-muted">{{ i }}</span></label>{% endfor %}</div>
+                <textarea name="comment" rows="2" placeholder="Any additional feedback? (optional)" class="w-full rounded-xl border border-border bg-background/70 p-3 text-sm"></textarea>
+                <button class="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">Submit feedback</button>
+            </form>
+        </section>
+    {% elseif not admin and ticket.hasFeedback %}
+        <section class="glass-panel p-6">
+            <h2 class="font-semibold">Your feedback</h2>
+            <p class="mt-2 text-sm">Rating: <strong>{{ ticket.feedbackRating }}/5</strong></p>
+            {% if ticket.feedbackComment %}<p class="mt-1 text-sm text-muted-foreground">{{ ticket.feedbackComment }}</p>{% endif %}
+        </section>
+    {% endif %}
     <aside class="space-y-4 lg:sticky lg:top-24 lg:self-start">
         {% if admin %}<form method="post" action="{{ path('app_admin_support_status', {id: ticket.id}) }}" class="glass-panel space-y-4 p-5"><input type="hidden" name="_token" value="{{ csrf_token('support_status_' ~ ticket.id) }}"><h2 class="font-semibold">Admin controls</h2><select name="status" class="w-full rounded-xl border border-border bg-background/70 p-3"><option value="open" {{ ticket.status.value == 'open' ? 'selected' }}>Open</option><option value="in_progress" {{ ticket.status.value == 'in_progress' ? 'selected' }}>In progress</option><option value="resolved" {{ ticket.status.value == 'resolved' ? 'selected' }}>Resolved</option><option value="closed" {{ ticket.status.value == 'closed' ? 'selected' }}>Closed</option></select><select name="priority" class="w-full rounded-xl border border-border bg-background/70 p-3"><option value="low" {{ ticket.priority.value == 'low' ? 'selected' }}>Low</option><option value="normal" {{ ticket.priority.value == 'normal' ? 'selected' }}>Normal</option><option value="high" {{ ticket.priority.value == 'high' ? 'selected' }}>High</option><option value="urgent" {{ ticket.priority.value == 'urgent' ? 'selected' }}>Urgent</option></select><button class="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">Update ticket</button></form>{% endif %}
+        <div class="glass-panel space-y-3 p-5">
+            <h2 class="font-semibold">Attachments</h2>
+            {% for att in attachments %}
+                <a href="{{ path('app_support_download_attachment', {id: att.id}) }}" class="flex items-center gap-2 rounded-xl border border-border p-3 text-sm hover:bg-muted/50">
+                    <i data-lucide="{{ att.isImage ? 'image' : 'file' }}" class="h-4 w-4 text-muted-foreground"></i>
+                    <span class="flex-1 truncate">{{ att.originalName }}</span>
+                    <span class="text-xs text-muted-foreground">{{ att.fileSizeFormatted }}</span>
+                </a>
+            {% else %}
+                <p class="text-sm text-muted-foreground">No attachments yet.</p>
+            {% endfor %}
+            {% if ticket.status.value in ['open', 'in_progress'] %}
+                <form method="post" action="{{ path('app_support_upload_attachment', {id: ticket.id}) }}" enctype="multipart/form-data" class="mt-2">
+                    <input type="hidden" name="_token" value="{{ csrf_token('support_attachment_' ~ ticket.id) }}">
+                    <input type="file" name="attachment" required class="w-full text-sm">
+                    <button class="mt-2 w-full rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-muted">Upload</button>
+                </form>
+            {% endif %}
+        </div>
         <div class="glass-panel p-5"><h2 class="font-semibold">Live chat</h2><p class="mt-2 text-sm text-muted-foreground">This thread polls for new messages every 3 seconds. It can later be upgraded to Mercure/SSE.</p></div>
     </aside>
 </div>
 <script>
 function supportChat(config) {
     return {
-        body: '', internal: false, lastId: 0, timer: null,
+        body: '', internal: false, lastId: 0, timer: null, aiFixing: false,
         init() { this.lastId = this.findLastId(); this.scroll(); this.timer = setInterval(() => this.poll(), 3000); },
         findLastId() { const nodes = document.querySelectorAll('[data-message-id]'); return nodes.length ? parseInt(nodes[nodes.length - 1].dataset.messageId || '0') : 0; },
         scroll() { const box = document.getElementById('support-messages'); if (box) box.scrollTop = box.scrollHeight; },
         render(message) { const box = document.getElementById('support-messages'); if (!box || document.querySelector(`[data-message-id="${message.id}"]`)) return; const mine = message.senderId === config.me; const row = document.createElement('div'); row.className = 'flex ' + (mine ? 'justify-end' : 'justify-start'); row.dataset.messageId = message.id; row.innerHTML = `<div class="max-w-[75%] rounded-2xl px-4 py-3 ${mine ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}"><p class="whitespace-pre-line text-sm"></p><p class="mt-2 text-[10px] opacity-70"></p></div>`; row.querySelector('p').textContent = message.body; row.querySelectorAll('p')[1].textContent = message.sender + ' · ' + message.createdAt; box.appendChild(row); this.lastId = Math.max(this.lastId, message.id); this.scroll(); },
         poll() { fetch(config.endpoint + '?after=' + this.lastId).then(r => r.json()).then(d => (d.messages || []).forEach(m => this.render(m))).catch(() => {}); },
-        send() { if (!this.body.trim()) return; const data = new FormData(); data.append('_token', config.token); data.append('body', this.body); data.append('internal', this.internal ? '1' : '0'); fetch(config.endpoint, { method: 'POST', body: data }).then(r => r.json()).then(d => { if (d.message) { this.render(d.message); this.body = ''; this.internal = false; } }); }
+        send() { if (!this.body.trim()) return; const data = new FormData(); data.append('_token', config.token); data.append('body', this.body); data.append('internal', this.internal ? '1' : '0'); fetch(config.endpoint, { method: 'POST', body: data }).then(r => r.json()).then(d => { if (d.message) { this.render(d.message); this.body = ''; this.internal = false; } }); },
+        aiFixMsg() { if (!this.body.trim() || this.aiFixing) return; this.aiFixing = true; fetch('/api/chat/correct', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: this.body }) }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => { if (d.corrected && d.corrected !== this.body) this.body = d.corrected; }).catch(() => {}).finally(() => { this.aiFixing = false; }); }
     }
 }
 </script>

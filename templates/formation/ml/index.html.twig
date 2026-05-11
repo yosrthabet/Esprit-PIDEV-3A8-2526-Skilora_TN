@@ -1,0 +1,32 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}AI Formation Tools{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8" x-data="{ tab: 'recommend' }">
+    <section class="glass-panel p-8">
+        <div class="flex items-center gap-3"><i data-lucide="sparkles" class="h-6 w-6 text-primary"></i><h1 class="text-3xl font-light tracking-holographic">AI Formation Tools</h1></div>
+        <p class="mt-2 text-muted-foreground">Course recommendations & completion predictions</p>
+    </section>
+    <div class="flex flex-wrap gap-2">
+        <button @click="tab='recommend'" :class="tab==='recommend'?'bg-primary text-primary-foreground':'bg-muted'" class="rounded-xl px-4 py-2 text-sm font-bold transition">Recommendations</button>
+        <button @click="tab='predict'" :class="tab==='predict'?'bg-primary text-primary-foreground':'bg-muted'" class="rounded-xl px-4 py-2 text-sm font-bold transition">Completion Predictor</button>
+    </div>
+
+    <section x-show="tab==='recommend'" class="glass-panel space-y-4 p-6">
+        <h2 class="font-semibold">Course Recommendations</h2>
+        <form @submit.prevent="fetch('{{ path('app_formation_ml_recommend') }}',{method:'POST',body:new FormData($el)}).then(r=>r.json()).then(d=>$refs.recResult.textContent=JSON.stringify(d,null,2))" class="grid gap-3">
+            <input name="skills" placeholder="Your skills (comma-separated)" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <button class="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">Get Recommendations</button>
+        </form>
+        <pre x-ref="recResult" class="max-h-64 overflow-auto rounded-xl bg-muted/50 p-4 text-xs"></pre>
+    </section>
+
+    <section x-show="tab==='predict'" class="glass-panel space-y-4 p-6">
+        <h2 class="font-semibold">Completion Predictor</h2>
+        <form @submit.prevent="fetch('{{ path('app_formation_ml_completion_predict') }}',{method:'POST',body:new FormData($el)}).then(r=>r.json()).then(d=>$refs.predResult.textContent=JSON.stringify(d,null,2))" class="grid gap-3">
+            <input name="formation_id" type="number" placeholder="Formation ID" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <button class="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">Predict</button>
+        </form>
+        <pre x-ref="predResult" class="max-h-64 overflow-auto rounded-xl bg-muted/50 p-4 text-xs"></pre>
+    </section>
+</div>
+{% endblock %}

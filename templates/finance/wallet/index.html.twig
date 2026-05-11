@@ -1,0 +1,94 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Wallet{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(16,185,129,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-emerald-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Wallet</p>
+                    <form method="post" action="{{ path('app_finance_wallet_currency') }}" class="inline-flex items-center gap-2">
+                        <input type="hidden" name="_token" value="{{ csrf_token('wallet_currency') }}">
+                        <select name="currency" onchange="this.form.submit()" class="appearance-none rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur cursor-pointer hover:bg-white/20 transition">
+                            {% for c in currencies %}
+                                <option value="{{ c.value }}" {{ c == currentCurrency ? 'selected' }} class="text-black">{{ c.value }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">{{ wallet.balance }} {{ wallet.currency.value }}</h1>
+                <p class="mt-4 max-w-2xl text-sm leading-7 text-white/70">
+                    {% if currentCurrency.value != 'EUR' %}
+                        1 EUR = {{ eurRate }} {{ currentCurrency.value }} · Rates auto-updated
+                    {% else %}
+                        Wallet in EUR · Stripe native currency
+                    {% endif %}
+                </p>
+            </div>
+            <div class="flex gap-3">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur text-center min-w-[7rem]">
+                    <p class="text-3xl font-light">{{ transactions|length }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Transactions</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="grid gap-6 lg:grid-cols-[24rem_1fr]">
+        <div class="space-y-4">
+            {# ── Stripe Top-up ── #}
+            <form method="post" action="{{ path('app_wallet_topup_checkout') }}" class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm space-y-4">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="credit-card" class="h-4 w-4 text-primary"></i>
+                    <h2 class="text-xs font-black uppercase tracking-[0.2em]">Top up via Stripe</h2>
+                </div>
+                <input type="hidden" name="_token" value="{{ csrf_token('wallet_topup') }}">
+                <input name="amount" required type="number" min="1" step="1" inputmode="numeric" placeholder="Amount in EUR" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-4 text-sm">
+                <p class="text-[11px] text-muted-foreground">
+                    {% if currentCurrency.value != 'EUR' %}
+                        Payment in EUR · Auto-converted to {{ currentCurrency.value }} at current rate
+                    {% else %}
+                        Payment in EUR · Credited directly
+                    {% endif %}
+                </p>
+                <button class="w-full rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:shadow-md">
+                    <i data-lucide="zap" class="mr-1.5 inline h-3.5 w-3.5"></i> Pay with card
+                </button>
+                <p class="text-[10px] text-center text-muted-foreground">Secure payment via Stripe · Sandbox mode</p>
+            </form>
+
+            {# ── Manual Top-up (fallback) ── #}
+            <details class="rounded-[1.75rem] border border-border/70 bg-card/70 shadow-sm">
+                <summary class="cursor-pointer p-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition">Manual top-up (demo)</summary>
+                <form method="post" action="{{ path('app_finance_wallet_recharge') }}" class="px-5 pb-5 space-y-4">
+                    <input type="hidden" name="_token" value="{{ csrf_token('wallet_recharge_' ~ app.user.id) }}">
+                    <input name="amount" required inputmode="decimal" placeholder="Amount in {{ currentCurrency.value }}" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-4 text-sm">
+                    <button class="w-full rounded-full border border-border px-4 py-3 text-sm font-bold text-foreground shadow-sm transition hover:shadow-md">Credit {{ currentCurrency.value }} wallet</button>
+                </form>
+            </details>
+        </div>
+
+        {# ── Transactions ── #}
+        <section class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+            <h2 class="text-xs font-black uppercase tracking-[0.2em]">Transactions</h2>
+            <div class="mt-4 space-y-3">
+                {% for transaction in transactions %}
+                    <div class="rounded-2xl border border-border/60 bg-background/60 p-4">
+                        <div class="flex justify-between gap-3">
+                            <span class="font-bold">{{ transaction.type|replace({'_': ' '})|title }}</span>
+                            <span class="font-black">{{ transaction.amount }} {{ transaction.currency.value }}</span>
+                        </div>
+                        <p class="mt-1 text-[11px] text-muted-foreground">{{ transaction.status }} · {{ transaction.createdAt|date('M d, Y · H:i') }}</p>
+                    </div>
+                {% else %}
+                    <p class="rounded-2xl border border-dashed border-border bg-background/50 p-4 text-sm text-muted-foreground text-center">No wallet transactions yet.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

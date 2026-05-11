@@ -1,0 +1,111 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Finance Analytics{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8 animate-fade-in relative z-10">
+
+    {% include 'components/_breadcrumbs.html.twig' with {items: [{label: 'Finance', route: 'app_finance'}, {label: 'Analytics'}]} %}
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(139,92,246,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-violet-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Finance analytics</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Revenue insights<br class="hidden sm:block"> & forecasting.</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Track your earnings, monitor pending payments, and forecast future revenue.</p>
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <a href="{{ path('app_finance_export_forecast') }}" class="inline-flex rounded-full bg-white px-4 py-2 text-sm font-bold text-black shadow-sm transition hover:shadow-md">
+                        <i data-lucide="download" class="mr-1.5 inline h-3.5 w-3.5"></i> Export CSV
+                    </a>
+                    <a href="{{ path('app_finance_calculator') }}" class="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20">
+                        <i data-lucide="calculator" class="mr-1.5 inline h-3.5 w-3.5"></i> Salary Calculator
+                    </a>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-2xl font-light">{{ kpis.total_earned }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Earned</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-2xl font-light">{{ kpis.total_pending }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Pending</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-2xl font-light">{{ kpis.wallet_balance }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Wallet</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-2xl font-light">{{ kpis.total_contracts }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Contracts</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-2xl font-light">{{ kpis.total_invoices }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Invoices</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ── Charts ── #}
+    <div class="grid gap-6 lg:grid-cols-5">
+        <section class="lg:col-span-3 rounded-[1.75rem] border border-border/70 bg-card/70 shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between border-b border-border/40 px-6 py-4">
+                <div>
+                    <h2 class="text-xs font-black uppercase tracking-[0.2em]">Monthly Revenue</h2>
+                    <p class="text-[11px] text-muted-foreground mt-0.5">Last 6 months breakdown</p>
+                </div>
+            </div>
+            <div class="p-6" style="height:340px"><canvas id="monthlyChart"></canvas></div>
+        </section>
+        <section class="lg:col-span-2 rounded-[1.75rem] border border-border/70 bg-card/70 shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between border-b border-border/40 px-6 py-4">
+                <div>
+                    <h2 class="text-xs font-black uppercase tracking-[0.2em]">Forecast</h2>
+                    <p class="text-[11px] text-muted-foreground mt-0.5">Projected next 3 months</p>
+                </div>
+            </div>
+            <div class="p-6" style="height:340px"><canvas id="forecastChart"></canvas></div>
+        </section>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        if (typeof Chart === 'undefined') return;
+        const isDark = document.documentElement.classList.contains('dark') || window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
+        const textColor = isDark ? '#a1a1aa' : '#6b7280';
+
+        const mCtx = document.getElementById('monthlyChart').getContext('2d');
+        const grad = mCtx.createLinearGradient(0,0,0,340);
+        grad.addColorStop(0,'rgba(99,102,241,0.25)'); grad.addColorStop(1,'rgba(99,102,241,0)');
+
+        new Chart(mCtx, {type:'bar', data:{labels:{{ monthly.labels|json_encode|raw }}, datasets:[{label:'Revenue', data:{{ monthly.values|json_encode|raw }}, backgroundColor:grad, borderColor:'#6366f1', borderWidth:2, borderRadius:8, hoverBackgroundColor:'rgba(99,102,241,0.5)'}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{backgroundColor:isDark?'rgba(15,23,42,0.95)':'rgba(255,255,255,0.95)',titleColor:isDark?'#f8fafc':'#111827',bodyColor:isDark?'#cbd5e1':'#4b5563',borderColor:gridColor,borderWidth:1,padding:12,cornerRadius:8}}, scales:{y:{beginAtZero:true,grid:{color:gridColor,drawBorder:false},border:{display:false},ticks:{color:textColor,padding:8}},x:{grid:{display:false},border:{display:false},ticks:{color:textColor}}}}});
+
+        const fCtx = document.getElementById('forecastChart').getContext('2d');
+        const hLabels = {{ monthly.labels|json_encode|raw }};
+        const hValues = {{ monthly.values|json_encode|raw }};
+        const fLabels = {{ forecast.forecast_labels|json_encode|raw }};
+        const fValues = {{ forecast.forecast_values|json_encode|raw }};
+        const bLow = {{ forecast.band_low|default([])|json_encode|raw }};
+        const bHigh = {{ forecast.band_high|default([])|json_encode|raw }};
+        const allLabels = [...hLabels,...fLabels];
+        const nullPad = Array(hLabels.length).fill(null);
+        const datasets = [
+            {label:'Historical', data:[...hValues,...Array(fLabels.length).fill(null)], borderColor:'#6366f1', backgroundColor:'transparent', borderWidth:2.5, tension:0.4, pointBackgroundColor:isDark?'#1f2937':'#fff',pointBorderColor:'#6366f1',pointBorderWidth:2,pointRadius:4},
+            {label:'Forecast', data:[...nullPad,...fValues], borderColor:'#f97316',backgroundColor:'transparent', borderDash:[6,4], borderWidth:2.5,tension:0.4,pointBackgroundColor:isDark?'#1f2937':'#fff',pointBorderColor:'#f97316',pointBorderWidth:2,pointRadius:4}
+        ];
+        if (bHigh.length) {
+            datasets.push({label:'Confidence Band', data:[...nullPad,...bHigh], borderColor:'transparent', backgroundColor:'rgba(249,115,22,0.08)', fill:'+1', pointRadius:0, tension:0.4});
+            datasets.push({label:'', data:[...nullPad,...bLow], borderColor:'transparent', backgroundColor:'transparent', pointRadius:0, tension:0.4});
+        }
+        new Chart(fCtx, {type:'line', data:{labels:allLabels, datasets}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{color:textColor,usePointStyle:true,padding:20,filter:item=>item.text!==''}},tooltip:{backgroundColor:isDark?'rgba(15,23,42,0.95)':'rgba(255,255,255,0.95)',titleColor:isDark?'#f8fafc':'#111827',bodyColor:isDark?'#cbd5e1':'#4b5563',borderColor:gridColor,borderWidth:1,padding:12,cornerRadius:8}}, scales:{y:{beginAtZero:true,grid:{color:gridColor,drawBorder:false},border:{display:false},ticks:{color:textColor,padding:8}},x:{grid:{display:false},border:{display:false},ticks:{color:textColor}}}}});
+    }, 500);
+});
+</script>
+{% endblock %}

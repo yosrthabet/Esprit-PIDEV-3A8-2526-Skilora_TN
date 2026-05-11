@@ -1,0 +1,37 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Certificates — Admin{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="glass-panel p-8">
+        <p class="text-xs font-bold uppercase tracking-label text-primary">Admin</p>
+        <h1 class="mt-2 text-3xl font-light tracking-holographic">Certificates issued</h1>
+        <p class="mt-1 text-sm text-muted-foreground">{{ certificates|length }} certificates</p>
+    </section>
+    <div class="glass-panel overflow-hidden">
+        <table class="w-full text-left text-sm">
+            <thead class="border-b border-border/50 bg-muted/30"><tr>
+                <th class="px-4 py-3 font-semibold">Learner</th>
+                <th class="px-4 py-3 font-semibold">Formation</th>
+                <th class="px-4 py-3 font-semibold">Verification ID</th>
+                <th class="px-4 py-3 font-semibold">Issued</th>
+                <th class="px-4 py-3 font-semibold">Actions</th>
+            </tr></thead>
+            <tbody class="divide-y divide-border/30">
+                {% for cert in certificates %}
+                    <tr class="transition hover:bg-muted/20">
+                        <td class="px-4 py-3">{{ cert.enrollment.user.displayName }}</td>
+                        <td class="px-4 py-3">{{ cert.enrollment.formation.title }}</td>
+                        <td class="px-4 py-3 font-mono text-xs text-muted-foreground">{{ cert.verificationId|slice(0, 12) }}…</td>
+                        <td class="px-4 py-3 text-xs text-muted-foreground">{{ cert.issuedAt|date('M d, Y') }}</td>
+                        <td class="px-4 py-3">
+                            <a href="{{ path('app_certificate_verify', {verificationId: cert.verificationId}) }}" target="_blank" class="text-xs font-bold text-primary hover:underline">Verify</a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="px-4 py-8 text-center text-muted-foreground">No certificates issued yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

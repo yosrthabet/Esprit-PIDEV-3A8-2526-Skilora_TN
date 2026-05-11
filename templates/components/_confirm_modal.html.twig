@@ -1,0 +1,53 @@
+{# _confirm_modal.html.twig — Alpine.js destructive action confirmation
+   Usage: Wrap a delete button/form in this component.
+   {% include 'components/_confirm_modal.html.twig' with {
+       trigger_label: 'Delete',
+       title: 'Delete this item?',
+       description: 'This action cannot be undone.',
+       action_url: path('app_some_delete', {id: item.id}),
+       csrf_token: csrf_token('delete_' ~ item.id),
+       confirm_label: 'Yes, delete',
+       variant: 'danger'
+   } %}
+#}
+{% set _variant = variant|default('danger') %}
+{% set _btn_class = _variant == 'danger' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-primary hover:bg-primary/90 text-primary-foreground' %}
+
+<div x-data="{ open: false }" class="inline-flex">
+    <button @click="open = true" type="button"
+        class="inline-flex items-center gap-1.5 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 transition hover:bg-red-100 dark:hover:bg-red-900/40">
+        <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+        {{ trigger_label|default('Delete') }}
+    </button>
+
+    <template x-teleport="body">
+        <div x-show="open" x-transition.opacity class="fixed inset-0 z-[9999] flex items-center justify-center p-4" @keydown.escape.window="open = false">
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="open = false"></div>
+            <div x-show="open" x-transition
+                class="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+                <div class="flex items-start gap-4">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400">
+                        <i data-lucide="alert-triangle" class="h-5 w-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-foreground">{{ title|default('Are you sure?') }}</h3>
+                        <p class="mt-1 text-sm text-muted-foreground">{{ description|default('This action cannot be undone.') }}</p>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button @click="open = false" type="button"
+                        class="rounded-xl border border-border px-4 py-2 text-sm font-semibold transition hover:bg-muted">
+                        Cancel
+                    </button>
+                    <form method="post" action="{{ action_url }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token }}">
+                        {% if method is defined %}<input type="hidden" name="_method" value="{{ method }}">{% endif %}
+                        <button type="submit" class="rounded-xl px-4 py-2 text-sm font-bold transition {{ _btn_class }}">
+                            {{ confirm_label|default('Confirm') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>

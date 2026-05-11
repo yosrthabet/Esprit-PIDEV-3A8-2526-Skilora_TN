@@ -1,11 +1,23 @@
-<nav class="flex flex-wrap gap-2">
-    {% for item in [
-        {label: 'Feed', route: 'app_community'},
-        {label: 'Network', route: 'app_community_network'},
-        {label: 'Groups', route: 'app_community_groups'},
-        {label: 'Events', route: 'app_community_events'},
-        {label: 'Blog', route: 'app_community_blog'}
-    ] %}
-        <a href="{{ path(item.route) }}" class="rounded-full border border-border px-3 py-1.5 text-xs font-bold transition {{ app.request.attributes.get('_route') starts with item.route ? 'bg-primary text-primary-foreground' : 'bg-background/60 text-muted-foreground hover:text-foreground' }}">{{ item.label }}</a>
-    {% endfor %}
+{% set current_route = app.request.attributes.get('_route') %}
+{% set feed_routes  = ['app_community', 'app_community_for_you', 'app_community_following', 'app_community_saved', 'app_community_search', 'app_community_post_show', 'app_community_post_edit'] %}
+{% set net_routes   = ['app_community_network', 'app_community_invitation_send', 'app_community_invitation_accept', 'app_community_invitation_decline', 'app_community_invitation_cancel'] %}
+{% set group_routes = ['app_community_groups', 'app_community_group_new', 'app_community_group_show', 'app_community_group_edit'] %}
+{% set event_routes = ['app_community_events', 'app_community_event_new', 'app_community_event_show'] %}
+{% set blog_routes  = ['app_community_blog', 'app_community_blog_new', 'app_community_blog_show'] %}
+
+{% macro tab(href, label, icon, active) %}
+<a href="{{ href }}"
+   class="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+          {{ active ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50' : 'text-muted-foreground hover:bg-background/60 hover:text-foreground' }}">
+    <i data-lucide="{{ icon }}" class="h-4 w-4"></i>
+    {{ label }}
+</a>
+{% endmacro %}
+
+<nav class="mb-2 flex items-center gap-1 overflow-x-auto rounded-xl border border-border bg-muted/40 p-1 backdrop-blur-sm">
+    {{ _self.tab(path('app_community'), 'Feed', 'newspaper', current_route in feed_routes) }}
+    {{ _self.tab(path('app_community_network'), 'Network', 'users', current_route in net_routes) }}
+    {{ _self.tab(path('app_community_groups'), 'Groups', 'layout-grid', current_route in group_routes) }}
+    {{ _self.tab(path('app_community_events'), 'Events', 'calendar', current_route in event_routes) }}
+    {{ _self.tab(path('app_community_blog'), 'Blog', 'book-open', current_route in blog_routes) }}
 </nav>

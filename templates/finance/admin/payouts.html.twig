@@ -1,0 +1,102 @@
+{% extends 'layouts/adaptive.html.twig' %}
+
+{% block page_title %}Payout Requests{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(245,158,11,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-amber-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative flex flex-wrap items-end justify-between gap-6">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Admin finance</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Payout Requests</h1>
+            </div>
+            <div class="rounded-3xl border border-white/10 bg-white/10 px-5 py-3 backdrop-blur">
+                <p class="text-3xl font-light">{{ payouts|length }}</p>
+                <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Total</p>
+            </div>
+        </div>
+    </section>
+
+    {# ── Table ── #}
+    <section class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm overflow-hidden">
+    {% if payouts is empty %}
+        <div class="rounded-2xl border border-dashed border-border bg-background/50 p-12 text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted"><i data-lucide="inbox" class="h-7 w-7 text-muted-foreground/50"></i></div>
+            <p class="mt-3 text-sm font-bold">No payout requests yet.</p>
+        </div>
+    {% else %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-border/50 text-left text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+                        <th class="pb-3 pr-4">#</th>
+                        <th class="pb-3 pr-4">User</th>
+                        <th class="pb-3 pr-4">Amount</th>
+                        <th class="pb-3 pr-4">Bank</th>
+                        <th class="pb-3 pr-4">Status</th>
+                        <th class="pb-3 pr-4">Requested</th>
+                        <th class="pb-3 pr-4">Note</th>
+                        <th class="pb-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border/30">
+                    {% for payout in payouts %}
+                        <tr class="hover:bg-muted/20 transition">
+                            <td class="py-3 pr-4 font-mono text-xs text-muted-foreground">{{ payout.id }}</td>
+                            <td class="py-3 pr-4">
+                                <div class="font-bold">{{ payout.user.fullName ?? payout.user.username }}</div>
+                                <div class="text-[11px] text-muted-foreground">{{ payout.user.email }}</div>
+                            </td>
+                            <td class="py-3 pr-4 font-bold">{{ payout.amount }} {{ payout.currency.value }}</td>
+                            <td class="py-3 pr-4 text-xs text-muted-foreground">
+                                {{ payout.bankAccount.bankName }}<br>
+                                {{ payout.bankAccount.maskedIban }}
+                            </td>
+                            <td class="py-3 pr-4">
+                                {% set statusColor = {
+                                    'pending': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                                    'approved': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                                    'completed': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                                    'rejected': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                                } %}
+                                <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider {{ statusColor[payout.status.value] ?? 'bg-muted text-muted-foreground' }}">
+                                    {{ payout.status.value }}
+                                </span>
+                            </td>
+                            <td class="py-3 pr-4 text-xs text-muted-foreground">{{ payout.createdAt|date('M d, Y H:i') }}</td>
+                            <td class="py-3 pr-4 text-xs text-muted-foreground max-w-[150px] truncate">{{ payout.note ?? '—' }}</td>
+                            <td class="py-3">
+                                {% if payout.isPending %}
+                                    <div class="flex items-center gap-1.5">
+                                        <form method="post" action="{{ path('app_admin_finance_payout_approve', {id: payout.id}) }}" class="inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('payout_action_' ~ payout.id) }}">
+                                            <button type="submit" class="inline-flex h-7 items-center rounded-full bg-emerald-600 px-3 text-[11px] font-bold text-white hover:bg-emerald-700 transition shadow-sm">
+                                                <i data-lucide="check" class="h-3 w-3 mr-1"></i> Approve
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{{ path('app_admin_finance_payout_reject', {id: payout.id}) }}" class="inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('payout_action_' ~ payout.id) }}">
+                                            <button type="submit" class="inline-flex h-7 items-center rounded-full bg-red-600 px-3 text-[11px] font-bold text-white hover:bg-red-700 transition shadow-sm">
+                                                <i data-lucide="x" class="h-3 w-3 mr-1"></i> Reject
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <span class="text-xs text-muted-foreground">
+                                        {% if payout.processedAt %}Processed {{ payout.processedAt|date('M d') }}{% endif %}
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+    </section>
+</div>
+{% endblock %}

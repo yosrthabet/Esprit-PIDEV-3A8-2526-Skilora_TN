@@ -1,18 +1,23 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}{{ action }}{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+<div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8"
+     x-data="formWithSignature({
+        existingUrl: {% if formation.id and formation.certificateSignatureFilename %}'{{ path('app_trainer_formation_signature_preview', {id: formation.id}) }}'{% else %}null{% endif %}
+     })">
     <form method="post" class="glass-panel space-y-5 p-8">
         <div>
             <p class="text-xs font-bold uppercase tracking-label text-primary">Trainer studio</p>
             <h1 class="mt-2 text-3xl font-light tracking-holographic">{{ action }}</h1>
         </div>
+
         {% if errors|default([]) is not empty %}
             <div class="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
                 {% for error in errors %}<p>{{ error }}</p>{% endfor %}
             </div>
         {% endif %}
         <input type="hidden" name="_token" value="{{ csrf_token(formation.id ? 'trainer_formation_edit_' ~ formation.id : 'trainer_formation_new') }}">
+
         <input name="title" value="{{ formation.title }}" placeholder="Formation title" required class="h-11 w-full rounded-xl border border-border bg-background/70 px-4 text-sm">
         <textarea name="description" rows="5" placeholder="What will learners achieve?" class="w-full rounded-xl border border-border bg-background/70 px-4 py-3 text-sm">{{ formation.description }}</textarea>
         <div class="grid gap-4 md:grid-cols-2">
@@ -23,7 +28,175 @@
             <input name="duration_hours" value="{{ formation.durationHours }}" type="number" min="0" placeholder="Duration hours" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
             <input name="price_amount" value="{{ formation.priceAmount }}" inputmode="decimal" placeholder="Price or leave free" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
         </div>
-        <button class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">{{ action }}</button>
+
+        {# Signature status indicator + open modal button #}
+        <div class="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/20 p-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg" :class="hasSignature ? 'bg-emerald-500/15 text-emerald-500' : 'bg-muted text-muted-foreground'">
+                <i data-lucide="pen-tool" class="h-5 w-5"></i>
+            </div>
+            <div class="flex-1">
+                <p class="text-sm font-semibold" x-text="hasSignature ? 'Signature ready' : 'Certificate signature required'"></p>
+                <p class="text-xs text-muted-foreground">Your signature appears on learner certificates</p>
+            </div>
+            <button type="button" @click="openModal()" class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold transition hover:bg-muted">
+                <i data-lucide="edit-3" class="h-4 w-4"></i>
+                <span x-text="hasSignature ? 'Change' : 'Draw'"></span>
+            </button>
+        </div>
+
+        <input type="hidden" name="signature_data" x-ref="signatureData" :value="signatureValue">
+        {% if formation.id and formation.certificateSignatureFilename %}
+            <input type="hidden" name="remove_signature" :value="removeSignature ? '1' : ''">
+        {% endif %}
+
+        <button type="submit" class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">{{ action }}</button>
     </form>
+
+    {# ── Signature Modal ── #}
+    <div x-show="modalOpen" x-transition.opacity.duration.200ms
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         @keydown.escape.window="closeModal()" style="display:none;">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal()"></div>
+        <div class="relative z-10 w-full max-w-2xl rounded-2xl border border-border bg-card shadow-2xl"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             @click.stop>
+            {# Modal header #}
+            <div class="flex items-center justify-between border-b border-border/60 px-6 py-4">
+                <div>
+                    <h3 class="text-base font-semibold text-foreground">Certificate signature</h3>
+                    <p class="text-xs text-muted-foreground">Draw your signature — exported as transparent PNG</p>
+                </div>
+                <button type="button" @click="closeModal()" class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted">
+                    <i data-lucide="x" class="h-4 w-4"></i>
+                </button>
+            </div>
+
+            {# Modal body #}
+            <div class="p-6 space-y-4">
+                <div class="grid gap-5 lg:grid-cols-[1fr_180px]">
+                    <div class="space-y-3">
+                        <div class="overflow-hidden rounded-xl border border-border/80 bg-gradient-to-b from-zinc-900 to-zinc-950">
+                            <div class="flex items-center justify-between border-b border-border/70 px-4 py-2.5">
+                                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300/90">Signature Pad</p>
+                                <button type="button" @click="clearPad()" class="inline-flex h-7 items-center rounded-md border border-border bg-background px-2.5 text-xs font-medium hover:bg-accent">Clear</button>
+                            </div>
+                            <div class="p-3">
+                                <div class="rounded-lg border border-dashed border-border/70 bg-zinc-900/90 p-2" :class="sigError ? 'border-rose-500/70' : 'hover:border-indigo-500/40'">
+                                    <canvas x-ref="signaturePadCanvas" class="block h-[200px] w-full rounded-md bg-zinc-800/70" aria-label="Signature canvas"></canvas>
+                                </div>
+                                <p class="mt-1.5 text-[11px] text-muted-foreground">Draw with mouse or touch.</p>
+                            </div>
+                        </div>
+                        {% if formation.id and formation.certificateSignatureFilename %}
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="checkbox" x-model="removeSignature" class="h-4 w-4 rounded border-border"> Remove existing signature
+                            </label>
+                        {% endif %}
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-xs font-medium text-muted-foreground">Preview</p>
+                        <div class="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg border border-border bg-black/40 p-2">
+                            <img x-show="previewUrl" :src="previewUrl" alt="Signature" class="max-h-full max-w-full object-contain">
+                            <span x-show="!previewUrl" class="text-center text-[11px] text-muted-foreground">No signature</span>
+                        </div>
+                        <p class="text-[11px] text-muted-foreground" x-show="existingUrl && !previewUrl">Existing signature kept if no new one drawn.</p>
+                    </div>
+                </div>
+            </div>
+
+            {# Modal footer #}
+            <div class="flex items-center justify-end gap-3 border-t border-border/60 px-6 py-4">
+                <button type="button" @click="closeModal()" class="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted">Cancel</button>
+                <button type="button" @click="confirmSignature()" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90">
+                    <span x-text="previewUrl ? 'Save signature' : 'Confirm'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+function formWithSignature(config) {
+    return {
+        modalOpen: false,
+        pad: null,
+        previewUrl: config.existingUrl || null,
+        existingUrl: config.existingUrl || null,
+        signatureValue: '',
+        removeSignature: false,
+        sigError: false,
+        libLoaded: false,
+        get hasSignature() {
+            return !!this.signatureValue || !!this.existingUrl;
+        },
+        async openModal() {
+            this.modalOpen = true;
+            document.body.style.overflow = 'hidden';
+            await this.ensureLib();
+            this.$nextTick(() => this.setupCanvas());
+        },
+        closeModal() {
+            this.modalOpen = false;
+            document.body.style.overflow = '';
+        },
+        confirmSignature() {
+            this.capture();
+            this.closeModal();
+        },
+        async ensureLib() {
+            if (this.libLoaded) return;
+            if (window.SignaturePad) { this.libLoaded = true; return; }
+            if (!window.__sigPadP) {
+                window.__sigPadP = new Promise((res, rej) => {
+                    const s = document.createElement('script');
+                    s.src = 'https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js';
+                    s.onload = res; s.onerror = rej;
+                    document.head.appendChild(s);
+                });
+            }
+            await window.__sigPadP;
+            this.libLoaded = true;
+        },
+        setupCanvas() {
+            const canvas = this.$refs.signaturePadCanvas;
+            if (!canvas || this.pad) return;
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+            canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+            const ctx = canvas.getContext('2d');
+            ctx.scale(ratio, ratio);
+            this.pad = new window.SignaturePad(canvas, {
+                minWidth: 0.8, maxWidth: 2.4,
+                penColor: 'rgba(241,245,249,0.96)',
+                backgroundColor: 'rgba(0,0,0,0)',
+                velocityFilterWeight: 0.7,
+            });
+            this.pad.addEventListener('endStroke', () => {
+                this.sigError = false;
+                this.capture();
+            });
+        },
+        clearPad() {
+            if (this.pad) this.pad.clear();
+            this.sigError = false;
+            this.previewUrl = this.existingUrl;
+            this.signatureValue = '';
+        },
+        capture() {
+            if (!this.pad) return;
+            if (this.pad.isEmpty()) {
+                this.signatureValue = '';
+                this.previewUrl = this.existingUrl;
+                return;
+            }
+            const url = this.pad.toDataURL('image/png');
+            this.signatureValue = url;
+            this.previewUrl = url;
+        },
+    };
+}
+</script>
 {% endblock %}

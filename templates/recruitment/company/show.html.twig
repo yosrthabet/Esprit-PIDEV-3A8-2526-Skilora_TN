@@ -1,0 +1,43 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}{{ company.name }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="relative overflow-hidden rounded-[2rem] border border-border bg-card p-6 shadow-xl shadow-black/5 sm:p-8 lg:p-10">
+        <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary/10 blur-3xl"></div>
+        <div class="relative">
+            <a href="{{ path('app_jobs') }}" class="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground"><i data-lucide="arrow-left" class="h-4 w-4"></i>Back to jobs</a>
+            <h1 class="mt-6 text-4xl font-semibold tracking-tight sm:text-6xl">{{ company.name }}</h1>
+            <div class="mt-3 flex flex-wrap gap-4 text-muted-foreground">
+                {% if company.industry %}<span class="inline-flex items-center gap-1"><i data-lucide="building-2" class="h-4 w-4"></i>{{ company.industry }}</span>{% endif %}
+                {% if company.location %}<span class="inline-flex items-center gap-1"><i data-lucide="map-pin" class="h-4 w-4"></i>{{ company.location }}</span>{% endif %}
+                {% if company.website %}<a href="{{ company.website }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-primary hover:underline"><i data-lucide="globe" class="h-4 w-4"></i>Website</a>{% endif %}
+            </div>
+            {% if company.description %}
+                <p class="mt-5 max-w-3xl text-muted-foreground">{{ company.description }}</p>
+            {% endif %}
+            <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:max-w-xl">
+                <div class="rounded-3xl border border-border bg-background/70 p-4"><p class="text-3xl font-light">{{ open_jobs_count }}</p><p class="mt-1 text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">Open jobs</p></div>
+                <div class="rounded-3xl border border-border bg-background/70 p-4"><p class="text-3xl font-light">{{ jobs|length }}</p><p class="mt-1 text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">Recent listings</p></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="rounded-[1.75rem] border border-border bg-card p-6 shadow-sm">
+        <h2 class="text-xl font-bold">Open positions</h2>
+        {% if jobs|length > 0 %}
+            <div class="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {% for job in jobs %}
+                    <a href="{{ path('app_job_show', {id: job.id}) }}" class="group rounded-2xl border border-border bg-background/70 p-5 transition hover:border-primary/30 hover:shadow-md">
+                        <h3 class="font-bold group-hover:text-primary">{{ job.title }}</h3>
+                        <p class="mt-1 text-sm text-muted-foreground">{{ job.location ?: 'Remote' }} · {{ job.workType ? job.workType.value|title : 'N/A' }}</p>
+                        {% if job.minSalary %}<p class="mt-2 text-sm font-bold">{{ job.minSalary }} – {{ job.maxSalary }} {{ job.currency.value }}</p>{% endif %}
+                        <p class="mt-2 text-xs text-muted-foreground">Posted {{ job.postedAt|date('M d, Y') }}</p>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="mt-4 text-sm text-muted-foreground">No open positions at the moment.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

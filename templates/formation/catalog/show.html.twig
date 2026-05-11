@@ -20,7 +20,7 @@
         <div class="mt-6 flex flex-wrap items-center gap-3">
             {% if enrollment %}
                 <a href="{{ path('app_learning_show', {id: enrollment.id}) }}" class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Continue learning</a>
-            {% elseif formation.published and app.user and not app.user.admin %}
+            {% elseif formation.published and app.user and not app.user.admin and not can_edit_modules %}
                 <form method="post" action="{{ path('app_formation_enroll', {id: formation.id}) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('enroll_formation_' ~ formation.id) }}">
                     <button class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Enroll now</button>
@@ -78,6 +78,10 @@
                         <span class="text-xs font-bold text-primary">{{ item.rating }}/5</span>
                     </div>
                     {% if item.comment %}<p class="mt-2 text-sm text-muted-foreground">{{ item.comment }}</p>{% endif %}
+                    <div class="mt-3 flex items-center gap-3 border-t border-border/50 pt-2">
+                        <form method="post" action="{{ path('app_formation_review_vote', {id: item.id}) }}" class="inline"><input type="hidden" name="_token" value="{{ csrf_token('review_vote_' ~ item.id) }}"><input type="hidden" name="vote" value="helpful"><button class="text-xs text-muted-foreground hover:text-green-500" title="Helpful">👍</button></form>
+                        <form method="post" action="{{ path('app_formation_review_vote', {id: item.id}) }}" class="inline"><input type="hidden" name="_token" value="{{ csrf_token('review_vote_' ~ item.id) }}"><input type="hidden" name="vote" value="unhelpful"><button class="text-xs text-muted-foreground hover:text-red-500" title="Not helpful">👎</button></form>
+                    </div>
                 </article>
             {% else %}
                 <p class="text-sm text-muted-foreground">No reviews have been posted yet.</p>

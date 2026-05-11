@@ -1,20 +1,105 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}{{ group.name }}{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel p-8">
-        <p class="text-xs font-bold uppercase tracking-label text-primary">Community group</p>
-        <h1 class="mt-2 text-4xl font-light tracking-holographic">{{ group.name }}</h1>
-        <p class="mt-3 text-muted-foreground">{{ group.description ?: 'No description yet.' }}</p>
-        <p class="mt-3 text-sm text-muted-foreground">{{ group.membersCount }} members · Owner {{ group.owner.displayName }}</p>
-        {% if not app.user.admin and not membership %}
-            <form method="post" action="{{ path('app_community_group_join', {id: group.id}) }}" class="mt-5">
-                <input type="hidden" name="_token" value="{{ csrf_token('community_group_join_' ~ group.id) }}">
-                <button class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Join group</button>
-            </form>
-        {% elseif membership %}
-            <span class="mt-5 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">Member</span>
-        {% endif %}
+<div class="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
+
+    {% include 'components/_breadcrumbs.html.twig' with {items: [{label: 'Community', route: 'app_community'}, {label: 'Groups', route: 'app_community_groups'}, {label: group.name}]} %}
+
+    <section class="glass-panel relative overflow-hidden p-0">
+        <div class="h-36 sm:h-44 bg-gradient-to-br from-indigo-600/20 via-violet-500/10 to-fuchsia-500/10 relative">
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i data-lucide="users" class="h-16 w-16 text-foreground/5"></i>
+            </div>
+        </div>
+        <div class="px-8 pb-8 -mt-8 relative z-10">
+            <div class="flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-card bg-primary text-primary-foreground text-2xl font-bold shadow-lg">
+                {{ group.name|first|upper }}
+            </div>
+            <h1 class="mt-4 text-3xl font-light tracking-holographic">{{ group.name }}</h1>
+            <p class="mt-2 text-muted-foreground">{{ group.description ?: 'No description yet.' }}</p>
+
+            <div class="mt-4 flex flex-wrap items-center gap-4">
+                <span class="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <i data-lucide="users" class="h-4 w-4"></i> {{ group.membersCount }} member{{ group.membersCount != 1 ? 's' : '' }}
+                </span>
+                <span class="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <i data-lucide="crown" class="h-4 w-4 text-amber-500"></i> {{ group.owner.displayName }}
+                </span>
+                <span class="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <i data-lucide="lock" class="h-4 w-4"></i> {{ group.privacy|title }}
+                </span>
+            </div>
+
+            <div class="mt-5 flex flex-wrap items-center gap-3">
+                {% if not app.user.admin and not membership %}
+                    <form method="post" action="{{ path('app_community_group_join', {id: group.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('community_group_join_' ~ group.id) }}">
+                        <button class="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition hover:bg-primary/90">
+                            <i data-lucide="user-plus" class="h-4 w-4"></i> Join group
+                        </button>
+                    </form>
+                {% elseif membership %}
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                        <i data-lucide="check-circle" class="h-3.5 w-3.5"></i> Member ({{ membership.role }})
+                    </span>
+                    {% if membership.role != 'owner' %}
+                        {% include 'components/_confirm_modal.html.twig' with {
+                            trigger_label: 'Leave group',
+                            title: 'Leave this group?',
+                            description: 'You will no longer see group activity.',
+                            action_url: path('app_community_group_leave', {id: group.id}),
+                            csrf_token: csrf_token('community_group_leave_' ~ group.id),
+                            confirm_label: 'Leave',
+                            variant: 'danger'
+                        } %}
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            {% if group.owner.id == app.user.id %}
+            <div class="mt-5 flex flex-wrap gap-2 border-t border-border/40 pt-5">
+                <a href="{{ path('app_community_group_edit', {id: group.id}) }}" class="inline-flex items-center gap-1.5 rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted transition">
+                    <i data-lucide="pencil" class="h-3.5 w-3.5"></i> Edit group
+                </a>
+                {% include 'components/_confirm_modal.html.twig' with {
+                    trigger_label: 'Delete group',
+                    title: 'Delete this group permanently?',
+                    description: 'All members will be removed. This cannot be undone.',
+                    action_url: path('app_community_group_delete', {id: group.id}),
+                    csrf_token: csrf_token('community_group_delete_' ~ group.id)
+                } %}
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    {% if membership and not app.user.admin %}
+    <section class="glass-panel p-5">
+        <form method="post" action="{{ path('app_community_group_post', {id: group.id}) }}" class="space-y-3">
+            <input type="hidden" name="_token" value="{{ csrf_token('community_group_post_' ~ group.id) }}">
+            <textarea name="content" rows="4" required placeholder="Share something with {{ group.name }}..." class="w-full rounded-xl border border-border bg-background/70 px-4 py-3 text-sm"></textarea>
+            <button class="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">Post to group</button>
+        </form>
+    </section>
+    {% endif %}
+
+    <section class="space-y-4">
+        <h2 class="text-lg font-bold">Group feed</h2>
+        {% for post in posts %}
+            <article class="rounded-[1.5rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="font-bold">{{ post.author.displayName }}</p>
+                        <p class="text-[11px] text-muted-foreground">{{ post.createdAt|date('M d, Y · H:i') }}</p>
+                    </div>
+                    <a href="{{ path('app_community_post_show', {id: post.id}) }}" class="rounded-full border border-border px-3 py-1.5 text-xs font-bold">Open</a>
+                </div>
+                <p class="mt-3 whitespace-pre-line text-sm leading-relaxed">{{ post.content }}</p>
+                <div class="mt-3 text-xs text-muted-foreground">{{ post.likesCount }} reactions · {{ post.commentsCount }} replies · {{ post.sharesCount }} shares</div>
+            </article>
+        {% else %}
+            <div class="rounded-[1.5rem] border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">No posts in this group yet.</div>
+        {% endfor %}
     </section>
 </div>
 {% endblock %}

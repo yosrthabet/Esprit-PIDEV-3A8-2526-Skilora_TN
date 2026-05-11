@@ -1,0 +1,65 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}{{ quiz.title }}{% endblock %}
+{% block content %}
+<div x-data="{ answered: 0, total: {{ questions|length }} {% if quiz.timeLimitMinutes %}, timeLeft: {{ quiz.timeLimitMinutes * 60 }}, timerInterval: null{% endif %} }"
+     {% if quiz.timeLimitMinutes %}x-init="timerInterval = setInterval(() => { timeLeft--; if (timeLeft <= 0) { clearInterval(timerInterval); $refs.quizForm.submit(); } }, 1000)"{% endif %}
+     class="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
+
+    {% include 'components/_breadcrumbs.html.twig' with {items: [{label: 'Learning', route: 'app_learning'}, {label: quiz.title}]} %}
+
+    <section class="glass-panel p-8">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-label text-primary">Quiz</p>
+                <h1 class="mt-2 text-3xl font-light tracking-holographic">{{ quiz.title }}</h1>
+                {% if quiz.description %}<p class="mt-2 text-muted-foreground">{{ quiz.description }}</p>{% endif %}
+            </div>
+            {% if quiz.timeLimitMinutes %}
+            <div class="flex items-center gap-2 rounded-xl border border-border bg-background/70 px-4 py-2" :class="timeLeft < 60 ? 'border-red-500/50 bg-red-500/5' : ''">
+                <i data-lucide="timer" class="h-4 w-4" :class="timeLeft < 60 ? 'text-red-500' : 'text-muted-foreground'"></i>
+                <span class="font-mono text-sm font-semibold" :class="timeLeft < 60 ? 'text-red-500' : 'text-foreground'" x-text="Math.floor(timeLeft / 60).toString().padStart(2, '0') + ':' + (timeLeft % 60).toString().padStart(2, '0')"></span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mt-5 flex items-center gap-4">
+            <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                <span class="inline-flex items-center gap-1"><i data-lucide="help-circle" class="h-3.5 w-3.5"></i> {{ questions|length }} questions</span>
+                <span class="inline-flex items-center gap-1"><i data-lucide="target" class="h-3.5 w-3.5"></i> Pass: {{ quiz.passingScore }}%</span>
+            </div>
+        </div>
+        <div class="mt-4">
+            <div class="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+                <span x-text="answered + ' / ' + total + ' answered'">0 / {{ questions|length }} answered</span>
+                <span x-text="Math.round(answered / total * 100) + '%'">0%</span>
+            </div>
+            <div class="h-2 rounded-full bg-muted overflow-hidden">
+                <div class="h-full rounded-full bg-primary transition-all duration-300" :style="'width:' + (answered / total * 100) + '%'"></div>
+            </div>
+        </div>
+    </section>
+
+    <form x-ref="quizForm" method="post" action="{{ path('app_quiz_submit', {id: quiz.id}) }}" class="space-y-4">
+        <input type="hidden" name="_token" value="{{ csrf_token('quiz_submit_' ~ quiz.id) }}">
+        {% for question in questions %}
+            <div class="glass-panel space-y-3 p-6">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{{ loop.index }}</span>
+                    <p class="font-semibold text-foreground">{{ question.questionText }}</p>
+                </div>
+                <div class="space-y-2 pl-10" x-data="{ selected: null }">
+                    {% for choice in question.choices %}
+                        <label class="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-border p-3 transition hover:bg-muted/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                            <input type="radio" name="q_{{ question.id }}" value="{{ loop.index0 }}" required class="accent-primary"
+                                @change="if (selected === null) { answered++; } selected = {{ loop.index0 }}">
+                            <span class="text-sm">{{ choice }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+        <button class="w-full rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 hover:scale-[1.005]">
+            <i data-lucide="send" class="mr-1 inline h-4 w-4"></i> Submit answers
+        </button>
+    </form>
+</div>
+{% endblock %}

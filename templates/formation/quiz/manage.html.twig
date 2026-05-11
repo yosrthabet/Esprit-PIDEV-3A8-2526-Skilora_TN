@@ -1,0 +1,43 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Manage Quizzes — {{ formation.title }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="glass-panel p-8">
+        <a href="{{ path('app_admin_formation_show', {id: formation.id}) }}" class="text-sm font-semibold text-muted-foreground hover:text-foreground">← Back to formation</a>
+        <h1 class="mt-4 text-3xl font-light tracking-holographic">Manage Quizzes</h1>
+        <p class="mt-1 text-sm text-muted-foreground">{{ formation.title }}</p>
+    </section>
+
+    <section class="glass-panel p-6">
+        <h2 class="font-semibold">Create a new quiz</h2>
+        <form method="post" action="{{ path('app_formation_quiz_create', {id: formation.id}) }}" class="mt-4 grid gap-3 md:grid-cols-2">
+            <input type="hidden" name="_token" value="{{ csrf_token('quiz_create_' ~ formation.id) }}">
+            <input name="title" placeholder="Quiz title" required class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <input name="passing_score" type="number" value="70" min="0" max="100" placeholder="Passing %" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <input name="description" placeholder="Description (optional)" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <input name="time_limit" type="number" placeholder="Time limit (min, optional)" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <button class="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground md:col-span-2">Create Quiz</button>
+        </form>
+    </section>
+
+    {% if quizzes|length > 0 %}
+    <div class="space-y-3">
+        {% for quiz in quizzes %}
+        <div class="glass-panel flex items-center justify-between gap-4 p-5">
+            <div>
+                <h3 class="font-bold">{{ quiz.title }}</h3>
+                <p class="text-xs text-muted-foreground">{{ quiz.questionCount }} questions · Pass: {{ quiz.passingScore }}% · {{ quiz.published ? 'Published' : 'Draft' }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ path('app_formation_quiz_edit', {id: quiz.id}) }}" class="rounded-xl border border-border px-3 py-1.5 text-xs font-bold hover:bg-muted">Edit</a>
+                <form method="post" action="{{ path('app_formation_quiz_publish', {id: quiz.id}) }}" class="inline"><input type="hidden" name="_token" value="{{ csrf_token('quiz_publish_' ~ quiz.id) }}"><button class="rounded-xl border border-border px-3 py-1.5 text-xs font-bold hover:bg-muted">{{ quiz.published ? 'Unpublish' : 'Publish' }}</button></form>
+                <form method="post" action="{{ path('app_formation_quiz_delete', {id: quiz.id}) }}" class="inline" data-confirm="Delete this quiz?" data-confirm-label="Delete"><input type="hidden" name="_token" value="{{ csrf_token('quiz_delete_' ~ quiz.id) }}"><button class="rounded-xl border border-destructive/30 px-3 py-1.5 text-xs font-bold text-destructive hover:bg-destructive/10">Delete</button></form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <div class="glass-panel p-8 text-center text-muted-foreground">No quizzes yet. Create one above.</div>
+    {% endif %}
+</div>
+{% endblock %}

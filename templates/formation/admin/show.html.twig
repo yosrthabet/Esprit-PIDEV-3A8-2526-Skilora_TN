@@ -16,7 +16,7 @@
                 <input type="hidden" name="_token" value="{{ csrf_token('admin_formation_archive_' ~ formation.id) }}">
                 <button class="rounded-xl border border-border px-5 py-3 text-sm font-bold">Archive</button>
             </form>
-            <form method="post" action="{{ path('app_admin_formation_delete', {id: formation.id}) }}" onsubmit="return confirm('Delete this formation?')">
+            <form method="post" action="{{ path('app_admin_formation_delete', {id: formation.id}) }}" data-confirm="Delete this formation?" data-confirm-label="Delete">
                 <input type="hidden" name="_token" value="{{ csrf_token('admin_formation_delete_' ~ formation.id) }}">
                 <button class="rounded-xl border border-border px-5 py-3 text-sm font-bold text-destructive">Delete</button>
             </form>

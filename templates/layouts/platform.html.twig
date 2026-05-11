@@ -36,7 +36,8 @@
      }" 
      x-init="$nextTick(() => isLoading = false)"
      @keydown.escape.window="closeDropdowns()"
-     class="min-h-screen bg-background text-foreground transition-colors duration-300 font-spatial selection:bg-primary/30 selection:text-primary">
+     class="min-h-screen bg-background text-foreground transition-colors duration-300 font-spatial selection:bg-primary/30 selection:text-primary"
+     dir="{{ app.request.locale == 'ar' ? 'rtl' : 'ltr' }}">
 
     {# ── 1. SPATIAL ENVIRONMENT ── #}
     {# Subtle grid texture (Dark mode only or adaptive) #}
@@ -231,6 +232,27 @@
                     </div>
                     {% endif %}
 
+                    {# Locale Switcher #}
+                    <div class="relative hidden sm:block" x-data="{ localeOpen: false }" @click.away="localeOpen = false">
+                        <button @click="localeOpen = !localeOpen" type="button"
+                                class="inline-flex items-center justify-center h-9 px-2 rounded-lg
+                                       text-muted-foreground hover:text-foreground hover:bg-muted/60
+                                       transition-colors duration-200 text-[12px] font-bold uppercase tracking-wide">
+                            {{ app.request.locale|upper }}
+                        </button>
+                        <div x-show="localeOpen" x-transition
+                             class="absolute right-0 top-full mt-1 w-28 rounded-lg border border-border/50 bg-popover/95 backdrop-blur-lg shadow-lg overflow-hidden z-50"
+                             style="display:none;">
+                            {% for loc in ['en', 'fr', 'ar'] %}
+                                <a href="{{ path('app_locale_switch', {locale: loc}) }}"
+                                   class="flex items-center gap-2 px-3 py-2 text-[13px] font-medium transition-colors
+                                          {{ app.request.locale == loc ? 'text-primary bg-primary/[0.08]' : 'text-foreground/80 hover:bg-muted/60' }}">
+                                    {{ loc == 'en' ? '🇬🇧 English' : (loc == 'fr' ? '🇫🇷 Français' : '🇸🇦 العربية') }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+
                     {# Theme Toggle #}
                     <button type="button"
                             class="hidden sm:inline-flex items-center justify-center h-9 w-9 rounded-lg
@@ -296,26 +318,47 @@
                                     </span>
                                 </div>
                             </div>
+                            {% if app.user %}
                             <div class="p-1.5">
-                                {% if app.user %}
                                     <a href="{{ path('app_profile') }}"
                                        class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted/70 hover:text-foreground transition-colors">
-                                        <i data-lucide="user" class="h-4 w-4 text-muted-foreground"></i> Mon profil
+                                        <i data-lucide="user" class="h-4 w-4 text-muted-foreground"></i> {{ 'profile.my_profile'|trans }}
+                                    </a>
+                                    <a href="{{ path('app_notifications_index') }}"
+                                       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted/70 hover:text-foreground transition-colors">
+                                        <i data-lucide="bell" class="h-4 w-4 text-muted-foreground"></i> {{ 'profile.notifications'|trans }}
                                     </a>
                                     <a href="{{ path('app_settings') }}"
                                        class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted/70 hover:text-foreground transition-colors">
-                                        <i data-lucide="settings" class="h-4 w-4 text-muted-foreground"></i> Paramètres
+                                        <i data-lucide="settings" class="h-4 w-4 text-muted-foreground"></i> {{ 'profile.settings'|trans }}
                                     </a>
+                            </div>
+                            <div class="border-t border-border/40 p-1.5">
+                                    <a href="{{ path('app_finance_wallet') }}"
+                                       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted/70 hover:text-foreground transition-colors">
+                                        <i data-lucide="wallet" class="h-4 w-4 text-muted-foreground"></i> {{ 'profile.wallet'|trans }}
+                                        <span class="ml-auto text-[11px] font-black text-primary">{{ wallet_balance() }} TND</span>
+                                    </a>
+                                    <a href="{{ path('app_finance_bank_accounts') }}"
+                                       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted/70 hover:text-foreground transition-colors">
+                                        <i data-lucide="landmark" class="h-4 w-4 text-muted-foreground"></i> {{ 'profile.bank_accounts'|trans }}
+                                    </a>
+                                    <a href="{{ path('app_finance_analytics') }}"
+                                       class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted/70 hover:text-foreground transition-colors">
+                                        <i data-lucide="trending-up" class="h-4 w-4 text-muted-foreground"></i> {{ 'profile.analytics'|trans }}
+                                    </a>
+                            </div>
+                            <div class="border-t border-border/40 p-1.5">
                                     <button onclick="var t=localStorage.getItem('theme')==='dark'?'light':'dark';localStorage.setItem('theme',t);document.documentElement.classList.toggle('dark', t==='dark');"
                                             class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted/70 hover:text-foreground transition-colors sm:hidden">
-                                        <i data-lucide="sun-moon" class="h-4 w-4 text-muted-foreground"></i> Thème
+                                        <i data-lucide="sun-moon" class="h-4 w-4 text-muted-foreground"></i> {{ 'profile.theme'|trans }}
                                     </button>
-                                {% endif %}
                             </div>
+                            {% endif %}
                             <div class="border-t border-border/40 p-1.5">
                                 <a href="{{ path('app_logout') }}"
                                    class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-destructive hover:bg-destructive/10 transition-colors">
-                                    <i data-lucide="log-out" class="h-4 w-4"></i> Se déconnecter
+                                    <i data-lucide="log-out" class="h-4 w-4"></i> {{ 'profile.log_out'|trans }}
                                 </a>
                             </div>
                         </div>
@@ -341,10 +384,11 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 translate-y-0"
              x-transition:leave-end="opacity-0 -translate-y-2"
-             class="lg:hidden border-t border-border/30 bg-background/95 backdrop-blur-lg shadow-lg"
+             class="lg:hidden border-t border-border/30 bg-background/95 backdrop-blur-lg shadow-lg max-h-[80vh] overflow-y-auto"
              style="display: none;">
             <nav class="mx-auto max-w-lg p-3 space-y-0.5">
-                {% for link in topnav_items %}
+                {# Primary links #}
+                {% for link in topnav_grouped.primary %}
                     {% set is_active = (current_route is defined and current_route == link.route) or (current_route is defined and current_route starts with link.route|split('_index')[0] ~ '_') %}
                     <a href="{{ path(link.route) }}"
                        @click="mobileMenuOpen = false"
@@ -354,6 +398,43 @@
                         {{ link.label }}
                     </a>
                 {% endfor %}
+
+                {# Collapsible groups #}
+                {% for group in topnav_grouped.groups %}
+                    <div x-data="{ mobileGroupOpen: false }" class="mt-1">
+                        <button @click="mobileGroupOpen = !mobileGroupOpen"
+                                class="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-foreground/70 hover:bg-muted/60 hover:text-foreground transition-colors">
+                            <span class="flex items-center gap-3">
+                                <i data-lucide="{{ group.icon }}" class="h-5 w-5 shrink-0 text-muted-foreground"></i>
+                                {{ group.label }}
+                            </span>
+                            <svg class="h-4 w-4 text-muted-foreground transition-transform duration-200" :class="mobileGroupOpen && 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="mobileGroupOpen" x-collapse class="ml-4 space-y-0.5 mt-0.5">
+                            {% for child in group.children %}
+                                {% set child_active = current_route is defined and (current_route == child.route or current_route starts with child.route|split('_index')[0] ~ '_') %}
+                                <a href="{{ path(child.route) }}"
+                                   @click="mobileMenuOpen = false"
+                                   class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-[13px] font-medium transition-colors
+                                          {{ child_active ? 'bg-primary/[0.08] text-primary' : 'text-foreground/60 hover:bg-muted/60 hover:text-foreground' }}">
+                                    <i data-lucide="{{ child.icon }}" class="h-4 w-4 shrink-0 {{ child_active ? 'text-primary' : 'text-muted-foreground' }}"></i>
+                                    {{ child.label }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {# Mobile locale switcher #}
+                <div class="border-t border-border/30 mt-2 pt-2 flex items-center gap-2 px-4">
+                    {% for loc in ['en', 'fr', 'ar'] %}
+                        <a href="{{ path('app_locale_switch', {locale: loc}) }}"
+                           class="flex-1 text-center rounded-lg py-2 text-xs font-bold uppercase tracking-wide transition-colors
+                                  {{ app.request.locale == loc ? 'bg-primary/[0.1] text-primary' : 'text-muted-foreground hover:bg-muted/60' }}">
+                            {{ loc == 'en' ? '🇬🇧 EN' : (loc == 'fr' ? '🇫🇷 FR' : '🇸🇦 AR') }}
+                        </a>
+                    {% endfor %}
+                </div>
             </nav>
         </div>
     </header>
@@ -408,6 +489,88 @@
 
 {# Reusable dialogs #}
 {{ include('components/edit-dialog.html.twig') }}
+
+{# Global confirm modal — replaces browser confirm() everywhere #}
+<div id="global-confirm-modal" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" id="confirm-modal-backdrop"></div>
+    <div class="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-start gap-4">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <h3 id="confirm-modal-title" class="text-lg font-semibold text-foreground">Are you sure?</h3>
+                <p id="confirm-modal-desc" class="mt-1 text-sm text-muted-foreground">This action cannot be undone.</p>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-3">
+            <button id="confirm-modal-cancel" type="button"
+                class="rounded-xl border border-border px-4 py-2 text-sm font-semibold transition hover:bg-muted">
+                Cancel
+            </button>
+            <button id="confirm-modal-ok" type="button"
+                class="rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2 text-sm font-bold text-white transition">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+<script>
+window.confirmModal = function(opts) {
+    return new Promise(function(resolve) {
+        var modal = document.getElementById('global-confirm-modal');
+        var title = document.getElementById('confirm-modal-title');
+        var desc = document.getElementById('confirm-modal-desc');
+        var okBtn = document.getElementById('confirm-modal-ok');
+        var cancelBtn = document.getElementById('confirm-modal-cancel');
+        var backdrop = document.getElementById('confirm-modal-backdrop');
+
+        title.textContent = (opts && opts.title) || 'Are you sure?';
+        desc.textContent = (opts && opts.description) || 'This action cannot be undone.';
+        okBtn.textContent = (opts && opts.confirmLabel) || 'Delete';
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        function close(result) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+            backdrop.removeEventListener('click', onCancel);
+            document.removeEventListener('keydown', onKey);
+            resolve(result);
+        }
+        function onOk() { close(true); }
+        function onCancel() { close(false); }
+        function onKey(e) { if (e.key === 'Escape') close(false); }
+
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+        backdrop.addEventListener('click', onCancel);
+        document.addEventListener('keydown', onKey);
+    });
+};
+
+document.addEventListener('submit', async function(e) {
+    var form = e.target;
+    var msg = form.getAttribute('data-confirm');
+    if (!msg) return;
+    if (form._confirmed) { form._confirmed = false; return; }
+    e.preventDefault();
+    var ok = await window.confirmModal({ title: msg, description: 'This action cannot be undone.', confirmLabel: form.getAttribute('data-confirm-label') || 'Confirm' });
+    if (ok) { form._confirmed = true; form.submit(); }
+});
+
+document.addEventListener('click', async function(e) {
+    var btn = e.target.closest('[data-confirm-click]');
+    if (!btn) return;
+    if (btn._confirmed) { btn._confirmed = false; return; }
+    e.preventDefault(); e.stopImmediatePropagation();
+    var ok = await window.confirmModal({ title: btn.getAttribute('data-confirm-click'), description: 'This action cannot be undone.', confirmLabel: btn.getAttribute('data-confirm-label') || 'Confirm' });
+    if (ok) { btn._confirmed = true; btn.click(); }
+}, true);
+</script>
 
 {# Hand Gesture Control — lazy-loaded on demand or when enabled #}
 {{ include('components/hand-gesture.html.twig') }}

@@ -1,0 +1,49 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Chatbot — Skilora AI{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 py-6" x-data="chatbot()">
+    <section class="glass-panel p-8">
+        <div class="flex items-center gap-3"><i data-lucide="bot" class="h-6 w-6 text-primary"></i><h1 class="text-3xl font-light tracking-holographic">Skilora AI Assistant</h1></div>
+        <p class="mt-2 text-sm text-muted-foreground">Ask me anything about formations, recruitment, or finance.</p>
+    </section>
+    <div class="mt-6 space-y-4" x-ref="messages">
+        <template x-for="msg in messages" :key="msg.id">
+            <div :class="msg.role === 'user' ? 'ml-auto max-w-[80%] bg-primary text-primary-foreground' : 'mr-auto max-w-[80%] bg-muted'" class="rounded-2xl px-4 py-3 text-sm">
+                <p x-text="msg.text"></p>
+            </div>
+        </template>
+        <div x-show="loading" class="mr-auto max-w-[80%] rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground animate-pulse">Thinking...</div>
+    </div>
+    <form @submit.prevent="send" class="mt-4 flex gap-2">
+        <input x-model="input" type="text" placeholder="Type your message..." class="h-12 flex-1 rounded-xl border border-border bg-background/70 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary" :disabled="loading">
+        <button type="submit" :disabled="loading || !input.trim()" class="rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground disabled:opacity-50">Send</button>
+    </form>
+</div>
+<script>
+function chatbot() {
+    return {
+        messages: [], input: '', loading: false, nextId: 0,
+        async send() {
+            const text = this.input.trim();
+            if (!text) return;
+            this.messages.push({id: this.nextId++, role: 'user', text});
+            this.input = '';
+            this.loading = true;
+            try {
+                const fd = new FormData();
+                fd.append('message', text);
+                const ctx = new URLSearchParams(window.location.search).get('ctx') || '';
+                if (ctx) fd.append('context', ctx);
+                const res = await fetch('{{ path("app_chatbot_ask") }}', {method: 'POST', body: fd});
+                const data = await res.json();
+                this.messages.push({id: this.nextId++, role: 'bot', text: data.reply || 'No response.'});
+            } catch(e) {
+                this.messages.push({id: this.nextId++, role: 'bot', text: 'Error: ' + e.message});
+            }
+            this.loading = false;
+            this.$nextTick(() => this.$refs.messages?.scrollIntoView({behavior: 'smooth', block: 'end'}));
+        }
+    };
+}
+</script>
+{% endblock %}

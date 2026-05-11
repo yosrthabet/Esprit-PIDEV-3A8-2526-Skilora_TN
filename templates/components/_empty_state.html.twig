@@ -1,0 +1,23 @@
+{# _empty_state.html.twig — Consistent empty state with icon + message + optional CTA
+   Usage: {% include 'components/_empty_state.html.twig' with {
+       icon: 'inbox',
+       title: 'No items yet',
+       description: 'Create your first item to get started.',
+       cta_label: 'Create item',
+       cta_route: 'app_item_new'
+   } %}
+#}
+<div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+    <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/60 text-muted-foreground mb-5">
+        <i data-lucide="{{ icon|default('inbox') }}" class="h-7 w-7"></i>
+    </div>
+    <h3 class="text-lg font-semibold text-foreground">{{ title|default('Nothing here yet') }}</h3>
+    <p class="mt-2 max-w-sm text-sm text-muted-foreground">{{ description|default('Items will appear here once created.') }}</p>
+    {% if cta_label is defined and cta_route is defined %}
+        <a href="{{ path(cta_route, cta_params|default({})) }}"
+           class="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition hover:bg-primary/90">
+            <i data-lucide="plus" class="h-4 w-4"></i>
+            {{ cta_label }}
+        </a>
+    {% endif %}
+</div>

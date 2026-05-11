@@ -1,0 +1,69 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}AI Recruitment Tools{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8" x-data="{ tab: 'match' }">
+    <section class="glass-panel p-8">
+        <div class="flex items-center gap-3"><i data-lucide="sparkles" class="h-6 w-6 text-primary"></i><h1 class="text-3xl font-light tracking-holographic">AI Recruitment Tools</h1></div>
+        <p class="mt-2 text-muted-foreground">Powered by Skilora ML API</p>
+    </section>
+    <div class="flex flex-wrap gap-2">
+        <button @click="tab='match'" :class="tab==='match'?'bg-primary text-primary-foreground':'bg-muted'" class="rounded-xl px-4 py-2 text-sm font-bold transition">Skill Match</button>
+        <button @click="tab='semantic'" :class="tab==='semantic'?'bg-primary text-primary-foreground':'bg-muted'" class="rounded-xl px-4 py-2 text-sm font-bold transition">AI Deep Match</button>
+        <button @click="tab='cv'" :class="tab==='cv'?'bg-primary text-primary-foreground':'bg-muted'" class="rounded-xl px-4 py-2 text-sm font-bold transition">CV Analysis</button>
+        <button @click="tab='salary'" :class="tab==='salary'?'bg-primary text-primary-foreground':'bg-muted'" class="rounded-xl px-4 py-2 text-sm font-bold transition">Salary Predict</button>
+        <button @click="tab='interview'" :class="tab==='interview'?'bg-primary text-primary-foreground':'bg-muted'" class="rounded-xl px-4 py-2 text-sm font-bold transition">Interview Questions</button>
+    </div>
+
+    <section x-show="tab==='match'" class="glass-panel space-y-4 p-6">
+        <h2 class="font-semibold">Skill Match</h2>
+        <form @submit.prevent="fetch('{{ path('app_recruitment_ml_match') }}',{method:'POST',body:new FormData($el)}).then(r=>r.json()).then(d=>$refs.matchResult.textContent=JSON.stringify(d,null,2))" class="grid gap-3 md:grid-cols-2">
+            <input name="skills" placeholder="Your skills (comma-separated)" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <input name="job_skills" placeholder="Required skills (comma-separated)" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <button class="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground md:col-span-2">Analyze</button>
+        </form>
+        <pre x-ref="matchResult" class="max-h-64 overflow-auto rounded-xl bg-muted/50 p-4 text-xs"></pre>
+    </section>
+
+    <section x-show="tab==='semantic'" class="glass-panel space-y-4 p-6">
+        <h2 class="font-semibold">AI Deep Match</h2>
+        <form @submit.prevent="fetch('{{ path('app_recruitment_ml_semantic_match') }}',{method:'POST',body:new FormData($el)}).then(r=>r.json()).then(d=>$refs.semResult.textContent=JSON.stringify(d,null,2))" class="grid gap-3">
+            <textarea name="cv_text" rows="4" placeholder="CV/Resume text" class="rounded-xl border border-border bg-background/70 px-4 py-3 text-sm"></textarea>
+            <textarea name="job_description" rows="4" placeholder="Job description" class="rounded-xl border border-border bg-background/70 px-4 py-3 text-sm"></textarea>
+            <button class="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">Analyze</button>
+        </form>
+        <pre x-ref="semResult" class="max-h-64 overflow-auto rounded-xl bg-muted/50 p-4 text-xs"></pre>
+    </section>
+
+    <section x-show="tab==='cv'" class="glass-panel space-y-4 p-6">
+        <h2 class="font-semibold">CV Analysis</h2>
+        <form @submit.prevent="fetch('{{ path('app_recruitment_ml_analyze_cv') }}',{method:'POST',body:new FormData($el)}).then(r=>r.json()).then(d=>$refs.cvResult.textContent=JSON.stringify(d,null,2))" class="grid gap-3">
+            <textarea name="cv_text" rows="6" placeholder="Paste CV text here" class="rounded-xl border border-border bg-background/70 px-4 py-3 text-sm"></textarea>
+            <button class="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">Analyze CV</button>
+        </form>
+        <pre x-ref="cvResult" class="max-h-64 overflow-auto rounded-xl bg-muted/50 p-4 text-xs"></pre>
+    </section>
+
+    <section x-show="tab==='salary'" class="glass-panel space-y-4 p-6">
+        <h2 class="font-semibold">Salary Prediction</h2>
+        <form @submit.prevent="fetch('{{ path('app_recruitment_ml_salary_predict') }}',{method:'POST',body:new FormData($el)}).then(r=>r.json()).then(d=>$refs.salaryResult.textContent=JSON.stringify(d,null,2))" class="grid gap-3 md:grid-cols-2">
+            <input name="title" placeholder="Job title" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <input name="skills" placeholder="Skills (comma-separated)" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <input name="experience_years" type="number" placeholder="Years of experience" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <input name="location" placeholder="Location" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <button class="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground md:col-span-2">Predict</button>
+        </form>
+        <pre x-ref="salaryResult" class="max-h-64 overflow-auto rounded-xl bg-muted/50 p-4 text-xs"></pre>
+    </section>
+
+    <section x-show="tab==='interview'" class="glass-panel space-y-4 p-6">
+        <h2 class="font-semibold">Interview Question Generator</h2>
+        <form @submit.prevent="fetch('{{ path('app_recruitment_ml_interview_questions') }}',{method:'POST',body:new FormData($el)}).then(r=>r.json()).then(d=>$refs.iqResult.textContent=JSON.stringify(d,null,2))" class="grid gap-3">
+            <input name="job_title" placeholder="Job title" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <textarea name="job_description" rows="3" placeholder="Job description" class="rounded-xl border border-border bg-background/70 px-4 py-3 text-sm"></textarea>
+            <input name="count" type="number" value="5" placeholder="Number of questions" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <button class="rounded-xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground">Generate</button>
+        </form>
+        <pre x-ref="iqResult" class="max-h-64 overflow-auto rounded-xl bg-muted/50 p-4 text-xs"></pre>
+    </section>
+</div>
+{% endblock %}

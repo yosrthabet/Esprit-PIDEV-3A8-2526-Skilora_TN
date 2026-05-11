@@ -1,21 +1,97 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Community Blog{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel flex flex-wrap items-center justify-between gap-4 p-8">
-        <div><p class="text-xs font-bold uppercase tracking-label text-primary">Blog</p><h1 class="mt-2 text-4xl font-light tracking-holographic">Long-form community knowledge.</h1></div>
-        {% if not app.user.admin %}<a href="{{ path('app_community_blog_new') }}" class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">New article</a>{% endif %}
-        <div class="w-full">{% include 'community/_tabs.html.twig' %}</div>
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(139,92,246,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-violet-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[1fr_20rem] lg:items-end">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Community blog</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Long-form<br class="hidden sm:block"> knowledge.</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">In-depth articles, tutorials, and insights from the Skilora community.</p>
+                <div class="mt-6 flex flex-wrap gap-2">
+                    {% if not app.user.admin %}
+                        <a href="{{ path('app_community_blog_new') }}" class="rounded-full bg-white px-4 py-2 text-sm font-bold text-black shadow-sm transition hover:shadow-md">
+                            <i data-lucide="pen-line" class="mr-1.5 inline h-3.5 w-3.5"></i> New article
+                        </a>
+                    {% endif %}
+                    <a href="{{ path('app_community') }}" class="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15">Feed</a>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ articles|length }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Articles</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ articles|length > 0 ? articles|length : 0 }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Authors</p>
+                </div>
+            </div>
+        </div>
     </section>
+
+    {# ── Tabs ── #}
+    <section class="flex flex-wrap items-center gap-3">
+        {% include 'community/_tabs.html.twig' %}
+    </section>
+
+    {# ── Featured article ── #}
+    {% if articles|length > 0 %}
+    <section class="rounded-[1.75rem] border border-border/70 bg-card/70 shadow-sm overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-xl">
+        <a href="{{ path('app_community_blog_show', {slug: articles[0].slug}) }}" class="grid lg:grid-cols-2">
+            <div class="h-48 lg:h-full bg-gradient-to-br from-violet-600/20 via-indigo-500/10 to-sky-500/10 flex items-center justify-center">
+                <i data-lucide="newspaper" class="h-16 w-16 text-foreground/5"></i>
+            </div>
+            <div class="p-6 sm:p-8 flex flex-col justify-center">
+                <div class="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span>{{ articles[0].publishedAt ? articles[0].publishedAt|date('M d, Y') : articles[0].createdAt|date('M d, Y') }}</span>
+                    <span>·</span>
+                    <span>{{ articles[0].author.displayName }}</span>
+                    <span>·</span>
+                    <span>{{ max(1, (articles[0].content|length / 1000)|round) }} min read</span>
+                </div>
+                <h2 class="mt-3 text-2xl font-bold text-foreground">{{ articles[0].title }}</h2>
+                <p class="mt-3 text-sm text-muted-foreground line-clamp-3">{{ articles[0].excerpt ?: articles[0].content|slice(0, 200) }}</p>
+                <span class="mt-5 inline-flex items-center gap-1 text-sm font-bold text-primary">Read more →</span>
+            </div>
+        </a>
+    </section>
+    {% endif %}
+
+    {# ── Article grid ── #}
     <section class="grid gap-4 lg:grid-cols-3">
-        {% for article in articles %}
-            <a href="{{ path('app_community_blog_show', {slug: article.slug}) }}" class="glass-panel p-5 transition hover:border-primary/40">
-                <p class="text-xs text-muted-foreground">{{ article.publishedAt ? article.publishedAt|date('M d, Y') : article.createdAt|date('M d, Y') }} · {{ article.author.displayName }}</p>
-                <h2 class="mt-3 text-xl font-semibold">{{ article.title }}</h2>
+        {% for article in articles|slice(1) %}
+            <a href="{{ path('app_community_blog_show', {slug: article.slug}) }}" class="group rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl">
+                <div class="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span>{{ article.publishedAt ? article.publishedAt|date('M d, Y') : article.createdAt|date('M d, Y') }}</span>
+                    <span>·</span>
+                    <span>{{ max(1, (article.content|length / 1000)|round) }} min read</span>
+                </div>
+                <h2 class="mt-3 text-lg font-bold text-foreground group-hover:text-primary transition-colors">{{ article.title }}</h2>
                 <p class="mt-2 line-clamp-3 text-sm text-muted-foreground">{{ article.excerpt ?: article.content|slice(0, 160) }}</p>
+                <div class="mt-4 flex items-center gap-2">
+                    {% set a_initials = article.author.displayName|split(' ')|map(w => w|first)|join('')|upper %}
+                    <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-muted text-[9px] font-black text-muted-foreground">{{ a_initials }}</div>
+                    <span class="text-xs text-muted-foreground">{{ article.author.displayName }}</span>
+                </div>
             </a>
         {% else %}
-            <div class="glass-panel col-span-full p-12 text-center text-muted-foreground">No articles yet.</div>
+            {% if articles|length == 0 %}
+            <div class="col-span-full rounded-[1.75rem] border border-dashed border-border bg-card/50 p-12 text-center">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                    <i data-lucide="newspaper" class="h-8 w-8 text-muted-foreground/50"></i>
+                </div>
+                <p class="mt-4 text-sm font-bold">No articles yet</p>
+                <p class="mt-1.5 text-xs text-muted-foreground">Write the first community article and share your expertise.</p>
+                {% if not app.user.admin %}
+                    <a href="{{ path('app_community_blog_new') }}" class="mt-4 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm">New article</a>
+                {% endif %}
+            </div>
+            {% endif %}
         {% endfor %}
     </section>
 </div>

@@ -23,7 +23,7 @@
                     {% for material in module.materials %}
                         <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-background/50 px-3 py-2">
                             <a href="{{ material.resourceUrl }}" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold hover:text-primary">{{ material.position }}. {{ material.title }} <span class="text-xs text-muted-foreground">{{ material.kind }}</span></a>
-                            <form method="post" action="{{ path('app_trainer_formation_material_delete', {id: formation.id, moduleId: module.id, materialId: material.id}) }}" onsubmit="return confirm('Delete this material?')">
+                            <form method="post" action="{{ path('app_trainer_formation_material_delete', {id: formation.id, moduleId: module.id, materialId: material.id}) }}" data-confirm="Delete this material?" data-confirm-label="Delete">
                                 <input type="hidden" name="_token" value="{{ csrf_token('trainer_material_delete_' ~ formation.id ~ '_' ~ material.id) }}">
                                 <button class="text-sm font-bold text-destructive">Delete</button>
                             </form>

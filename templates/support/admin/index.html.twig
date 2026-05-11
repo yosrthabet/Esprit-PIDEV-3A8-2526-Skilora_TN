@@ -1,60 +1,81 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Admin Support{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel p-8">
-        <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(239,68,68,.18))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-red-500/25 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[1fr_36rem] lg:items-end">
             <div>
-                <p class="text-xs font-bold uppercase tracking-label text-primary">Support operations</p>
-                <h1 class="mt-2 text-4xl font-light tracking-holographic">Ticket queue</h1>
-                <p class="mt-2 text-muted-foreground">Search, prioritize, and route current support requests.</p>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Support operations</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Ticket queue.</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Search, prioritize, and route current support requests.</p>
+                <div class="mt-6">
+                    <a href="{{ path('app_admin_support_export_csv', filters) }}" class="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15">
+                        <i data-lucide="download" class="mr-1.5 inline h-3.5 w-3.5"></i> Export CSV
+                    </a>
+                </div>
             </div>
-            <a href="{{ path('app_admin_support_export_csv', filters) }}" class="inline-flex h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-bold hover:bg-muted/50">Export CSV</a>
+            <div class="grid grid-cols-4 gap-3">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ status_stats.open|default(0) }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Open</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ active_count }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Active</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ status_stats.resolved|default(0) }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Resolved</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ status_stats.closed|default(0) }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Closed</p>
+                </div>
+            </div>
         </div>
     </section>
 
-    <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div class="glass-panel p-5"><p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Open</p><p class="mt-2 text-3xl font-light">{{ status_stats.open|default(0) }}</p></div>
-        <div class="glass-panel p-5"><p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Active</p><p class="mt-2 text-3xl font-light">{{ active_count }}</p></div>
-        <div class="glass-panel p-5"><p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Resolved</p><p class="mt-2 text-3xl font-light">{{ status_stats.resolved|default(0) }}</p></div>
-        <div class="glass-panel p-5"><p class="text-xs font-bold uppercase tracking-label text-muted-foreground">Closed</p><p class="mt-2 text-3xl font-light">{{ status_stats.closed|default(0) }}</p></div>
-    </section>
-
+    {# ── Distribution cards ── #}
     <section class="grid gap-4 lg:grid-cols-3">
-        <div class="glass-panel p-5">
-            <h2 class="font-semibold">Priority distribution</h2>
+        <div class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+            <h2 class="text-xs font-black uppercase tracking-[0.2em]">Priority distribution</h2>
             <div class="mt-4 space-y-2">
                 {% for key, count in priority_stats %}
-                    <div class="flex items-center justify-between rounded-xl bg-muted/30 px-3 py-2 text-sm"><span>{{ key|replace({'_': ' '})|title }}</span><strong>{{ count }}</strong></div>
+                    <div class="flex items-center justify-between rounded-2xl bg-muted/30 px-3 py-2 text-sm"><span>{{ key|replace({'_': ' '})|title }}</span><span class="font-black">{{ count }}</span></div>
                 {% endfor %}
             </div>
         </div>
-        <div class="glass-panel p-5">
-            <h2 class="font-semibold">Category distribution</h2>
+        <div class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+            <h2 class="text-xs font-black uppercase tracking-[0.2em]">Category distribution</h2>
             <div class="mt-4 space-y-2">
                 {% for key, count in category_stats %}
-                    <div class="flex items-center justify-between rounded-xl bg-muted/30 px-3 py-2 text-sm"><span>{{ key|replace({'_': ' '})|title }}</span><strong>{{ count }}</strong></div>
+                    <div class="flex items-center justify-between rounded-2xl bg-muted/30 px-3 py-2 text-sm"><span>{{ key|replace({'_': ' '})|title }}</span><span class="font-black">{{ count }}</span></div>
                 {% endfor %}
             </div>
         </div>
-        <div class="glass-panel p-5">
-            <h2 class="font-semibold">7-day volume</h2>
+        <div class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+            <h2 class="text-xs font-black uppercase tracking-[0.2em]">7-day volume</h2>
             <div class="mt-4 space-y-2">
                 {% for day, count in daily_stats %}
-                    <div class="flex items-center justify-between rounded-xl bg-muted/30 px-3 py-2 text-sm"><span>{{ day|date('M d') }}</span><strong>{{ count }}</strong></div>
+                    <div class="flex items-center justify-between rounded-2xl bg-muted/30 px-3 py-2 text-sm"><span>{{ day|date('M d') }}</span><span class="font-black">{{ count }}</span></div>
                 {% endfor %}
             </div>
         </div>
     </section>
 
-    <form method="get" action="{{ path('app_admin_support') }}" class="glass-panel grid gap-3 p-4 xl:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(10rem,1fr))_auto] xl:items-end">
+    {# ── Filters ── #}
+    <form method="get" action="{{ path('app_admin_support') }}" class="rounded-[1.75rem] border border-border/70 bg-card/70 p-4 shadow-sm grid gap-3 xl:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(10rem,1fr))_auto] xl:items-end">
         <label class="space-y-1">
-            <span class="text-xs font-bold uppercase tracking-label text-muted-foreground">Search</span>
-            <input name="q" value="{{ filters.q|default('') }}" placeholder="Subject, requester, description, or message" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Search</span>
+            <input name="q" value="{{ filters.q|default('') }}" placeholder="Subject, requester, description, or message" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-3 text-sm">
         </label>
         <label class="space-y-1">
-            <span class="text-xs font-bold uppercase tracking-label text-muted-foreground">Status</span>
-            <select name="status" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Status</span>
+            <select name="status" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-3 text-sm">
                 <option value="all">All statuses</option>
                 {% for status in statuses %}
                     <option value="{{ status.value }}" {{ filters.status|default('all') == status.value ? 'selected' }}>{{ status.label }}</option>
@@ -62,8 +83,8 @@
             </select>
         </label>
         <label class="space-y-1">
-            <span class="text-xs font-bold uppercase tracking-label text-muted-foreground">Category</span>
-            <select name="category" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Category</span>
+            <select name="category" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-3 text-sm">
                 <option value="all">All categories</option>
                 {% for category in categories %}
                     <option value="{{ category.value }}" {{ filters.category|default('all') == category.value ? 'selected' }}>{{ category.label }}</option>
@@ -71,8 +92,8 @@
             </select>
         </label>
         <label class="space-y-1">
-            <span class="text-xs font-bold uppercase tracking-label text-muted-foreground">Priority</span>
-            <select name="priority" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Priority</span>
+            <select name="priority" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-3 text-sm">
                 <option value="all">All priorities</option>
                 {% for priority in priorities %}
                     <option value="{{ priority.value }}" {{ filters.priority|default('all') == priority.value ? 'selected' }}>{{ priority.label }}</option>
@@ -80,8 +101,8 @@
             </select>
         </label>
         <label class="space-y-1">
-            <span class="text-xs font-bold uppercase tracking-label text-muted-foreground">Sort</span>
-            <select name="sort" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Sort</span>
+            <select name="sort" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-3 text-sm">
                 <option value="updated" {{ filters.sort|default('updated') == 'updated' ? 'selected' }}>Recently updated</option>
                 <option value="newest" {{ filters.sort|default('updated') == 'newest' ? 'selected' }}>Newest first</option>
                 <option value="oldest" {{ filters.sort|default('updated') == 'oldest' ? 'selected' }}>Oldest first</option>
@@ -89,13 +110,14 @@
             </select>
         </label>
         <div class="flex gap-2">
-            <button class="h-11 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground">Filter</button>
-            <a href="{{ path('app_admin_support') }}" class="inline-flex h-11 items-center rounded-xl border border-border px-4 text-sm font-semibold text-muted-foreground hover:text-foreground">Reset</a>
+            <button class="h-11 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground shadow-sm transition hover:shadow-md">Filter</button>
+            <a href="{{ path('app_admin_support') }}" class="inline-flex h-11 items-center rounded-full border border-border px-4 text-sm font-bold text-muted-foreground hover:text-foreground transition">Reset</a>
         </div>
     </form>
 
-    <section class="overflow-hidden rounded-2xl border border-border/70 bg-card/60">
-        <div class="hidden grid-cols-[1.1fr_0.8fr_0.7fr_0.7fr_0.8fr] gap-4 border-b border-border/70 px-5 py-3 text-xs font-bold uppercase tracking-label text-muted-foreground lg:grid">
+    {# ── Table ── #}
+    <section class="overflow-hidden rounded-[1.75rem] border border-border/70 bg-card/70 shadow-sm">
+        <div class="hidden grid-cols-[1.1fr_0.8fr_0.7fr_0.7fr_0.8fr] gap-4 border-b border-border/70 px-5 py-3 text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground lg:grid">
             <span>Ticket</span>
             <span>Requester</span>
             <span>Status</span>
@@ -103,22 +125,26 @@
             <span>Updated</span>
         </div>
         {% for ticket in tickets %}
-            <a href="{{ path('app_admin_support_show', {id: ticket.id}) }}" class="grid gap-3 border-b border-border/50 px-5 py-4 transition last:border-b-0 hover:bg-muted/30 lg:grid-cols-[1.1fr_0.8fr_0.7fr_0.7fr_0.8fr] lg:items-center">
+            <a href="{{ path('app_admin_support_show', {id: ticket.id}) }}" class="grid gap-3 border-b border-border/50 px-5 py-4 transition last:border-b-0 hover:bg-muted/20 lg:grid-cols-[1.1fr_0.8fr_0.7fr_0.7fr_0.8fr] lg:items-center">
                 <div>
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">#{{ ticket.id }}</span>
-                        <span class="text-xs text-muted-foreground">{{ ticket.category.label }}</span>
+                        <span class="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-black text-primary">#{{ ticket.id }}</span>
+                        <span class="rounded-full bg-muted px-2.5 py-1 text-[10px] font-black text-muted-foreground">{{ ticket.category.label }}</span>
                     </div>
-                    <h2 class="mt-2 text-lg font-semibold">{{ ticket.subject }}</h2>
+                    <h2 class="mt-2 text-base font-bold">{{ ticket.subject }}</h2>
                     <p class="mt-1 line-clamp-1 text-sm text-muted-foreground lg:hidden">{{ ticket.requester.displayName }}</p>
                 </div>
                 <p class="hidden text-sm text-muted-foreground lg:block">{{ ticket.requester.displayName }}</p>
-                <div><span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ ticket.status.label }}</span></div>
-                <p class="text-sm text-muted-foreground">{{ ticket.priority.label }}</p>
-                <p class="text-xs text-muted-foreground">{{ ticket.updatedAt|date('M d, H:i') }}</p>
+                <div><span class="rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide
+                    {% if ticket.status.value == 'open' %}bg-sky-500/10 text-sky-600 dark:text-sky-400
+                    {% elseif ticket.status.value == 'in_progress' %}bg-amber-500/10 text-amber-600 dark:text-amber-400
+                    {% elseif ticket.status.value == 'resolved' %}bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
+                    {% else %}bg-muted text-muted-foreground{% endif %}">{{ ticket.status.label }}</span></div>
+                <p class="text-sm font-semibold text-muted-foreground">{{ ticket.priority.label }}</p>
+                <p class="text-[11px] text-muted-foreground">{{ ticket.updatedAt|date('M d, H:i') }}</p>
             </a>
         {% else %}
-            <div class="p-12 text-center text-muted-foreground">No tickets match the current filters.</div>
+            <div class="rounded-[1.4rem] border border-dashed border-border bg-background/50 m-4 p-12 text-center text-sm text-muted-foreground">No tickets match the current filters.</div>
         {% endfor %}
     </section>
 </div>

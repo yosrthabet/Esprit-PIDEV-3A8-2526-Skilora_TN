@@ -1,0 +1,29 @@
+{% set r = app.request.attributes.get('_route') %}
+<div class="mb-8">
+    <div class="flex items-center gap-4">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Skilora</p>
+            <h1 class="text-2xl font-bold tracking-tight text-foreground">Gestion financière</h1>
+        </div>
+    </div>
+    <nav class="mt-5 flex flex-wrap gap-2 rounded-2xl border border-border/80 bg-muted/30 p-1.5 shadow-inner dark:bg-muted/20" aria-label="Finance admin">
+        {% set tabs = [
+            { route: 'app_admin_finance', label: "Vue d'ensemble", icon: 'layout-dashboard' },
+            { route: 'app_admin_finance_payslips', label: 'Bulletins de paie', icon: 'file-text' },
+            { route: 'app_admin_finance_exchange_rates', label: 'Taux de change', icon: 'refresh-cw' },
+            { route: 'app_admin_finance_reviews', label: 'Avis', icon: 'star' },
+            { route: 'app_admin_finance_payouts', label: 'Retraits', icon: 'arrow-up-right' },
+            { route: 'admin_finance_project_payment', label: 'Paiement projet', icon: 'credit-card' },
+        ] %}
+        {% for tab in tabs %}
+            <a href="{{ path(tab.route) }}"
+               class="group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all
+                      {{ r == tab.route
+                         ? 'border border-border bg-card text-foreground shadow-md'
+                         : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground' }}">
+                <i data-lucide="{{ tab.icon }}" class="h-4 w-4 shrink-0 opacity-80"></i>
+                {{ tab.label }}
+            </a>
+        {% endfor %}
+    </nav>
+</div>

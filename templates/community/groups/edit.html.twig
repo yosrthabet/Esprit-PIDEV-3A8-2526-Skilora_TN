@@ -1,0 +1,19 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Edit Group{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+    <form method="post" class="glass-panel space-y-5 p-8">
+        <a href="{{ path('app_community_group_show', {id: group.id}) }}" class="text-sm font-semibold text-muted-foreground hover:text-foreground">← Back to group</a>
+        <p class="mt-4 text-xs font-bold uppercase tracking-label text-primary">Community groups</p>
+        <h1 class="text-3xl font-light tracking-holographic">Edit group</h1>
+        <input type="hidden" name="_token" value="{{ csrf_token('community_group_edit_' ~ group.id) }}">
+        <input name="name" required value="{{ group.name }}" placeholder="Group name" class="h-11 w-full rounded-xl border border-border bg-background/70 px-4 text-sm">
+        <textarea name="description" rows="5" placeholder="What is this group for?" class="w-full rounded-xl border border-border bg-background/70 px-4 py-3 text-sm">{{ group.description }}</textarea>
+        <select name="privacy" class="h-11 w-full rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <option value="public" {{ group.privacy == 'public' ? 'selected' : '' }}>Public group</option>
+            <option value="private" {{ group.privacy == 'private' ? 'selected' : '' }}>Private group</option>
+        </select>
+        <button class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Save changes</button>
+    </form>
+</div>
+{% endblock %}

@@ -2,32 +2,90 @@
 {% block page_title %}Candidates{% endblock %}
 {% block content %}
 {% set columns = {
-    applied: 'Applied',
-    viewed: 'Viewed',
-    interview: 'Interview',
-    offer: 'Offer',
-    rejected: 'Rejected'
+    applied: {label: 'Applied', hint: 'New arrivals'},
+    viewed: {label: 'Viewed', hint: 'Screened once'},
+    interview: {label: 'Interview', hint: 'In conversation'},
+    offer: {label: 'Offer', hint: 'Closing stage'},
+    rejected: {label: 'Rejected', hint: 'Archived'}
 } %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel p-8">
-        <p class="text-xs font-bold uppercase tracking-label text-primary">Candidate Pipeline</p>
-        <h1 class="mt-2 text-4xl font-light tracking-holographic">Applications to review</h1>
-        <p class="mt-2 text-sm text-muted-foreground">Move candidates from applied to interview to offer.</p>
+{% set total = applications|length %}
+{% set interview_count = applications|filter(a => a.status.value == 'interview')|length %}
+{% set offer_count = applications|filter(a => a.status.value == 'offer')|length %}
+{% set average_match = total > 0 ? ((applications|reduce((carry, item) => carry + item.matchScore, 0) / total)|round) : 0 %}
+
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(16,185,129,.28))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-primary/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[1fr_30rem] lg:items-end">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Candidate command center</p>
+                <h1 class="mt-4 max-w-4xl text-4xl font-semibold tracking-tight sm:text-6xl">Move candidates, not cards.</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Screen CVs, schedule interviews, send offers, and keep each applicant in the right lane.</p>
+                <div class="mt-6 flex flex-wrap gap-2">
+                    <a href="{{ path('app_post_job') }}" class="rounded-full bg-white px-4 py-2 text-sm font-bold text-black shadow-sm">Publish another role</a>
+                    <a href="{{ path('app_interviews') }}" class="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15">Interviews</a>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ total }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Candidates</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ interview_count }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Interviews</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ average_match }}%</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Avg match</p>
+                </div>
+            </div>
+        </div>
     </section>
+
+    <section class="grid gap-3 md:grid-cols-5">
+        {% for status, column in columns %}
+            {% set count = applications|filter(a => a.status.value == status)|length %}
+            <a href="#stage-{{ status }}" class="rounded-3xl border border-border bg-card/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-xs font-black uppercase tracking-[0.22em] text-muted-foreground">{{ column.label }}</span>
+                    <span class="rounded-full bg-muted px-2.5 py-1 text-xs font-black">{{ count }}</span>
+                </div>
+                <p class="mt-2 text-xs text-muted-foreground">{{ column.hint }}</p>
+            </a>
+        {% endfor %}
+    </section>
+
     <section class="grid gap-4 xl:grid-cols-5">
-        {% for status, label in columns %}
-            <div class="glass-panel min-h-60 p-4">
-                <div class="mb-4 flex items-center justify-between">
-                    <h2 class="text-sm font-bold uppercase tracking-label">{{ label }}</h2>
-                    <span class="rounded-full bg-muted px-2 py-0.5 text-xs font-bold">{{ applications|filter(a => a.status.value == status)|length }}</span>
+        {% for status, column in columns %}
+            {% set items = applications|filter(a => a.status.value == status) %}
+            <div id="stage-{{ status }}" class="rounded-[1.75rem] border border-border/70 bg-card/70 p-3 shadow-sm">
+                <div class="mb-3 flex items-center justify-between px-2 py-1">
+                    <div>
+                        <h2 class="text-sm font-black uppercase tracking-[0.2em]">{{ column.label }}</h2>
+                        <p class="text-xs text-muted-foreground">{{ column.hint }}</p>
+                    </div>
+                    <span class="rounded-full bg-background px-2.5 py-1 text-xs font-black shadow-sm">{{ items|length }}</span>
                 </div>
                 <div class="space-y-3">
-                    {% for app_item in applications|filter(a => a.status.value == status) %}
-                        <a href="{{ path('app_application_profile', {id: app_item.id}) }}" class="block rounded-2xl border border-border/50 bg-background/60 p-4 transition hover:border-primary/40">
-                            <p class="font-semibold">{{ app_item.candidate.displayName }}</p>
-                            <p class="mt-1 line-clamp-1 text-xs text-muted-foreground">{{ app_item.jobOffer.title }}</p>
-                            <p class="mt-3 text-xs text-muted-foreground">{{ app_item.matchScore }}% match · {{ app_item.appliedAt|date('M d') }}</p>
+                    {% for app_item in items %}
+                        <a href="{{ path('app_application_profile', {id: app_item.id}) }}" class="group block rounded-[1.4rem] border border-border bg-background/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-xl">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="truncate text-base font-bold group-hover:text-primary">{{ app_item.candidate.displayName }}</p>
+                                    <p class="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{{ app_item.jobOffer.title }}</p>
+                                </div>
+                                <span class="rounded-full bg-muted px-2 py-1 text-[11px] font-black">{{ app_item.matchScore }}%</span>
+                            </div>
+                            <div class="mt-4 h-1.5 overflow-hidden rounded-full bg-muted"><div class="h-full rounded-full bg-primary" style="width: {{ app_item.matchScore }}%"></div></div>
+                            <div class="mt-4 flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                                <span>{{ app_item.appliedAt|date('M d, H:i') }}</span>
+                                <span>Open profile -></span>
+                            </div>
                         </a>
+                    {% else %}
+                        <div class="rounded-[1.4rem] border border-dashed border-border bg-background/50 p-5 text-center text-xs text-muted-foreground">No candidates in {{ column.label|lower }}.</div>
                     {% endfor %}
                 </div>
             </div>

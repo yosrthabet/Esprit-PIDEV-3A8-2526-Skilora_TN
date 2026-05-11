@@ -1,0 +1,75 @@
+{% verbatim %}\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[top=1.5cm,bottom=1.5cm,left=2cm,right=2cm]{geometry}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+\definecolor{accent}{HTML}{1E3A5F}
+\definecolor{muted}{HTML}{64748B}
+\definecolor{dark}{HTML}{0F172A}
+\definecolor{rulecolor}{HTML}{CBD5E1}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+\titleformat{\section}{\large\bfseries\color{accent}}{}{0pt}{}[\color{rulecolor}\titlerule]
+\titlespacing{\section}{0pt}{14pt}{6pt}
+
+\begin{document}
+
+% ── Header ──
+\begin{center}
+{\fontsize{24pt}{28pt}\selectfont\bfseries\color{dark} {% endverbatim %}{{ cv.fullName|latex_escape }}{% verbatim %}}\\[4pt]
+{\large\color{muted} {% endverbatim %}{{ cv.professionalTitle|latex_escape }}{% verbatim %}}\\[8pt]
+{\small\color{muted}
+{% endverbatim %}{% if cv.email %}{{ cv.email|latex_escape }}{% endif %}{% if cv.phone %}{% verbatim %}~~|~~{% endverbatim %}{{ cv.phone|latex_escape }}{% endif %}{% if cv.address %}{% verbatim %}~~|~~{% endverbatim %}{{ cv.address|latex_escape }}{% endif %}{% verbatim %}
+}
+\end{center}
+
+\vspace{4pt}
+
+% ── Profile ──
+\section*{Profile}
+{\color{dark}\small {% endverbatim %}{{ cv.professionalSummary|latex_escape }}{% verbatim %}}
+
+% ── Experience ──
+{% endverbatim %}{% if cv.experience is not empty %}{% verbatim %}
+\section*{Experience}
+{% endverbatim %}{% for item in cv.experience %}{% verbatim %}
+\textbf{\color{dark} {% endverbatim %}{{ item.jobTitle|latex_escape }}{% verbatim %}}{% endverbatim %}{% if item.duration %}{% verbatim %}\hfill{\small\color{muted}\itshape {% endverbatim %}{{ item.duration|latex_escape }}{% verbatim %}}{% endverbatim %}{% endif %}{% verbatim %}\\
+{% endverbatim %}{% if item.company %}{% verbatim %}{\small\color{muted}\itshape {% endverbatim %}{{ item.company|latex_escape }}{% verbatim %}}\\{% endverbatim %}{% endif %}
+{% if item.description %}{% verbatim %}{\small\color{dark} {% endverbatim %}{{ item.description|latex_escape }}{% verbatim %}}{% endverbatim %}{% endif %}{% verbatim %}
+\vspace{6pt}
+{% endverbatim %}{% endfor %}{% endif %}{% verbatim %}
+
+% ── Education ──
+{% endverbatim %}{% if cv.education is not empty %}{% verbatim %}
+\section*{Education}
+{% endverbatim %}{% for item in cv.education %}{% verbatim %}
+\textbf{\color{dark} {% endverbatim %}{{ item.degree|latex_escape }}{% verbatim %}}{% endverbatim %}{% if item.year %}{% verbatim %}\hfill{\small\color{muted}\itshape {% endverbatim %}{{ item.year|latex_escape }}{% verbatim %}}{% endverbatim %}{% endif %}{% verbatim %}\\
+{% endverbatim %}{% if item.institution %}{% verbatim %}{\small\color{muted}\itshape {% endverbatim %}{{ item.institution|latex_escape }}{% verbatim %}}{% endverbatim %}{% endif %}{% verbatim %}
+\vspace{6pt}
+{% endverbatim %}{% endfor %}{% endif %}{% verbatim %}
+
+% ── Skills ──
+{% endverbatim %}{% if cv.skillsAsList() is not empty %}{% verbatim %}
+\section*{Skills}
+{\small\color{dark}
+{% endverbatim %}{{ cv.skillsAsList()|join(' ~~\\textbullet~~ ')|raw }}{% verbatim %}
+}
+{% endverbatim %}{% endif %}{% verbatim %}
+
+% ── Languages ──
+{% endverbatim %}{% if cv.languagesAsList() is not empty %}{% verbatim %}
+\section*{Languages}
+{\small\color{dark}
+{% endverbatim %}{{ cv.languagesAsList()|join(' ~~\\textbullet~~ ')|raw }}{% verbatim %}
+}
+{% endverbatim %}{% endif %}{% verbatim %}
+
+\end{document}{% endverbatim %}

@@ -1,40 +1,70 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Applications{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <div class="glass-panel p-8">
-        <p class="text-xs font-bold uppercase tracking-label text-primary">Pipeline</p>
-        <h1 class="mt-2 text-4xl font-light tracking-holographic">Your applications</h1>
-        <p class="mt-2 text-muted-foreground">Track every opportunity from applied to interview to offer.</p>
-    </div>
-    <div class="grid gap-4 lg:grid-cols-3">
+{% set total = applications|length %}
+{% set interview_total = interviews_by_application|length %}
+{% set offer_total = offers_by_application|length %}
+{% set avg_match = total > 0 ? ((applications|reduce((carry, item) => carry + item.matchScore, 0) / total)|round) : 0 %}
+
+<div class="mx-auto max-w-[92rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="relative overflow-hidden rounded-[2rem] border border-border bg-card p-6 shadow-xl shadow-black/5 sm:p-8 lg:p-10">
+        <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary/10 blur-3xl"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[1fr_26rem] lg:items-end">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.3em] text-primary">Opportunity tracker</p>
+                <h1 class="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">Your applications</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">Track every role from application to interview to signed offer. Keep your next move visible.</p>
+                <div class="mt-6 flex flex-wrap gap-2">
+                    <a href="{{ path('app_jobs') }}" class="rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Find more work</a>
+                    <a href="{{ path('app_candidate_job_preferences') }}" class="rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-muted">Tune preferences</a>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="rounded-3xl border border-border bg-background/70 p-4"><p class="text-3xl font-light">{{ total }}</p><p class="mt-1 text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">Applied</p></div>
+                <div class="rounded-3xl border border-border bg-background/70 p-4"><p class="text-3xl font-light">{{ interview_total }}</p><p class="mt-1 text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">Interviews</p></div>
+                <div class="rounded-3xl border border-border bg-background/70 p-4"><p class="text-3xl font-light">{{ avg_match }}%</p><p class="mt-1 text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">Avg fit</p></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {% for app_item in applications %}
             {% set job = app_item.jobOffer %}
             {% set interview = interviews_by_application[app_item.id]|default(null) %}
             {% set hire_offer = offers_by_application[app_item.id]|default(null) %}
-            <article class="glass-panel p-5">
-                <span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ app_item.status.label }}</span>
-                <h2 class="mt-3 text-lg font-semibold"><a href="{{ path('app_application_show', {id: app_item.id}) }}" class="hover:text-primary">{{ job.title }}</a></h2>
-                <p class="mt-1 text-sm text-muted-foreground">{{ job.companyLabel }} · {{ app_item.appliedAt|date('M d, Y') }}</p>
-                <div class="mt-4 h-2 overflow-hidden rounded-full bg-muted"><div class="h-full rounded-full bg-primary" style="width: {{ app_item.matchScore }}%"></div></div>
-                <p class="mt-2 text-xs text-muted-foreground">{{ app_item.matchScore }}% application readiness</p>
+            <article class="group rounded-[1.75rem] border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl">
+                <div class="flex items-start justify-between gap-4">
+                    <span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-black text-primary">{{ app_item.status.label }}</span>
+                    <span class="text-xs font-semibold text-muted-foreground">{{ app_item.appliedAt|date('M d, Y') }}</span>
+                </div>
+                <h2 class="mt-4 line-clamp-2 text-xl font-bold tracking-tight"><a href="{{ path('app_application_show', {id: app_item.id}) }}" class="group-hover:text-primary">{{ job.title }}</a></h2>
+                <p class="mt-2 text-sm text-muted-foreground">{{ job.companyLabel }}</p>
+                <div class="mt-5 flex items-center gap-3"><div class="h-2 flex-1 overflow-hidden rounded-full bg-muted"><div class="h-full rounded-full bg-primary" style="width: {{ app_item.matchScore }}%"></div></div><span class="text-sm font-black">{{ app_item.matchScore }}%</span></div>
+                <p class="mt-2 text-xs text-muted-foreground">application readiness</p>
                 {% if interview %}
-                    <div class="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
-                        <p class="font-semibold text-foreground">Interview: {{ interview.scheduledAt|date('M d, H:i') }}</p>
-                        {% if interview.notes %}<p class="mt-1 line-clamp-2">{{ interview.notes }}</p>{% endif %}
-                        {% if interview.meetingUrl %}<a href="{{ interview.meetingUrl }}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-flex font-semibold text-primary">Open meeting link →</a>{% endif %}
+                    <div class="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm">
+                        <p class="font-bold text-foreground">Interview · {{ interview.scheduledAt|date('M d, H:i') }}</p>
+                        {% if interview.notes %}<p class="mt-1 line-clamp-2 text-muted-foreground">{{ interview.notes }}</p>{% endif %}
+                        {% if interview.meetingUrl %}<a href="{{ interview.meetingUrl }}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-flex font-bold text-primary">Open meeting link -></a>{% endif %}
                     </div>
                 {% elseif hire_offer %}
-                    <div class="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs text-muted-foreground">
-                        <p class="font-semibold text-foreground">Hire offer: {{ hire_offer.status.value|title }}</p>
-                        <a href="{{ path('app_hire_offers') }}" class="mt-2 inline-flex font-semibold text-primary">View offer →</a>
+                    <div class="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm">
+                        <p class="font-bold text-foreground">Hire offer · {{ hire_offer.status.value|title }}</p>
+                        <a href="{{ path('app_hire_offers') }}" class="mt-2 inline-flex font-bold text-primary">View offer -></a>
                     </div>
                 {% endif %}
-                <a href="{{ path('app_application_show', {id: app_item.id}) }}" class="mt-4 inline-flex text-xs font-semibold text-primary">View details →</a>
+                <div class="mt-5 flex items-center justify-between">
+                    <a href="{{ path('app_application_show', {id: app_item.id}) }}" class="text-sm font-black text-primary">View details -></a>
+                    <form method="post" action="{{ path('app_application_delete', {id: app_item.id}) }}" class="inline" data-confirm="Withdraw this application?" data-confirm-label="Withdraw"><input type="hidden" name="_token" value="{{ csrf_token('delete_application_' ~ app_item.id) }}"><button class="rounded-lg border border-border px-2 py-1 text-[11px] font-bold text-muted-foreground hover:border-destructive/50 hover:text-destructive">Withdraw</button></form>
+                </div>
             </article>
         {% else %}
-            <div class="glass-panel col-span-full p-12 text-center text-muted-foreground">No applications yet. Start from Find Work.</div>
+            <div class="col-span-full rounded-[2rem] border border-dashed border-border bg-card p-12 text-center">
+                <p class="text-xl font-bold">No applications yet.</p>
+                <p class="mt-2 text-muted-foreground">Start from Find Work and apply with a CV to build your pipeline.</p>
+                <a href="{{ path('app_jobs') }}" class="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Find work</a>
+            </div>
         {% endfor %}
-    </div>
+    </section>
 </div>
 {% endblock %}

@@ -1,16 +1,35 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Certificate QR{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-3xl px-4 py-8 text-center sm:px-6 lg:px-8">
-    <section class="glass-panel p-8">
-        <p class="text-xs font-bold uppercase tracking-label text-primary">Certificate QR</p>
-        <h1 class="mt-2 text-3xl font-light tracking-holographic">{{ certificate.enrollment.formation.title }}</h1>
-        {% if qr_data_uri %}
-            <img src="{{ qr_data_uri }}" alt="Certificate verification QR" class="mx-auto mt-6 h-80 w-80 rounded-2xl bg-white p-4">
-        {% else %}
-            <div class="mx-auto mt-6 rounded-2xl border border-border bg-muted p-6 text-sm text-muted-foreground">QR generator unavailable. Use the verification link below.</div>
-        {% endif %}
-        <a href="{{ verification_url }}" class="mt-6 block break-all text-sm font-semibold text-primary">{{ verification_url }}</a>
+<div class="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    {% include 'components/_breadcrumbs.html.twig' with {items: [{label: 'Certificates', route: 'app_certificates'}, {label: 'QR Code'}]} %}
+
+    <section class="relative overflow-hidden rounded-[2rem] p-10 text-center" style="background:#1a1a1f;border:1px solid rgba(245,158,11,.15)">
+        <div class="absolute inset-0 rounded-[2rem]" style="background:linear-gradient(160deg,#1a1a1f 0%,#27272a 40%,#1f1f23 100%)"></div>
+        <div class="absolute inset-0 rounded-[2rem]" style="background:radial-gradient(ellipse at top center, rgba(245,158,11,.08), transparent 55%)"></div>
+        <div class="relative z-10">
+            <p class="text-[11px] font-black uppercase tracking-[0.3em]" style="color:rgba(251,191,36,.75)">Scan to verify</p>
+            <h1 class="mt-3 text-2xl sm:text-3xl font-extralight tracking-tight" style="color:#fff">{{ certificate.enrollment.formation.title }}</h1>
+            <p class="mt-2 text-sm" style="color:#a1a1aa">{{ certificate.enrollment.user.displayName }}</p>
+
+            {% if qr_data_uri %}
+                <div class="mx-auto mt-8 inline-block rounded-2xl p-4" style="background:#ffffff">
+                    <img src="{{ qr_data_uri }}" alt="Certificate verification QR" class="h-64 w-64 sm:h-72 sm:w-72">
+                </div>
+            {% else %}
+                <div class="mx-auto mt-8 max-w-sm rounded-xl p-6" style="background:rgba(39,39,42,.5);border:1px solid rgba(63,63,70,.4);color:#a1a1aa">
+                    <p class="text-sm">QR generator unavailable. Use the verification link below.</p>
+                </div>
+            {% endif %}
+
+            <a href="{{ verification_url }}" class="mt-6 block break-all text-sm font-semibold" style="color:rgba(245,158,11,.8)">{{ verification_url }}</a>
+        </div>
     </section>
+
+    <div class="text-center">
+        <a href="{{ path('app_certificate_show', {id: certificate.id}) }}" class="inline-flex items-center gap-2 rounded-2xl border border-border px-5 py-3 text-sm font-semibold transition hover:bg-muted">
+            <i data-lucide="arrow-left" class="h-4 w-4"></i> Back to certificate
+        </a>
+    </div>
 </div>
 {% endblock %}

@@ -13,6 +13,22 @@
 {% block page_scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<style>
+    .grain-overlay{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:.035;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:128px 128px}
+    .video-frame-wrapper{position:relative;width:100%;height:100vh;overflow:hidden;background:#000}
+    video.video-frame-inner{width:100%;height:100%;position:absolute;inset:0;object-fit:cover}
+    .vf-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:0.75rem;z-index:10;pointer-events:none;padding:0 6vw;align-items:flex-end;text-align:right}
+    .vf-text{color:#fff;opacity:0;will-change:transform,opacity;text-shadow:0 2px 20px rgba(0,0,0,0.6);max-width:50%}
+    @media(max-width:767px){.vf-overlay{align-items:center;text-align:center}.vf-text{max-width:90%}}
+    .testimonial-track{display:flex;gap:2rem;padding:0 2vw;will-change:transform}
+    .testimonial-card{flex:0 0 380px;will-change:transform,opacity}
+    @media(max-width:767px){.testimonial-card{flex:0 0 85vw}}
+    .hero-word{display:inline-block;will-change:transform}
+    .stat-number{font-variant-numeric:tabular-nums}
+    .magnetic-btn{transition:transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)}
+    .clip-reveal{clip-path:inset(0 100% 0 0);transition:clip-path 0s}
+    .clip-reveal.revealed{clip-path:inset(0 0% 0 0);transition:clip-path 1.2s cubic-bezier(0.77,0,0.175,1)}
+</style>
 {% endblock %}
 
 {% block body %}
@@ -115,13 +131,17 @@
         </div>
     </header>
 
+    <div class="grain-overlay"></div>
+
     <main class="w-full relative overflow-x-hidden">
         <div class="w-full">
             
             {# ═══════════ 1. HERO ═══════════ #}
-            <section class="relative min-h-screen w-full flex flex-col justify-center items-center overflow-hidden bg-zinc-950 text-white" id="hero-section">
+            <section class="relative min-h-screen w-full flex flex-col justify-center items-center bg-zinc-950 text-white" id="hero-section">
                 <div class="absolute inset-0 z-0">
                     <div id="hero-blob" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.2),transparent_70%)] rounded-full mix-blend-screen"></div>
+                    <div id="hero-orb-2" class="absolute top-[30%] left-[20%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.12),transparent_60%)] rounded-full mix-blend-screen"></div>
+                    <div id="hero-orb-3" class="absolute top-[60%] right-[15%] w-[35vw] h-[35vw] max-w-[400px] max-h-[400px] bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.1),transparent_60%)] rounded-full mix-blend-screen"></div>
                 </div>
 
                 <div class="relative z-10 text-center w-full pt-10">
@@ -145,15 +165,17 @@
             </section>
 
 
-            {# ═══════════ 2. COMPANIES MARQUEE ═══════════ #}
-            <section class="bg-white py-10 border-y border-zinc-200 overflow-hidden">
-                <p class="text-center text-xs uppercase tracking-[0.3em] text-zinc-400 mb-6">Trusted by teams at</p>
-                <div class="relative overflow-hidden">
-                    <div class="companies-track flex items-center gap-16 whitespace-nowrap">
-                        {% for company in ['Vermeg', 'Sofrecom', 'Proxym', 'Talan', 'LineData', 'Sopra HR', 'Focus Corp', 'Wevioo', 'Telnet', 'Cynapsys', 'Vermeg', 'Sofrecom', 'Proxym', 'Talan', 'LineData', 'Sopra HR', 'Focus Corp', 'Wevioo', 'Telnet', 'Cynapsys', 'Vermeg', 'Sofrecom', 'Proxym', 'Talan', 'LineData', 'Sopra HR', 'Focus Corp', 'Wevioo', 'Telnet', 'Cynapsys'] %}
-                            <span class="text-zinc-400 text-lg font-bold tracking-tight flex-shrink-0">{{ company }}</span>
-                        {% endfor %}
-                    </div>
+            {# ═══════════ 1b. VIDEO SCROLL SCRUB ═══════════ #}
+            <section class="video-frame-wrapper" id="video-frame-section">
+                <video id="video-scrub" muted playsinline preload="auto" class="video-frame-inner">
+                    <source src="{{ asset('videos/hero-scroll-opt.mp4') }}" type="video/mp4">
+                </video>
+                <div class="vf-overlay" id="vf-overlay">
+                    <p class="vf-text vf-text-1 text-3xl md:text-6xl lg:text-7xl font-black uppercase leading-[1.1]">The future<br>is in your hands</p>
+                    <p class="vf-text vf-text-2 text-2xl md:text-5xl lg:text-6xl font-black uppercase leading-tight">AI is changing<br>the way we work</p>
+                    <p class="vf-text vf-text-3 text-2xl md:text-5xl lg:text-6xl font-black uppercase leading-tight">Skilora is here<br>to help</p>
+                    <p class="vf-text vf-text-4 text-xl md:text-4xl lg:text-5xl font-semibold tracking-wide">Find. Connect. Hire.</p>
+                    <p class="vf-text vf-text-5 text-lg md:text-3xl lg:text-4xl font-light tracking-[0.12em] text-emerald-400">Skilora — AI-powered freelancing</p>
                 </div>
             </section>
 
@@ -166,7 +188,7 @@
                     <div class="grid md:grid-cols-2 gap-16 items-center">
                         <div class="space-y-8">
                             <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold">About Skilora</p>
-                            <h2 class="text-4xl md:text-6xl font-black tracking-tight leading-[0.95]">
+                            <h2 class="text-4xl md:text-6xl font-black tracking-tight leading-[0.95] clip-reveal">
                                 Where talent<br>
                                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">meets opportunity.</span>
                             </h2>
@@ -175,17 +197,17 @@
                             </p>
                             <div class="flex gap-6">
                                 <div>
-                                    <p class="text-2xl font-black text-white">AI</p>
+                                    <p class="text-2xl font-black text-white stat-number" data-target-text="AI">AI</p>
                                     <p class="text-xs text-zinc-500 uppercase tracking-wider">Smart Matching</p>
                                 </div>
                                 <div class="w-px bg-zinc-800"></div>
                                 <div>
-                                    <p class="text-2xl font-black text-white">24/7</p>
+                                    <p class="text-2xl font-black text-white stat-number" data-target="24" data-suffix="/7">0/7</p>
                                     <p class="text-xs text-zinc-500 uppercase tracking-wider">Support</p>
                                 </div>
                                 <div class="w-px bg-zinc-800"></div>
                                 <div>
-                                    <p class="text-2xl font-black text-white">0%</p>
+                                    <p class="text-2xl font-black text-white stat-number" data-target="0" data-suffix="%">0%</p>
                                     <p class="text-xs text-zinc-500 uppercase tracking-wider">Hidden Fees</p>
                                 </div>
                             </div>
@@ -247,7 +269,7 @@
                 <div class="max-w-6xl mx-auto px-6 md:px-12">
                     <div class="text-center mb-16">
                         <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold mb-4">How it works</p>
-                        <h2 class="text-4xl md:text-6xl font-black tracking-tight">Three steps. Zero friction.</h2>
+                        <h2 class="text-4xl md:text-6xl font-black tracking-tight clip-reveal">Three steps. Zero friction.</h2>
                     </div>
 
                     <div class="grid md:grid-cols-3 gap-8">
@@ -282,40 +304,6 @@
             </section>
 
 
-            {# ═══════════ 6. CATEGORIES ═══════════ #}
-            <section class="categories-section bg-white text-zinc-950 py-24 md:py-32 overflow-hidden">
-                <div class="max-w-6xl mx-auto px-6 md:px-12">
-                    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-16">
-                        <div>
-                            <p class="text-xs uppercase tracking-[0.3em] text-indigo-500 font-semibold mb-4">Explore</p>
-                            <h2 class="text-4xl md:text-6xl font-black tracking-tight">Talent categories.</h2>
-                        </div>
-                        <p class="text-zinc-500 max-w-sm text-sm">From code to creativity — find the exact skill you need for your next project.</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {% set categories = [
-                            { icon: 'code-2', name: 'Web Development', count: '420+ pros' },
-                            { icon: 'smartphone', name: 'Mobile Apps', count: '180+ pros' },
-                            { icon: 'palette', name: 'UI/UX Design', count: '310+ pros' },
-                            { icon: 'brain', name: 'AI & Data Science', count: '95+ pros' },
-                            { icon: 'megaphone', name: 'Digital Marketing', count: '250+ pros' },
-                            { icon: 'video', name: 'Video & Motion', count: '130+ pros' },
-                            { icon: 'pen-tool', name: 'Graphic Design', count: '290+ pros' },
-                            { icon: 'shield-check', name: 'Cybersecurity', count: '60+ pros' },
-                        ] %}
-                        {% for cat in categories %}
-                        <div class="category-card group p-6 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-950 hover:text-white transition-colors duration-500 cursor-pointer">
-                            <div class="w-10 h-10 rounded-xl bg-zinc-100 group-hover:bg-zinc-800 flex items-center justify-center mb-4 transition-colors">
-                                <i data-lucide="{{ cat.icon }}" class="w-5 h-5 text-zinc-600 group-hover:text-white transition-colors"></i>
-                            </div>
-                            <h3 class="font-bold text-sm mb-1">{{ cat.name }}</h3>
-                            <p class="text-xs text-zinc-400">{{ cat.count }}</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </section>
 
 
             {# ═══════════ 7. PLATFORM FEATURES ═══════════ #}
@@ -325,7 +313,7 @@
                 <div class="relative z-10 max-w-6xl mx-auto px-6 md:px-12">
                     <div class="text-center mb-16">
                         <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold mb-4">Platform</p>
-                        <h2 class="text-4xl md:text-6xl font-black tracking-tight">Built for serious work.</h2>
+                        <h2 class="text-4xl md:text-6xl font-black tracking-tight clip-reveal">Built for serious work.</h2>
                     </div>
 
                     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -351,37 +339,47 @@
             </section>
 
 
-            {# ═══════════ 8. TESTIMONIALS ═══════════ #}
-            <section id="testimonials-section" class="bg-white text-zinc-950 py-24 md:py-32 overflow-hidden">
-                <div class="max-w-6xl mx-auto px-6 md:px-12">
-                    <div class="text-center mb-16">
-                        <p class="text-xs uppercase tracking-[0.3em] text-indigo-500 font-semibold mb-4">Testimonials</p>
-                        <h2 class="text-4xl md:text-6xl font-black tracking-tight">People love Skilora.</h2>
+            {# ═══════════ 8. TESTIMONIALS (horizontal stacked cards) ═══════════ #}
+            <section id="testimonials-section" class="relative bg-zinc-950 text-white py-24 md:py-40 overflow-hidden">
+                <div class="max-w-7xl mx-auto px-6 md:px-12">
+                    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.3em] text-indigo-400 font-semibold mb-4">Testimonials</p>
+                            <h2 class="text-4xl md:text-6xl font-black tracking-tight clip-reveal">People love<br>Skilora.</h2>
+                        </div>
+                        <p class="text-zinc-500 text-sm max-w-xs">Real stories from freelancers and companies using Skilora every day.</p>
                     </div>
 
-                    <div class="grid md:grid-cols-3 gap-6">
-                        {% set testimonials = [
-                            { name: 'Amira Ben Salah', role: 'UI/UX Designer', text: 'Skilora completely changed how I find clients. The AI matching saved me hours of pitching — now projects come to me.' },
-                            { name: 'Yassine Khlifi', role: 'Full-Stack Developer', text: 'The real-time chat and milestone payments make collaboration seamless. Best freelancing platform in Tunisia, hands down.' },
-                            { name: 'Sarah Trabelsi', role: 'Marketing Manager at Vermeg', text: 'We hired 3 freelancers through Skilora in one week. The talent quality and verification process is outstanding.' },
-                        ] %}
-                        {% for t in testimonials %}
-                        <div class="group p-8 rounded-2xl border border-zinc-200 hover:shadow-lg transition-shadow duration-300">
-                            <div class="flex mb-3 gap-0.5">
-                                {% for i in 1..5 %}<svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>{% endfor %}
-                            </div>
-                            <p class="text-zinc-600 text-sm leading-relaxed mb-6">"{{ t.text }}"</p>
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center text-sm font-bold text-zinc-600">
-                                    {{ t.name|first }}
+                    {% set testimonials = [
+                        { name: 'Amira Ben Salah', role: 'UI/UX Designer', text: 'Skilora completely changed how I find clients. The AI matching saved me hours of pitching — now projects come to me.', avatar: 'A', accent: 'from-indigo-500 to-violet-500' },
+                        { name: 'Yassine Khlifi', role: 'Full-Stack Developer', text: 'The real-time chat and milestone payments make collaboration seamless. Best freelancing platform in Tunisia, hands down.', avatar: 'Y', accent: 'from-teal-400 to-cyan-500' },
+                        { name: 'Sarah Trabelsi', role: 'Marketing Manager at Vermeg', text: 'We hired 3 freelancers through Skilora in one week. The talent quality and verification process is outstanding.', avatar: 'S', accent: 'from-amber-400 to-orange-500' },
+                        { name: 'Mehdi Gharbi', role: 'CTO at Proxym', text: 'The escrow system gives us confidence. We fund milestones, freelancers deliver, everyone wins. Skilora just works.', avatar: 'M', accent: 'from-rose-400 to-pink-500' },
+                        { name: 'Lina Jebali', role: 'Data Scientist', text: 'I landed my first AI consulting gig within 48 hours of signing up. The smart matching is genuinely impressive.', avatar: 'L', accent: 'from-emerald-400 to-green-500' },
+                    ] %}
+
+                    <div class="relative" id="testimonial-container">
+                        <div class="testimonial-track" id="testimonial-track">
+                            {% for t in testimonials %}
+                            <div class="testimonial-card rounded-2xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-sm p-8 md:p-10">
+                                <div class="flex items-center gap-1 mb-6">
+                                    {% for i in 1..5 %}
+                                    <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    {% endfor %}
                                 </div>
-                                <div>
-                                    <p class="font-semibold text-sm">{{ t.name }}</p>
-                                    <p class="text-xs text-zinc-400">{{ t.role }}</p>
+                                <p class="text-zinc-300 text-base md:text-lg leading-relaxed mb-8">"{{ t.text }}"</p>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-full bg-gradient-to-br {{ t.accent }} flex items-center justify-center text-sm font-bold text-white shadow-lg">
+                                        {{ t.avatar }}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-white">{{ t.name }}</p>
+                                        <p class="text-xs text-zinc-500">{{ t.role }}</p>
+                                    </div>
                                 </div>
                             </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
                 </div>
             </section>
@@ -402,10 +400,10 @@
                             <span class="relative z-10">Go to Dashboard</span>
                         </a>
                     {% else %}
-                        <a href="{{ path('app_register') }}" class="cta-element opacity-0 translate-y-8 group relative inline-flex items-center justify-center px-12 py-5 text-lg font-bold text-white bg-indigo-600 rounded-full overflow-hidden transition-colors hover:bg-indigo-500">
+                        <a href="{{ path('app_register') }}" class="cta-element magnetic-btn opacity-0 translate-y-8 group relative inline-flex items-center justify-center px-12 py-5 text-lg font-bold text-white bg-indigo-600 rounded-full overflow-hidden transition-colors hover:bg-indigo-500">
                             <span class="relative z-10">Get Started Free</span>
                         </a>
-                        <a href="{{ path('app_login') }}" class="cta-element opacity-0 translate-y-8 group relative inline-flex items-center justify-center px-10 py-5 text-lg font-bold text-white border border-zinc-700 rounded-full overflow-hidden transition-colors hover:border-zinc-500">
+                        <a href="{{ path('app_login') }}" class="cta-element magnetic-btn opacity-0 translate-y-8 group relative inline-flex items-center justify-center px-10 py-5 text-lg font-bold text-white border border-zinc-700 rounded-full overflow-hidden transition-colors hover:border-zinc-500">
                             <span class="relative z-10">Sign In</span>
                         </a>
                     {% endif %}

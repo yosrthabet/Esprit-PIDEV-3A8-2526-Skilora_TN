@@ -1,24 +1,42 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Contracts{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel p-8">
-        <p class="text-xs font-bold uppercase tracking-label text-primary">Finance bridge</p>
-        <h1 class="mt-2 text-4xl font-light tracking-holographic">Contracts</h1>
-        <p class="mt-2 text-muted-foreground">Accepted hire offers become contracts. Funding escrow activates the work.</p>
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(99,102,241,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-indigo-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative flex flex-wrap items-end justify-between gap-6">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Finance bridge</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Contracts</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Accepted hire offers become contracts. Funding escrow activates the work.</p>
+            </div>
+            <div class="rounded-3xl border border-white/10 bg-white/10 px-5 py-3 backdrop-blur">
+                <p class="text-3xl font-light">{{ contracts|length }}</p>
+                <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Total</p>
+            </div>
+        </div>
     </section>
+
+    {# ── Contract cards ── #}
     <section class="grid gap-4 lg:grid-cols-2">
         {% for contract in contracts %}
             {% set offer = contract.hireOffer %}
             {% set application = offer.application %}
-            <a href="{{ path('app_contract_show', {id: contract.id}) }}" class="glass-panel p-5 transition hover:border-primary/40">
-                <span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ contract.status.label }}</span>
-                <h2 class="mt-3 text-xl font-semibold">{{ application.jobOffer.title }}</h2>
-                <p class="mt-1 text-sm text-muted-foreground">{{ application.jobOffer.companyLabel }} · {{ contract.amount ?: 'Negotiable' }} {{ contract.currency.value }}</p>
-                <p class="mt-3 text-xs text-muted-foreground">Created {{ contract.createdAt|date('M d, Y') }}</p>
+            <a href="{{ path('app_contract_show', {id: contract.id}) }}" class="group rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl hover:border-primary/40">
+                <span class="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-black text-primary">{{ contract.status.label }}</span>
+                <h2 class="mt-3 text-xl font-bold">{{ application.jobOffer.title }}</h2>
+                <p class="mt-1 text-sm text-muted-foreground">{{ application.jobOffer.companyLabel }} · <span class="font-bold text-foreground">{{ contract.amount ?: 'Negotiable' }} {{ contract.currency.value }}</span></p>
+                <p class="mt-3 text-[11px] text-muted-foreground">Created {{ contract.createdAt|date('M d, Y') }}</p>
             </a>
         {% else %}
-            <div class="glass-panel col-span-full p-12 text-center text-muted-foreground">No contracts yet. Accept a hire offer to create one.</div>
+            <div class="col-span-full rounded-[1.75rem] border border-dashed border-border bg-card/50 p-12 text-center">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted"><i data-lucide="file-signature" class="h-8 w-8 text-muted-foreground/50"></i></div>
+                <p class="mt-4 text-sm font-bold">No contracts yet</p>
+                <p class="mt-1.5 text-xs text-muted-foreground">Accept a hire offer to create one.</p>
+            </div>
         {% endfor %}
     </section>
 </div>

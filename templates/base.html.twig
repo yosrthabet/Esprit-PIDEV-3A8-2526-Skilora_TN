@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="{% block html_class %}{% endblock %}">
+<html lang="en" class="{% block html_class %}{% endblock %}"{% if app.user and app.user.colorPalette %} data-palette="{{ app.user.colorPalette }}"{% endif %}>
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -141,7 +141,7 @@
         {% endif %}
 
         {% block javascripts %}
-        <script src="{{ asset('assets/app.js') }}?v=202605040003" defer></script>
+        <script src="{{ asset('assets/app.js') }}?v=202605100827" defer></script>
         {% block page_scripts %}{% endblock %}
         <script src="https://cdn.jsdelivr.net/combine/npm/@alpinejs/intersect@3/dist/cdn.min.js,npm/@alpinejs/collapse@3/dist/cdn.min.js,npm/alpinejs@3/dist/cdn.min.js" defer></script>
         <script>
@@ -153,5 +153,6 @@
             if('requestIdleCallback' in window){requestIdleCallback(function(){if('serviceWorker' in navigator)navigator.serviceWorker.register('/service-worker.js').catch(function(){});});}else{window.addEventListener('load',function(){if('serviceWorker' in navigator)navigator.serviceWorker.register('/service-worker.js').catch(function(){});});}
         </script>
         {% endblock %}
+        {% include 'components/_chatbot_widget.html.twig' ignore missing %}
     </body>
 </html>

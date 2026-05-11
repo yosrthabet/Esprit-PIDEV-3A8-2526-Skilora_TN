@@ -1,101 +1,220 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Find Work{% endblock %}
 {% block content %}
-{% set source_labels = {all: 'All', aneti: 'ANETI', reddit: 'Reddit', rss: 'RSS'} %}
+{% set source_labels = {all: 'All', platform: 'Skilora', aneti: 'ANETI', reddit: 'Reddit', rss: 'RSS', linkedin_rss: 'LinkedIn'} %}
 {% set base_query = app.request.query.all|merge({page: 1}) %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel relative overflow-hidden p-5 sm:p-7">
-        <div class="absolute right-0 top-0 h-48 w-96 bg-[radial-gradient(circle,rgba(99,102,241,.16),transparent_70%)]"></div>
-        <div class="relative flex flex-col gap-4">
-            <div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <p class="text-xs font-bold uppercase tracking-label text-primary">Opportunity Radar</p>
-                    <span class="rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">ANETI · Reddit · RSS</span>
-                </div>
-                <h1 class="mt-2 max-w-4xl text-4xl font-light tracking-holographic sm:text-5xl">Find work that actually fits.</h1>
-                <p class="mt-3 max-w-3xl text-muted-foreground">Search by role, skill, source, or work style. Try <span class="font-medium text-foreground">React remote</span>, <span class="font-medium text-foreground">Symfony Tunis</span>, or <span class="font-medium text-foreground">Data analyst</span>.</p>
-            </div>
-        </div>
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
 
-        <form class="relative mt-6 space-y-4" method="get" action="{{ path('app_jobs') }}">
-            <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-                <div class="relative flex h-12 items-center rounded-2xl border border-border bg-background/75 transition-within focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10">
-                    <div class="pointer-events-none flex h-full w-12 shrink-0 items-center justify-center text-muted-foreground">
-                        <i data-lucide="search" class="h-5 w-5"></i>
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(99,102,241,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-indigo-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative">
+            <div class="flex flex-wrap items-center gap-2">
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Opportunity Radar</p>
+                <span class="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-bold backdrop-blur">ANETI · Reddit · RSS</span>
+            </div>
+            <h1 class="mt-4 max-w-4xl text-4xl font-semibold tracking-tight sm:text-6xl">Find work that<br class="hidden sm:block"> actually fits.</h1>
+            <p class="mt-4 max-w-3xl text-base leading-7 text-white/70">Search by role, skill, source, or work style. Try <span class="font-bold text-white/90">React remote</span>, <span class="font-bold text-white/90">Symfony Tunis</span>, or <span class="font-bold text-white/90">Data analyst</span>.</p>
+
+            <form class="mt-8 space-y-4" method="get" action="{{ path('app_jobs') }}">
+                <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                    <div class="relative flex h-12 items-center rounded-full border border-white/20 bg-white/10 backdrop-blur transition focus-within:border-white/40 focus-within:ring-4 focus-within:ring-white/10">
+                        <div class="pointer-events-none flex h-full w-12 shrink-0 items-center justify-center text-white/50">
+                            <i data-lucide="search" class="h-5 w-5"></i>
+                        </div>
+                        <input name="q" value="{{ q }}" placeholder="React, Symfony, Tunis, remote..." class="h-full min-w-0 flex-1 rounded-full border-0 bg-transparent pr-4 text-base leading-none text-white outline-none placeholder:text-white/40 focus:ring-0">
                     </div>
-                    <input name="q" value="{{ q }}" placeholder="React, Symfony, Tunis, remote..." class="h-full min-w-0 flex-1 rounded-2xl border-0 bg-transparent pr-4 text-base leading-none outline-none placeholder:text-muted-foreground focus:ring-0">
+                    <button class="inline-flex h-12 min-w-36 items-center justify-center rounded-full bg-white px-7 text-sm font-bold text-black shadow-sm transition hover:shadow-md">
+                        Search jobs
+                    </button>
                 </div>
-                <button class="inline-flex h-12 min-w-36 items-center justify-center rounded-2xl bg-primary px-7 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90">
-                    Search jobs
-                </button>
-            </div>
 
-            <div class="grid gap-3 md:grid-cols-3">
-                <select name="work_type" class="h-11 rounded-xl border border-border bg-background/70 px-3 text-sm">
-                    <option value="all">All work types</option>
-                    <option value="remote" {{ work_type == 'remote' ? 'selected' }}>Remote</option>
-                    <option value="hybrid" {{ work_type == 'hybrid' ? 'selected' }}>Hybrid</option>
-                    <option value="onsite" {{ work_type == 'onsite' ? 'selected' }}>On site</option>
-                </select>
-                <select name="source" class="h-11 rounded-xl border border-border bg-background/70 px-3 text-sm">
-                    <option value="all">All sources</option>
-                    <option value="aneti" {{ source == 'aneti' ? 'selected' }}>ANETI Tunisia</option>
-                    <option value="reddit" {{ source == 'reddit' ? 'selected' }}>Reddit hiring</option>
-                    <option value="rss" {{ source == 'rss' ? 'selected' }}>Curated RSS</option>
-                </select>
-                <select name="sort" class="h-11 rounded-xl border border-border bg-background/70 px-3 text-sm">
-                    <option value="match" {{ sort == 'match' ? 'selected' }}>Best match</option>
-                    <option value="fresh" {{ sort == 'fresh' ? 'selected' }}>Freshest</option>
-                    <option value="salary" {{ sort == 'salary' ? 'selected' }}>Salary</option>
-                </select>
-            </div>
-        </form>
+                <div class="grid gap-3 md:grid-cols-3">
+                    <select name="work_type" class="h-11 rounded-2xl border border-white/15 bg-white/10 px-3 text-sm text-white backdrop-blur">
+                        <option value="all">All work types</option>
+                        <option value="remote" {{ work_type == 'remote' ? 'selected' }}>Remote</option>
+                        <option value="hybrid" {{ work_type == 'hybrid' ? 'selected' }}>Hybrid</option>
+                        <option value="onsite" {{ work_type == 'onsite' ? 'selected' }}>On site</option>
+                    </select>
+                    <select name="source" class="h-11 rounded-2xl border border-white/15 bg-white/10 px-3 text-sm text-white backdrop-blur">
+                        <option value="all">All sources</option>
+                        <option value="platform" {{ source == 'platform' ? 'selected' }}>Skilora (employer)</option>
+                        <option value="aneti" {{ source == 'aneti' ? 'selected' }}>ANETI Tunisia</option>
+                        <option value="reddit" {{ source == 'reddit' ? 'selected' }}>Reddit hiring</option>
+                        <option value="linkedin_rss" {{ source == 'linkedin_rss' ? 'selected' }}>LinkedIn</option>
+                        <option value="rss" {{ source == 'rss' ? 'selected' }}>Curated RSS</option>
+                    </select>
+                    <select name="sort" class="h-11 rounded-2xl border border-white/15 bg-white/10 px-3 text-sm text-white backdrop-blur">
+                        <option value="match" {{ sort == 'match' ? 'selected' }}>Best match</option>
+                        <option value="fresh" {{ sort == 'fresh' ? 'selected' }}>Freshest</option>
+                        <option value="salary" {{ sort == 'salary' ? 'selected' }}>Salary</option>
+                    </select>
+                </div>
+            </form>
 
-        <div class="relative mt-5 flex flex-wrap gap-2">
-            {% for label, chip_query in {
-                'Fresh jobs': {sort: 'fresh'},
-                'Remote only': {work_type: 'remote'},
-                'ANETI Tunisia': {source: 'aneti'},
-                'Reddit hiring': {source: 'reddit'},
-                'Symfony': {q: 'Symfony'},
-                'React': {q: 'React'}
-            } %}
-                <a href="{{ path('app_jobs', base_query|merge(chip_query)) }}" class="rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:border-primary/40 hover:text-foreground">{{ label }}</a>
-            {% endfor %}
+            <div class="mt-5 flex flex-wrap gap-2">
+                {% for label, chip_query in {
+                    'Fresh jobs': {sort: 'fresh'},
+                    'Remote only': {work_type: 'remote'},
+                    'ANETI Tunisia': {source: 'aneti'},
+                    'Reddit hiring': {source: 'reddit'},
+                    'Symfony': {q: 'Symfony'},
+                    'React': {q: 'React'}
+                } %}
+                    <a href="{{ path('app_jobs', base_query|merge(chip_query)) }}" class="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/80 backdrop-blur transition hover:bg-white/20 hover:text-white">{{ label }}</a>
+                {% endfor %}
+            </div>
         </div>
     </section>
 
-    <section class="glass-panel p-4">
+    {# ── Source tabs ── #}
+    <section class="rounded-[1.75rem] border border-border/70 bg-card/70 p-4 shadow-sm">
         <div class="flex flex-wrap items-center gap-2">
             {% for source_key, label in source_labels %}
                 {% set active = source == source_key or (source_key == 'all' and source == 'all') %}
                 {% set query = base_query|merge({source: source_key}) %}
-                <a href="{{ path('app_jobs', query) }}" class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold transition {{ active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground' }}">
+                <a href="{{ path('app_jobs', query) }}" class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold transition {{ active ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground hover:text-foreground' }}">
                     {{ label }}
-                    <span class="rounded-full bg-background/30 px-1.5 py-0.5 text-[10px]">{{ source_counts[source_key]|default(0) }}</span>
+                    <span class="rounded-full bg-background/30 px-1.5 py-0.5 text-[10px] font-black">{{ source_counts[source_key]|default(0) }}</span>
                 </a>
             {% endfor %}
         </div>
     </section>
 
     <div class="flex items-center justify-between">
-        <p class="text-sm text-muted-foreground"><strong class="text-foreground">{{ total }}</strong> jobs found</p>
+        <p class="text-sm text-muted-foreground"><strong class="font-black text-foreground">{{ total }}</strong> jobs found</p>
         <p class="text-xs text-muted-foreground">Page {{ page }} / {{ page_count }}</p>
     </div>
 
+    {# ── Job cards ── #}
     <section class="grid gap-4 lg:grid-cols-2">
         {% for item in match_cards %}
             {% include 'recruitment/jobs/_card.html.twig' with {item: item} %}
         {% else %}
-            <div class="glass-panel col-span-full p-12 text-center text-muted-foreground">No jobs match that search yet. Try broader keywords or clear source filters.</div>
+            <div class="col-span-full rounded-[1.75rem] border border-dashed border-border bg-card/50 p-12 text-center">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                    <i data-lucide="search-x" class="h-8 w-8 text-muted-foreground/50"></i>
+                </div>
+                <p class="mt-4 text-sm font-bold">No jobs match that search</p>
+                <p class="mt-1.5 text-xs text-muted-foreground">Try broader keywords or clear source filters.</p>
+            </div>
         {% endfor %}
     </section>
 
     {% if page_count > 1 %}
         <nav class="flex justify-center gap-3">
-            <a class="rounded-full border border-border px-4 py-2 text-sm {{ page <= 1 ? 'pointer-events-none opacity-40' }}" href="{{ path('app_jobs', app.request.query.all|merge({page: page - 1})) }}">Previous</a>
-            <a class="rounded-full border border-border px-4 py-2 text-sm {{ page >= page_count ? 'pointer-events-none opacity-40' }}" href="{{ path('app_jobs', app.request.query.all|merge({page: page + 1})) }}">Next</a>
+            <a class="rounded-full border border-border px-4 py-2 text-sm font-bold transition hover:bg-muted {{ page <= 1 ? 'pointer-events-none opacity-40' }}" href="{{ path('app_jobs', app.request.query.all|merge({page: page - 1})) }}">← Previous</a>
+            <a class="rounded-full border border-border px-4 py-2 text-sm font-bold transition hover:bg-muted {{ page >= page_count ? 'pointer-events-none opacity-40' }}" href="{{ path('app_jobs', app.request.query.all|merge({page: page + 1})) }}">Next →</a>
         </nav>
     {% endif %}
+
+    {# ── ANETI Live Feed (auto-refresh every 10s) ── #}
+    <section x-data="anetiFeed()" x-init="start()" class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-green-500/15">
+                    <i data-lucide="radio" class="h-5 w-5 text-green-500"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-black tracking-tight">ANETI Live Feed</h3>
+                    <p class="text-[11px] text-muted-foreground">Auto-updates every 10 seconds</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span x-show="loading" class="animate-spin text-muted-foreground">
+                    <i data-lucide="loader-2" class="h-4 w-4"></i>
+                </span>
+                <span x-cloak x-show="!loading" class="flex items-center gap-1.5 rounded-full bg-green-500/15 px-2.5 py-1 text-[10px] font-bold text-green-600">
+                    <span class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                    LIVE
+                </span>
+                <span class="rounded-full bg-muted px-2.5 py-1 text-[10px] font-bold text-muted-foreground" x-text="jobs.length + ' jobs'"></span>
+                <span class="text-[10px] text-muted-foreground" x-text="lastUpdated ? 'Updated: ' + lastUpdated : ''"></span>
+            </div>
+        </div>
+
+        <div class="relative mt-3">
+            <input type="text" x-model="search" @input.debounce.300ms="refresh()" placeholder="Filter ANETI jobs..."
+                   class="h-9 w-full rounded-xl border border-border bg-background pl-9 pr-3 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/20">
+            <i data-lucide="search" class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50"></i>
+        </div>
+
+        <div class="mt-4 max-h-[28rem] space-y-2 overflow-y-auto pr-1" x-ref="feedContainer">
+            <template x-for="job in jobs" :key="job.raw_id || job.url">
+                <a :href="job.url || job.apply_url || '#'" target="_blank" rel="noopener"
+                   class="group flex items-start gap-3 rounded-2xl border border-border/50 bg-background/60 p-3.5 transition hover:border-primary/30 hover:bg-primary/5 hover:shadow-sm">
+                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500 text-xs font-black" x-text="(job.source || 'A').charAt(0).toUpperCase()"></div>
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-bold group-hover:text-primary" x-text="job.title"></p>
+                        <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                            <span class="flex items-center gap-1" x-show="job.location">
+                                <i data-lucide="map-pin" class="h-3 w-3"></i>
+                                <span x-text="job.location"></span>
+                            </span>
+                            <span class="flex items-center gap-1" x-show="job.source">
+                                <i data-lucide="globe" class="h-3 w-3"></i>
+                                <span x-text="job.source"></span>
+                            </span>
+                            <span class="flex items-center gap-1" x-show="job.posted_date">
+                                <i data-lucide="calendar" class="h-3 w-3"></i>
+                                <span x-text="job.posted_date"></span>
+                            </span>
+                        </div>
+                        <p class="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground/80" x-show="job.description" x-text="job.description"></p>
+                    </div>
+                    <i data-lucide="external-link" class="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground/30 group-hover:text-primary"></i>
+                </a>
+            </template>
+            <div x-show="!loading && jobs.length === 0" class="py-8 text-center text-xs text-muted-foreground">
+                No ANETI jobs found. The crawler may not have run yet.<br>
+                <code class="mt-1 inline-block rounded bg-muted px-2 py-0.5 text-[10px]">python python/job_feed_crawler.py</code>
+            </div>
+        </div>
+    </section>
 </div>
+
+<script>
+function anetiFeed() {
+    return {
+        jobs: [],
+        loading: true,
+        lastUpdated: '',
+        search: '',
+        _interval: null,
+
+        start() {
+            this.refresh();
+            this._interval = setInterval(() => this.refresh(), 10000);
+        },
+
+        async refresh() {
+            try {
+                this.loading = true;
+                const params = new URLSearchParams({limit: '40'});
+                if (this.search.trim()) params.set('q', this.search.trim());
+                const resp = await fetch('{{ path("app_aneti_feed_api") }}?' + params.toString());
+                if (!resp.ok) return;
+                const data = await resp.json();
+                this.jobs = data.jobs || [];
+                if (data.updated) {
+                    const d = new Date(data.updated);
+                    this.lastUpdated = d.toLocaleTimeString();
+                }
+            } catch (e) {
+                console.warn('ANETI feed refresh failed:', e);
+            } finally {
+                this.loading = false;
+                this.$nextTick(() => {
+                    if (window.lucide) lucide.createIcons({attrs: {class: ['lucide']}, nameAttr: 'data-lucide'});
+                });
+            }
+        },
+
+        destroy() {
+            if (this._interval) clearInterval(this._interval);
+        }
+    };
+}
+</script>
 {% endblock %}

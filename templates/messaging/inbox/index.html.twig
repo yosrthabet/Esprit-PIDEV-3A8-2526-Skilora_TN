@@ -43,62 +43,574 @@
         </section>
     </aside>
 
-    <section class="glass-panel min-h-[36rem] p-0">
+    <section class="glass-panel min-h-[36rem] p-0 flex flex-col">
         {% if active_conversation %}
             {% set other = active_conversation.otherParticipant(app.user) %}
-            <div class="border-b border-border p-5">
-                <h2 class="text-xl font-semibold">{{ other ? other.displayName : 'Conversation' }}</h2>
-                <p class="text-sm text-muted-foreground">{{ other ? other.roleDisplayName : 'Direct message' }}</p>
-            </div>
-            <div x-data="dmInbox({ conversationId: {{ active_conversation.id }}, csrfToken: '{{ csrf_token('inbox_send_' ~ active_conversation.id) }}', initialMessages: {{ messages|map(message => {id: message.id, body: message.body, sender: message.sender.displayName, mine: message.sender.id == app.user.id, created_at: message.createdAt|date('M d, H:i')})|json_encode|e('html_attr') }} })" x-init="start()" class="flex h-[34rem] flex-col">
+            {% set serialized = messages|map(m => {id: m.id, body: m.body, sender: m.sender.displayName, sender_id: m.sender.id, mine: m.sender.id == app.user.id, message_type: m.messageType, voice_url: m.voiceUrl, image_url: m.imageUrl, is_read: m.isRead, created_at: m.createdAt|date('M d, H:i')}) %}
+            <div x-data="dmChat({{ {conversationId: active_conversation.id, csrfToken: csrf_token('inbox_send_' ~ active_conversation.id), myId: app.user.id, otherName: other ? other.displayName : 'User', mercureUrl: mercure_public_url, initialMessages: serialized}|json_encode|e('html_attr') }})" x-init="start()" @beforeunload.window="cleanup()" class="flex h-full flex-col">
+
+                {# ── Header with call buttons ── #}
+                <div class="flex items-center justify-between border-b border-border p-5">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-xl font-semibold">{{ other ? other.displayName : 'Conversation' }}</h2>
+                            <span x-show="peerOnline" x-cloak class="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" title="Online"></span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">
+                            <span x-show="typingVisible" x-cloak class="text-primary font-medium">typing...</span>
+                            <span x-show="!typingVisible">{{ other ? other.roleDisplayName : 'Direct message' }}</span>
+                        </p>
+                    </div>
+                    {% if can_send %}
+                    <div class="flex items-center gap-2">
+                        <button @click="summarizeChat()" :disabled="summarizing" class="rounded-xl border border-border p-2.5 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-40" title="Summarize conversation"><i data-lucide="sparkles" class="h-4 w-4"></i></button>
+                        <button @click="startCall('audio')" class="rounded-xl border border-border p-2.5 text-muted-foreground transition hover:bg-muted hover:text-foreground" title="Voice call"><i data-lucide="phone" class="h-4 w-4"></i></button>
+                        <button @click="startCall('video')" class="rounded-xl border border-border p-2.5 text-muted-foreground transition hover:bg-muted hover:text-foreground" title="Video call"><i data-lucide="video" class="h-4 w-4"></i></button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {# ── Summary banner ── #}
+                <div x-show="summaryText" x-cloak class="border-b border-border bg-primary/5 px-5 py-3">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="text-sm"><span class="font-bold text-primary"><i data-lucide="sparkles" class="mr-1 inline h-3.5 w-3.5"></i>Summary:</span> <span x-text="summaryText"></span></div>
+                        <button @click="summaryText = ''" class="shrink-0 text-muted-foreground hover:text-foreground"><i data-lucide="x" class="h-4 w-4"></i></button>
+                    </div>
+                </div>
+
+                {# ── Messages ── #}
                 <div x-ref="list" class="flex-1 space-y-3 overflow-auto p-5">
                     <template x-for="message in messages" :key="message.id">
                         <article class="flex" :class="message.mine ? 'justify-end' : 'justify-start'">
-                            <div class="max-w-[75%] rounded-2xl border border-border px-4 py-3" :class="message.mine ? 'bg-primary text-primary-foreground' : 'bg-background/60'">
+                            <div class="group relative max-w-[75%] rounded-2xl border border-border px-4 py-3" :class="message.mine ? 'bg-primary text-primary-foreground' : 'bg-background/60'">
                                 <p class="text-xs font-semibold" x-text="message.sender"></p>
-                                <p class="mt-1 whitespace-pre-line text-sm" x-text="message.body"></p>
-                                <p class="mt-2 text-[11px] opacity-70" x-text="message.created_at"></p>
+
+                                {# text #}
+                                <template x-if="message.message_type === 'text' || !message.message_type">
+                                    <p class="mt-1 whitespace-pre-line text-sm" x-text="message.body"></p>
+                                </template>
+
+                                {# image #}
+                                <template x-if="message.message_type === 'image'">
+                                    <img :src="message.image_url" class="mt-2 max-h-64 rounded-xl object-cover cursor-pointer" @click="window.open(message.image_url, '_blank')" loading="lazy">
+                                </template>
+
+                                {# voice #}
+                                <template x-if="message.message_type === 'voice'">
+                                    <audio :src="message.voice_url" controls class="mt-2 h-8 w-48"></audio>
+                                </template>
+
+                                <div class="mt-2 flex items-center gap-1.5 text-[11px] opacity-70">
+                                    <span x-text="message.created_at"></span>
+                                    <template x-if="message.mine && message.is_read">
+                                        <span title="Read">✓✓</span>
+                                    </template>
+                                    <template x-if="message.mine && !message.is_read">
+                                        <span title="Sent">✓</span>
+                                    </template>
+                                </div>
                             </div>
                         </article>
                     </template>
                 </div>
+
                 {% if can_send %}
-                    <form @submit.prevent="send" class="flex gap-3 border-t border-border p-4">
-                        <input x-model="body" required placeholder="Write a message..." class="h-11 flex-1 rounded-xl border border-border bg-background/70 px-4 text-sm outline-none focus:border-primary">
-                        <button class="rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground">Send</button>
+                {# ── Composer ── #}
+                <div class="border-t border-border p-4 space-y-2">
+                    <form @submit.prevent="sendText()" class="flex items-center gap-2">
+                        <input x-model="body" @input="emitTyping()" required placeholder="Write a message..." class="h-11 flex-1 rounded-xl border border-border bg-background/70 px-4 text-sm outline-none focus:border-primary">
+
+                        {# AI fix #}
+                        <button type="button" @click="aiCorrect()" :disabled="aiCorrecting || !body.trim()" class="rounded-xl border border-border p-2.5 text-primary hover:bg-muted transition disabled:opacity-40" title="AI correct">
+                            <i data-lucide="spell-check" class="h-4 w-4"></i>
+                        </button>
+
+                        {# Image upload #}
+                        <label class="cursor-pointer rounded-xl border border-border p-2.5 text-muted-foreground transition hover:bg-muted hover:text-foreground" title="Send image">
+                            <i data-lucide="image" class="h-4 w-4"></i>
+                            <input type="file" accept="image/*" @change="sendImage($event)" class="sr-only">
+                        </label>
+
+                        {# Voice record toggle #}
+                        <button type="button" @click="toggleRecording()" class="rounded-xl border border-border p-2.5 transition" :class="recording ? 'bg-rose-600 text-white animate-pulse' : 'text-muted-foreground hover:bg-muted hover:text-foreground'" :title="recording ? 'Stop recording' : 'Record voice'">
+                            <i data-lucide="mic" class="h-4 w-4"></i>
+                        </button>
+
+                        <button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground">Send</button>
                     </form>
+                    <p x-show="recording" x-cloak class="text-xs text-rose-500 font-medium">Recording... <span x-text="recordSecs + 's'"></span></p>
+                </div>
                 {% else %}
-                    <div class="border-t border-border p-4 text-sm text-muted-foreground">
-                        Sending is available only for accepted network connections. Existing conversation history remains readable.
-                    </div>
+                <div class="border-t border-border p-4 text-sm text-muted-foreground">
+                    Sending is available only for accepted network connections.
+                </div>
                 {% endif %}
+
+                {# ── Call overlay ── #}
+                <div x-show="callActive" x-cloak x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                    <div class="w-full max-w-lg rounded-[2rem] border border-border bg-card p-8 text-center shadow-2xl">
+                        <div class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full" :class="callType === 'video' ? 'bg-indigo-500/10' : 'bg-emerald-500/10'">
+                            <i :data-lucide="callType === 'video' ? 'video' : 'phone'" class="h-8 w-8" x-show="callType === 'audio'"></i>
+                            <i data-lucide="video" class="h-8 w-8 text-indigo-500" x-show="callType === 'video'"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold" x-text="callState === 'ringing' ? 'Calling...' : callState === 'incoming' ? 'Incoming call' : 'In call'"></h2>
+                        <p class="mt-1 text-muted-foreground" x-text="config.otherName"></p>
+                        <p class="mt-2 text-sm text-muted-foreground" x-text="callDuration"></p>
+
+                        {# Video elements #}
+                        <div x-show="callType === 'video' && (callState === 'connected' || callState === 'ringing')" x-cloak class="relative mt-4 mx-auto aspect-video max-w-md rounded-2xl bg-black overflow-hidden">
+                            <video x-ref="remoteVideo" autoplay playsinline class="h-full w-full object-cover"></video>
+                            <video x-ref="localVideo" autoplay playsinline muted class="absolute bottom-2 right-2 h-24 w-32 rounded-xl border-2 border-white/20 object-cover"></video>
+                        </div>
+                        <audio x-ref="remoteAudio" autoplay class="hidden"></audio>
+
+                        <div class="mt-6 flex justify-center gap-4">
+                            <template x-if="callState === 'incoming'">
+                                <button @click="answerCall()" class="rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-emerald-700">
+                                    <i data-lucide="phone" class="mr-2 inline h-4 w-4"></i> Answer
+                                </button>
+                            </template>
+                            <button @click="endCall()" class="rounded-full bg-rose-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-rose-700">
+                                <i data-lucide="phone-off" class="mr-2 inline h-4 w-4"></i> End
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
+
             <script>
-                function dmInbox(config) {
-                    return {
-                        conversationId: config.conversationId,
-                        csrfToken: config.csrfToken,
-                        messages: config.initialMessages || [],
-                        body: '',
-                        timer: null,
-                        start() { this.scrollDown(); this.timer = setInterval(() => this.poll(), 3000); },
-                        lastId() { return this.messages.length ? this.messages[this.messages.length - 1].id : 0; },
-                        poll() { fetch('/api/inbox/' + this.conversationId + '/messages?after=' + this.lastId()).then(r => r.json()).then(data => { (data.messages || []).forEach(m => this.messages.push(m)); this.scrollDown(); }); },
-                        send() {
-                            const body = this.body.trim();
-                            if (!body) return;
-                            const form = new FormData();
-                            form.append('body', body);
-                            form.append('_token', this.csrfToken);
-                            this.body = '';
-                            fetch('/api/inbox/' + this.conversationId + '/send', { method: 'POST', body: form }).then(r => r.json()).then(data => { if (data.message) { this.messages.push(data.message); this.scrollDown(); } });
-                        },
-                        scrollDown() { this.$nextTick(() => { this.$refs.list.scrollTop = this.$refs.list.scrollHeight; }); }
-                    }
+            function dmChat(config) {
+                return {
+                    config,
+                    messages: config.initialMessages || [],
+                    body: '',
+                    timer: null,
+                    eventSource: null,
+                    aiCorrecting: false,
+
+                    // Typing
+                    typingVisible: false,
+                    typingTimeout: null,
+                    lastTypingEmit: 0,
+
+                    // Presence
+                    peerOnline: false,
+
+                    // Voice recording
+                    recording: false,
+                    mediaRecorder: null,
+                    audioChunks: [],
+                    recordSecs: 0,
+                    recordTimer: null,
+
+                    // Summarize
+                    summarizing: false,
+                    summaryText: '',
+
+                    // Calls (WebRTC)
+                    callActive: false,
+                    callType: 'audio',
+                    callState: 'idle', // idle | ringing | incoming | connected
+                    callDuration: '00:00',
+                    callTimer: null,
+                    peerConnection: null,
+                    localStream: null,
+
+                    callPollTimer: null,
+
+                    start() {
+                        this.scrollDown();
+                        this.connectSSE();
+                        this.timer = setInterval(() => this.poll(), 5000);
+                        this.callPollTimer = setInterval(() => this.pollCallSignal(), 3000);
+                        fetch('/api/chat/presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ conversation_id: config.conversationId, status: 'online' }) });
+                        fetch('/api/chat/read/' + config.conversationId, { method: 'POST' });
+                    },
+
+                    cleanup() {
+                        if (this.eventSource) this.eventSource.close();
+                        if (this.timer) clearInterval(this.timer);
+                        if (this.callPollTimer) clearInterval(this.callPollTimer);
+                        fetch('/api/chat/presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ conversation_id: config.conversationId, status: 'offline' }) });
+                    },
+
+                    pollCallSignal() {
+                        if (this.callActive) return;
+                        fetch('/api/chat/call/check/' + config.conversationId)
+                            .then(r => r.json())
+                            .then(d => {
+                                if (d.active && d.signal && !this.callActive) {
+                                    this.callType = d.signal.call_type || 'audio';
+                                    this.callState = 'incoming';
+                                    this.callActive = true;
+                                }
+                            })
+                            .catch(() => {});
+                    },
+
+                    connectSSE() {
+                        if (!config.mercureUrl) return;
+                        try {
+                            const url = new URL(config.mercureUrl);
+                            const cid = config.conversationId;
+                            url.searchParams.append('topic', 'chat/conversation/' + cid + '/messages');
+                            url.searchParams.append('topic', 'chat/conversation/' + cid + '/typing');
+                            url.searchParams.append('topic', 'chat/conversation/' + cid + '/read');
+                            url.searchParams.append('topic', 'chat/conversation/' + cid + '/presence');
+                            url.searchParams.append('topic', 'chat/conversation/' + cid + '/call');
+                            this.eventSource = new EventSource(url);
+                            this.eventSource.onmessage = (e) => {
+                                const p = JSON.parse(e.data);
+                                if (p.type === 'new_message' && p.message && !p.message.is_mine) {
+                                    if (!this.messages.find(m => m.id === p.message.id)) {
+                                        this.messages.push(p.message);
+                                        this.scrollDown();
+                                    }
+                                } else if (p.type === 'typing' && p.user_id !== config.myId) {
+                                    this.showTyping();
+                                } else if (p.type === 'read_receipt') {
+                                    this.messages.forEach(m => { if (m.mine) m.is_read = true; });
+                                } else if (p.type === 'presence') {
+                                    if (p.user_id !== config.myId) this.peerOnline = p.status === 'online';
+                                } else if (p.type === 'call_offer' && p.caller_id !== config.myId) {
+                                    this.callType = p.call_type || 'audio';
+                                    this.callState = 'incoming';
+                                    this.callActive = true;
+                                } else if (p.type === 'call_end') {
+                                    this.endCall();
+                                }
+                            };
+                            this.eventSource.onerror = () => {
+                                if (this.eventSource) { this.eventSource.close(); this.eventSource = null; }
+                            };
+                        } catch(e) {}
+                    },
+
+                    showTyping() {
+                        this.typingVisible = true;
+                        clearTimeout(this.typingTimeout);
+                        this.typingTimeout = setTimeout(() => { this.typingVisible = false; }, 3000);
+                    },
+
+                    emitTyping() {
+                        const now = Date.now();
+                        if (now - this.lastTypingEmit < 2000) return;
+                        this.lastTypingEmit = now;
+                        fetch('/api/chat/typing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ conversation_id: config.conversationId }) });
+                    },
+
+                    lastId() { return this.messages.length ? this.messages[this.messages.length - 1].id : 0; },
+
+                    poll() {
+                        fetch('/api/inbox/' + config.conversationId + '/messages?after=' + this.lastId())
+                            .then(r => r.json())
+                            .then(data => {
+                                (data.messages || []).forEach(m => {
+                                    if (!this.messages.find(x => x.id === m.id)) this.messages.push(m);
+                                });
+                                this.scrollDown();
+                            });
+                    },
+
+                    sendText() {
+                        const body = this.body.trim();
+                        if (!body) return;
+                        const form = new FormData();
+                        form.append('body', body);
+                        form.append('_token', config.csrfToken);
+                        this.body = '';
+                        fetch('/api/inbox/' + config.conversationId + '/send', { method: 'POST', body: form })
+                            .then(r => r.json())
+                            .then(data => { if (data.message) { this.messages.push(data.message); this.scrollDown(); } });
+                    },
+
+                    sendImage(event) {
+                        const file = event.target.files[0];
+                        if (!file) return;
+                        const form = new FormData();
+                        form.append('conversation_id', config.conversationId);
+                        form.append('image', file);
+                        fetch('/api/chat/image', { method: 'POST', body: form })
+                            .then(r => r.json())
+                            .then(data => { if (data.id) { this.messages.push(data); this.scrollDown(); } });
+                        event.target.value = '';
+                    },
+
+                    async toggleRecording() {
+                        if (this.recording) {
+                            this.recording = false;
+                            clearInterval(this.recordTimer);
+                            if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') this.mediaRecorder.stop();
+                            return;
+                        }
+                        try {
+                            if (navigator.permissions && navigator.permissions.query) {
+                                try {
+                                    const perm = await navigator.permissions.query({ name: 'microphone' });
+                                    if (perm.state === 'denied') {
+                                        alert('Microphone access is blocked. Please click the lock icon in your browser address bar, allow microphone access, and reload the page.');
+                                        return;
+                                    }
+                                } catch(pe) {}
+                            }
+                            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                            this.mediaRecorder = new MediaRecorder(stream);
+                            this.audioChunks = [];
+                            this.recordSecs = 0;
+                            this.recording = true;
+                            this.recordTimer = setInterval(() => { this.recordSecs++; }, 1000);
+                            this.mediaRecorder.ondataavailable = (e) => { this.audioChunks.push(e.data); };
+                            this.mediaRecorder.onstop = () => {
+                                stream.getTracks().forEach(t => t.stop());
+                                const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                                const form = new FormData();
+                                form.append('conversation_id', config.conversationId);
+                                form.append('voice', blob, 'voice.webm');
+                                fetch('/api/chat/voice', { method: 'POST', body: form })
+                                    .then(r => r.json())
+                                    .then(data => { if (data.id) { this.messages.push(data); this.scrollDown(); } });
+                            };
+                            this.mediaRecorder.start();
+                        } catch (e) {
+                            if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+                                alert('Microphone access was denied. Please click the lock icon in your browser address bar, allow microphone, and reload the page.');
+                            } else if (e.name === 'NotFoundError') {
+                                alert('No microphone detected on this device.');
+                            } else {
+                                alert('Could not access microphone: ' + e.message);
+                            }
+                        }
+                    },
+
+                    aiCorrect() {
+                        if (!this.body.trim() || this.aiCorrecting) return;
+                        this.aiCorrecting = true;
+                        fetch('/api/chat/correct', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: this.body }) })
+                            .then(r => r.json())
+                            .then(d => { if (d.corrected) this.body = d.corrected; })
+                            .finally(() => { this.aiCorrecting = false; });
+                    },
+
+                    summarizeChat() {
+                        if (this.summarizing || this.messages.length < 2) return;
+                        this.summarizing = true;
+                        this.summaryText = '';
+                        fetch('/api/chat/summarize/' + config.conversationId, { method: 'POST' })
+                            .then(r => r.json())
+                            .then(d => { if (d.summary) this.summaryText = d.summary; })
+                            .catch(() => { this.summaryText = 'Could not generate summary.'; })
+                            .finally(() => { this.summarizing = false; });
+                    },
+
+                    // ── WebRTC Calls ──
+                    rtcConfig: { iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'turn:164.90.212.158:3478', username: 'skilora', credential: 'Sk1l0raTurn2026!' },
+                        { urls: 'turn:164.90.212.158:3478?transport=tcp', username: 'skilora', credential: 'Sk1l0raTurn2026!' }
+                    ]},
+                    signalPoll: null,
+                    iceSent: [],
+                    remoteIceApplied: 0,
+                    hasRemoteDesc: false,
+
+                    createPeer() {
+                        const pc = new RTCPeerConnection(this.rtcConfig);
+                        this.peerConnection = pc;
+                        this.hasRemoteDesc = false;
+                        this.iceSent = [];
+                        this.remoteIceApplied = 0;
+
+                        pc.onicecandidate = (e) => {
+                            if (e.candidate) {
+                                this.sendSignal('ice', { candidate: e.candidate.toJSON() });
+                            }
+                        };
+
+                        pc.ontrack = (e) => {
+                            if (this.callType === 'video' && this.$refs.remoteVideo) {
+                                this.$refs.remoteVideo.srcObject = e.streams[0];
+                            } else if (this.$refs.remoteAudio) {
+                                this.$refs.remoteAudio.srcObject = e.streams[0];
+                            }
+                        };
+
+                        pc.oniceconnectionstatechange = () => {
+                            if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+                                if (this.callState !== 'connected') {
+                                    this.callState = 'connected';
+                                    this.startCallTimer();
+                                }
+                            } else if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+                                this.endCall();
+                            }
+                        };
+
+                        if (this.localStream) {
+                            this.localStream.getTracks().forEach(t => pc.addTrack(t, this.localStream));
+                        }
+                        return pc;
+                    },
+
+                    sendSignal(type, extra) {
+                        const payload = { conversation_id: config.conversationId, signal_type: type, ...extra };
+                        fetch('/api/chat/call/signal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
+                    },
+
+                    startSignalPolling() {
+                        if (this.signalPoll) clearInterval(this.signalPoll);
+                        this.signalPoll = setInterval(() => this.pollSignals(), 1500);
+                    },
+
+                    async pollSignals() {
+                        if (!this.callActive || !this.peerConnection) return;
+                        try {
+                            const r = await fetch('/api/chat/call/signal/' + config.conversationId);
+                            const d = await r.json();
+
+                            if (d.answer && !this.hasRemoteDesc && this.peerConnection.signalingState === 'have-local-offer') {
+                                await this.peerConnection.setRemoteDescription({ type: 'answer', sdp: d.answer });
+                                this.hasRemoteDesc = true;
+                            }
+
+                            if (d.offer && !this.hasRemoteDesc && this.peerConnection.signalingState === 'stable') {
+                                await this.peerConnection.setRemoteDescription({ type: 'offer', sdp: d.offer });
+                                this.hasRemoteDesc = true;
+                                const answer = await this.peerConnection.createAnswer();
+                                await this.peerConnection.setLocalDescription(answer);
+                                this.sendSignal('answer', { sdp: answer.sdp });
+                            }
+
+                            if (d.ice_candidates && d.ice_candidates.length > this.remoteIceApplied && this.hasRemoteDesc) {
+                                for (let i = this.remoteIceApplied; i < d.ice_candidates.length; i++) {
+                                    try { await this.peerConnection.addIceCandidate(d.ice_candidates[i]); } catch(e) {}
+                                }
+                                this.remoteIceApplied = d.ice_candidates.length;
+                            }
+                        } catch(e) {}
+                    },
+
+                    async startCall(type) {
+                        this.callType = type;
+                        this.callDuration = '00:00';
+                        try {
+                            const constraints = { audio: true };
+                            if (type === 'video') constraints.video = { width: { ideal: 640 }, height: { ideal: 480 } };
+                            this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                            this.callState = 'ringing';
+                            this.callActive = true;
+
+                            if (type === 'video' && this.$refs.localVideo) {
+                                this.$nextTick(() => { if (this.$refs.localVideo) this.$refs.localVideo.srcObject = this.localStream; });
+                            }
+
+                            fetch('/api/chat/call/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ conversation_id: config.conversationId, call_type: type }) });
+
+                            const pc = this.createPeer();
+                            const offer = await pc.createOffer();
+                            await pc.setLocalDescription(offer);
+                            this.sendSignal('offer', { sdp: offer.sdp });
+
+                            this.startSignalPolling();
+                        } catch(e) {
+                            if (this.localStream) { this.localStream.getTracks().forEach(t => t.stop()); this.localStream = null; }
+                            this.callActive = false;
+                            this.callState = 'idle';
+                            if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+                                alert('Please allow microphone' + (type === 'video' ? ' and camera' : '') + ' access in your browser settings, then try again.');
+                            } else if (e.name === 'NotFoundError') {
+                                alert('No ' + (type === 'video' ? 'camera/microphone' : 'microphone') + ' detected.');
+                            } else {
+                                alert('Media access error: ' + e.message);
+                            }
+                        }
+                    },
+
+                    async answerCall() {
+                        try {
+                            const constraints = { audio: true };
+                            if (this.callType === 'video') constraints.video = { width: { ideal: 640 }, height: { ideal: 480 } };
+                            this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                            if (this.callType === 'video' && this.$refs.localVideo) {
+                                this.$nextTick(() => { if (this.$refs.localVideo) this.$refs.localVideo.srcObject = this.localStream; });
+                            }
+                        } catch(e) {
+                            alert('Camera/Microphone access denied.');
+                            return;
+                        }
+
+                        const pc = this.createPeer();
+                        this.startSignalPolling();
+
+                        try {
+                            const r = await fetch('/api/chat/call/signal/' + config.conversationId + '?need=offer');
+                            const d = await r.json();
+                            if (d.offer) {
+                                await pc.setRemoteDescription({ type: 'offer', sdp: d.offer });
+                                this.hasRemoteDesc = true;
+                                const answer = await pc.createAnswer();
+                                await pc.setLocalDescription(answer);
+                                this.sendSignal('answer', { sdp: answer.sdp });
+
+                                if (d.ice_candidates) {
+                                    for (const c of d.ice_candidates) {
+                                        try { await pc.addIceCandidate(c); } catch(e) {}
+                                    }
+                                    this.remoteIceApplied = d.ice_candidates.length;
+                                }
+                            }
+                        } catch(e) {}
+
+                        this.callState = 'connected';
+                        this.startCallTimer();
+                    },
+
+                    connectCall() {
+                        this.callState = 'connected';
+                        this.startCallTimer();
+                    },
+
+                    startCallTimer() {
+                        let secs = 0;
+                        if (this.callTimer) clearInterval(this.callTimer);
+                        this.callTimer = setInterval(() => {
+                            secs++;
+                            const m = String(Math.floor(secs / 60)).padStart(2, '0');
+                            const s = String(secs % 60).padStart(2, '0');
+                            this.callDuration = m + ':' + s;
+                        }, 1000);
+                    },
+
+                    endCall() {
+                        const wasActive = this.callActive;
+                        this.callActive = false;
+                        this.callState = 'idle';
+                        if (this.callTimer) clearInterval(this.callTimer);
+                        if (this.signalPoll) { clearInterval(this.signalPoll); this.signalPoll = null; }
+                        if (this.localStream) { this.localStream.getTracks().forEach(t => t.stop()); this.localStream = null; }
+                        if (this.peerConnection) { this.peerConnection.close(); this.peerConnection = null; }
+                        if (this.$refs.remoteVideo) this.$refs.remoteVideo.srcObject = null;
+                        if (this.$refs.remoteAudio) this.$refs.remoteAudio.srcObject = null;
+                        if (this.$refs.localVideo) this.$refs.localVideo.srcObject = null;
+                        this.hasRemoteDesc = false;
+                        this.remoteIceApplied = 0;
+                        if (wasActive) {
+                            fetch('/api/chat/call/end', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ conversation_id: config.conversationId }) });
+                        }
+                    },
+
+                    scrollDown() { this.$nextTick(() => { if (this.$refs.list) this.$refs.list.scrollTop = this.$refs.list.scrollHeight; }); }
                 }
+            }
             </script>
         {% else %}
-            <div class="flex h-[36rem] items-center justify-center p-10 text-center text-muted-foreground">Start a conversation from the contact list.</div>
+            <div class="flex h-[36rem] items-center justify-center p-10 text-center text-muted-foreground">
+                <div>
+                    <i data-lucide="message-circle" class="mx-auto h-12 w-12 text-muted-foreground/40"></i>
+                    <p class="mt-4 text-lg font-semibold text-foreground">Select a conversation</p>
+                    <p class="mt-1">Or start a new one from the contacts list.</p>
+                </div>
+            </div>
         {% endif %}
     </section>
 </div>

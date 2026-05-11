@@ -1,26 +1,110 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Support{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel p-8">
-        <div class="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+{% set open_count = tickets|filter(t => t.status.value == 'open')|length %}
+{% set progress_count = tickets|filter(t => t.status.value == 'in_progress')|length %}
+{% set resolved_count = tickets|filter(t => t.status.value == 'resolved' or t.status.value == 'closed')|length %}
+
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(14,165,233,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-sky-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[1fr_30rem] lg:items-end">
             <div>
-                <p class="text-xs font-bold uppercase tracking-label text-primary">Support desk</p>
-                <h1 class="mt-2 text-4xl font-light tracking-holographic">Your tickets</h1>
-                <p class="mt-2 text-muted-foreground">Create a ticket and chat with support in real time.</p>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Support desk</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Your tickets,<br class="hidden sm:block"> tracked live.</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Create a ticket and chat with support in real time. We've got your back.</p>
+                <div class="mt-6 flex flex-wrap gap-2">
+                    <a href="{{ path('app_support_new') }}" class="rounded-full bg-white px-4 py-2 text-sm font-bold text-black shadow-sm transition hover:shadow-md">
+                        <i data-lucide="plus" class="mr-1.5 inline h-3.5 w-3.5"></i> New ticket
+                    </a>
+                </div>
             </div>
-            <a href="{{ path('app_support_new') }}" class="inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">New ticket</a>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ open_count }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Open</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ progress_count }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">In progress</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ resolved_count }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Resolved</p>
+                </div>
+            </div>
         </div>
     </section>
 
-    <form method="get" action="{{ path('app_support') }}" class="glass-panel grid gap-3 p-4 md:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(10rem,1fr))_auto] md:items-end">
+    {# ── FAQ / Ask AI ── #}
+    <section class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm" x-data="supportFaq()">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-2.5">
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10"><i data-lucide="sparkles" class="h-4 w-4 text-primary"></i></div>
+                <div>
+                    <h2 class="text-sm font-bold">AI Help Center</h2>
+                    <p class="text-[11px] text-muted-foreground">Ask a question before creating a ticket</p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 flex gap-2">
+            <input x-model="question" @keydown.enter="askAi()" type="text" placeholder="e.g. How do I reset my password?" class="h-11 flex-1 rounded-2xl border border-border bg-background/70 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary" :disabled="loading">
+            <button @click="askAi()" :disabled="loading || !question.trim()" class="h-11 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground shadow-sm transition hover:shadow-md disabled:opacity-50">
+                <span x-show="!loading">Ask AI</span>
+                <span x-show="loading" class="flex items-center gap-1"><i data-lucide="loader-2" class="h-3.5 w-3.5 animate-spin"></i> Thinking</span>
+            </button>
+        </div>
+        <div x-show="answer" x-transition class="mt-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+            <div class="flex items-start gap-2.5">
+                <div class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/10"><i data-lucide="bot" class="h-3.5 w-3.5 text-primary"></i></div>
+                <p class="text-sm leading-relaxed text-foreground" x-text="answer"></p>
+            </div>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2">
+            <button @click="question='How do I top up my wallet?'; askAi()" class="rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition">How to top up wallet?</button>
+            <button @click="question='How can I track my application status?'; askAi()" class="rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition">Track application status?</button>
+            <button @click="question='How do I enroll in a formation?'; askAi()" class="rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition">How to enroll in a course?</button>
+            <button @click="question='How do I download my certificate?'; askAi()" class="rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition">Download my certificate?</button>
+            <button @click="question='How do I change my password?'; askAi()" class="rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition">Change my password?</button>
+        </div>
+    </section>
+    <script>
+    function supportFaq() {
+        return {
+            question: '', answer: '', loading: false,
+            async askAi() {
+                const q = this.question.trim();
+                if (!q) return;
+                this.loading = true;
+                this.answer = '';
+                try {
+                    const fd = new FormData();
+                    fd.append('message', q);
+                    fd.append('context', 'support');
+                    const res = await fetch('{{ path("app_chatbot_ask") }}', { method: 'POST', body: fd });
+                    const data = await res.json();
+                    this.answer = data.reply || 'No answer available. Please create a ticket.';
+                } catch(e) {
+                    this.answer = 'Could not reach AI. Please create a ticket instead.';
+                }
+                this.loading = false;
+            }
+        };
+    }
+    </script>
+
+    {# ── Filters ── #}
+    <form method="get" action="{{ path('app_support') }}" class="rounded-[1.75rem] border border-border/70 bg-card/70 p-4 shadow-sm grid gap-3 md:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(10rem,1fr))_auto] md:items-end">
         <label class="space-y-1">
-            <span class="text-xs font-bold uppercase tracking-label text-muted-foreground">Search</span>
-            <input name="q" value="{{ filters.q|default('') }}" placeholder="Subject, description, or message" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Search</span>
+            <input name="q" value="{{ filters.q|default('') }}" placeholder="Subject, description, or message" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-3 text-sm">
         </label>
         <label class="space-y-1">
-            <span class="text-xs font-bold uppercase tracking-label text-muted-foreground">Status</span>
-            <select name="status" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Status</span>
+            <select name="status" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-3 text-sm">
                 <option value="all">All statuses</option>
                 {% for status in statuses %}
                     <option value="{{ status.value }}" {{ filters.status|default('all') == status.value ? 'selected' }}>{{ status.label }}</option>
@@ -28,8 +112,8 @@
             </select>
         </label>
         <label class="space-y-1">
-            <span class="text-xs font-bold uppercase tracking-label text-muted-foreground">Category</span>
-            <select name="category" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Category</span>
+            <select name="category" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-3 text-sm">
                 <option value="all">All categories</option>
                 {% for category in categories %}
                     <option value="{{ category.value }}" {{ filters.category|default('all') == category.value ? 'selected' }}>{{ category.label }}</option>
@@ -37,8 +121,8 @@
             </select>
         </label>
         <label class="space-y-1">
-            <span class="text-xs font-bold uppercase tracking-label text-muted-foreground">Priority</span>
-            <select name="priority" class="h-11 w-full rounded-xl border border-border bg-background/70 px-3 text-sm">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Priority</span>
+            <select name="priority" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-3 text-sm">
                 <option value="all">All priorities</option>
                 {% for priority in priorities %}
                     <option value="{{ priority.value }}" {{ filters.priority|default('all') == priority.value ? 'selected' }}>{{ priority.label }}</option>
@@ -46,25 +130,60 @@
             </select>
         </label>
         <div class="flex gap-2">
-            <button class="h-11 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground">Filter</button>
-            <a href="{{ path('app_support') }}" class="inline-flex h-11 items-center rounded-xl border border-border px-4 text-sm font-semibold text-muted-foreground hover:text-foreground">Reset</a>
+            <button class="h-11 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground shadow-sm transition hover:shadow-md">Filter</button>
+            <a href="{{ path('app_support') }}" class="inline-flex h-11 items-center rounded-full border border-border px-4 text-sm font-bold text-muted-foreground hover:text-foreground transition">Reset</a>
         </div>
     </form>
 
+    {# ── Tickets ── #}
     <section class="grid gap-4 lg:grid-cols-2">
         {% for ticket in tickets %}
-            <a href="{{ path('app_support_show', {id: ticket.id}) }}" class="glass-panel p-5 transition hover:border-primary/40">
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ ticket.status.label }}</span>
-                    <span class="text-xs text-muted-foreground">{{ ticket.priority.label }} · {{ ticket.category.label }}</span>
+            <a href="{{ path('app_support_show', {id: ticket.id}) }}" class="group rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide
+                            {% if ticket.status.value == 'open' %}bg-sky-500/10 text-sky-600 dark:text-sky-400
+                            {% elseif ticket.status.value == 'in_progress' %}bg-amber-500/10 text-amber-600 dark:text-amber-400
+                            {% elseif ticket.status.value == 'resolved' %}bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
+                            {% elseif ticket.status.value == 'closed' %}bg-muted text-muted-foreground
+                            {% else %}bg-primary/10 text-primary{% endif %}">
+                            {{ ticket.status.label }}
+                        </span>
+                        <span class="rounded-full bg-muted px-2.5 py-1 text-[10px] font-black">{{ ticket.category.label }}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="h-2 w-2 rounded-full
+                            {% if ticket.priority.value == 'urgent' %}bg-red-500
+                            {% elseif ticket.priority.value == 'high' %}bg-orange-500
+                            {% elseif ticket.priority.value == 'normal' %}bg-amber-500
+                            {% else %}bg-sky-500{% endif %}"></div>
+                        <span class="text-[10px] font-black text-muted-foreground">{{ ticket.priority.label }}</span>
+                    </div>
                 </div>
-                <h2 class="mt-3 text-xl font-semibold">{{ ticket.subject }}</h2>
+                <h2 class="mt-3 text-lg font-bold text-foreground group-hover:text-primary transition-colors">{{ ticket.subject }}</h2>
                 <p class="mt-2 line-clamp-2 text-sm text-muted-foreground">{{ ticket.description }}</p>
-                <p class="mt-4 text-xs text-muted-foreground">Updated {{ ticket.updatedAt|date('M d, H:i') }}</p>
+
+                {% set statusSteps = ['open', 'in_progress', 'resolved', 'closed'] %}
+                {% set currentIdx = 0 %}
+                {% for s in statusSteps %}{% if s == ticket.status.value %}{% set currentIdx = loop.index0 %}{% endif %}{% endfor %}
+                <div class="mt-4 flex items-center gap-1">
+                    {% for s in statusSteps %}
+                    <div class="h-1.5 flex-1 rounded-full {{ loop.index0 <= currentIdx ? 'bg-primary' : 'bg-muted' }}"></div>
+                    {% endfor %}
+                </div>
+                <div class="mt-3 flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                    <span>Updated {{ ticket.updatedAt|date('M d, H:i') }}</span>
+                    <span>Open →</span>
+                </div>
             </a>
         {% else %}
-            <div class="glass-panel col-span-full p-12 text-center text-muted-foreground">
-                No tickets match your filters. Try a different search or create a new ticket.
+            <div class="col-span-full rounded-[1.75rem] border border-dashed border-border bg-card/50 p-12 text-center">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                    <i data-lucide="headphones" class="h-8 w-8 text-muted-foreground/50"></i>
+                </div>
+                <p class="mt-4 text-sm font-bold">No tickets found</p>
+                <p class="mt-1.5 text-xs text-muted-foreground">No tickets match your filters. Try a different search or create a new ticket.</p>
+                <a href="{{ path('app_support_new') }}" class="mt-4 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm">New ticket</a>
             </div>
         {% endfor %}
     </section>

@@ -1,0 +1,21 @@
+{# _breadcrumbs.html.twig — Usage: {% include 'components/_breadcrumbs.html.twig' with {items: [{label:'Home', route:'app_dashboard'}, {label:'Finance'}, {label:'Payslips'}]} %}  #}
+{% if items is defined and items|length > 0 %}
+<nav aria-label="Breadcrumb" class="mb-5">
+    <ol class="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+        {% for item in items %}
+            {% if not loop.last %}
+                <li class="flex items-center gap-1.5">
+                    {% if item.route is defined %}
+                        <a href="{{ path(item.route, item.params|default({})) }}" class="transition-colors hover:text-foreground">{{ item.label }}</a>
+                    {% else %}
+                        <span>{{ item.label }}</span>
+                    {% endif %}
+                    <i data-lucide="chevron-right" class="h-3.5 w-3.5 text-muted-foreground/50"></i>
+                </li>
+            {% else %}
+                <li class="font-medium text-foreground">{{ item.label }}</li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+{% endif %}

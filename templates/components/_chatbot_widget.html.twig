@@ -1,0 +1,75 @@
+{# Floating chatbot widget — inline AJAX, no iframe #}
+{% if app.user %}
+<div x-data="chatWidget()" class="fixed bottom-6 right-6 z-50">
+    <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0 scale-100" x-transition:leave-end="opacity-0 translate-y-4 scale-95" class="mb-3 w-[22rem] overflow-hidden rounded-2xl border border-border bg-background shadow-2xl backdrop-blur-xl">
+        <div class="flex items-center justify-between bg-gradient-to-r from-primary to-primary/80 px-4 py-3 text-primary-foreground">
+            <div class="flex items-center gap-2">
+                <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-foreground/15"><i data-lucide="bot" class="h-4 w-4"></i></div>
+                <div>
+                    <span class="text-sm font-bold">Skilora AI</span>
+                    <span class="ml-1.5 inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                </div>
+            </div>
+            <button @click="open=false" class="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-primary-foreground/20 transition"><i data-lucide="x" class="h-4 w-4"></i></button>
+        </div>
+        <div class="flex flex-col h-[26rem]">
+            <div class="flex-1 overflow-y-auto p-3 space-y-2" x-ref="chatMessages">
+                <template x-for="msg in messages" :key="msg.id">
+                    <div :class="msg.role === 'user' ? 'ml-auto max-w-[80%] bg-primary text-primary-foreground' : 'mr-auto max-w-[80%] bg-muted text-foreground'" class="rounded-2xl px-3 py-2 text-[13px] leading-relaxed">
+                        <p x-text="msg.text"></p>
+                    </div>
+                </template>
+                <div x-show="loading" class="mr-auto max-w-[80%] rounded-2xl bg-muted px-3 py-2 text-[13px] text-muted-foreground animate-pulse">Thinking…</div>
+            </div>
+            <form @submit.prevent="send()" class="border-t border-border/40 p-2 flex gap-2">
+                <input x-model="input" type="text" placeholder="Ask anything…" class="h-10 flex-1 rounded-xl border border-border bg-background/70 px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary" :disabled="loading">
+                <button type="submit" :disabled="loading || !input.trim()" class="rounded-xl bg-primary px-3 text-sm font-bold text-primary-foreground disabled:opacity-50"><i data-lucide="send" class="h-4 w-4"></i></button>
+            </form>
+        </div>
+        <div class="border-t border-border/40 bg-muted/20 px-4 py-1.5">
+            <p class="text-[10px] text-center text-muted-foreground">Powered by Skilora AI · Responses may be inaccurate</p>
+        </div>
+    </div>
+    <button @click="open=!open" class="group flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:scale-110 hover:shadow-primary/25 hover:shadow-xl">
+        <i data-lucide="message-circle" class="h-6 w-6 transition-transform" x-show="!open" :class="!open ? 'group-hover:rotate-12' : ''"></i>
+        <i data-lucide="x" class="h-6 w-6" x-show="open"></i>
+    </button>
+</div>
+<script>
+function chatWidget() {
+    return {
+        open: false, messages: [], input: '', loading: false, _id: 0,
+        getContext() {
+            const p = window.location.pathname;
+            if (p.includes('/support')) return 'support';
+            if (p.includes('/formation') || p.includes('/learning')) return 'formations';
+            if (p.includes('/jobs') || p.includes('/application') || p.includes('/offer')) return 'recruitment';
+            if (p.includes('/finance') || p.includes('/wallet') || p.includes('/escrow')) return 'finance';
+            return 'general';
+        },
+        async send() {
+            const text = this.input.trim();
+            if (!text) return;
+            this.messages.push({ id: this._id++, role: 'user', text });
+            this.input = '';
+            this.loading = true;
+            try {
+                const fd = new FormData();
+                fd.append('message', text);
+                fd.append('context', this.getContext());
+                const res = await fetch('{{ path("app_chatbot_ask") }}', { method: 'POST', body: fd });
+                const data = await res.json();
+                this.messages.push({ id: this._id++, role: 'bot', text: data.reply || 'No response.' });
+            } catch (e) {
+                this.messages.push({ id: this._id++, role: 'bot', text: 'Connection error. Please try again.' });
+            }
+            this.loading = false;
+            this.$nextTick(() => {
+                const el = this.$refs.chatMessages;
+                if (el) el.scrollTop = el.scrollHeight;
+            });
+        }
+    };
+}
+</script>
+{% endif %}

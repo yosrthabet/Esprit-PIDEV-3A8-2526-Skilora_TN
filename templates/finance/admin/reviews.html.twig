@@ -1,0 +1,89 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Admin — Reviews{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
+
+    {% include 'components/_breadcrumbs.html.twig' with {items: [{label: 'Finance', route: 'app_admin_finance'}, {label: 'Reviews'}]} %}
+
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(245,158,11,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-amber-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative">
+            <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Admin finance</p>
+            <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Job Reviews</h1>
+            <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Monitor contract reviews and manage ratings across the platform.</p>
+        </div>
+    </section>
+
+    {# ── Stats ── #}
+    {% set avg_rating = reviews|length > 0 ? (reviews|map(r => r.rating)|reduce((carry, v) => carry + v, 0) / reviews|length)|round(1) : 0 %}
+    {% set high_ratings = reviews|filter(r => r.rating >= 4)|length %}
+    {% set low_ratings = reviews|filter(r => r.rating <= 2)|length %}
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+            <p class="text-3xl font-light">{{ reviews|length }}</p>
+            <p class="mt-1 text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Total reviews</p>
+        </div>
+        <div class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+            <p class="text-3xl font-light">{{ avg_rating }}</p>
+            <p class="mt-1 text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Average rating</p>
+        </div>
+        <div class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+            <p class="text-3xl font-light">{{ high_ratings }}</p>
+            <p class="mt-1 text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">4+ star reviews</p>
+        </div>
+        <div class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm">
+            <p class="text-3xl font-light">{{ low_ratings }}</p>
+            <p class="mt-1 text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Low reviews (≤2)</p>
+        </div>
+    </section>
+
+    {# ── Reviews Table ── #}
+    <section class="rounded-[1.75rem] border border-border/70 bg-card/70 shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="border-b border-border bg-muted/40">
+                <tr>
+                    <th class="px-5 py-3 text-left text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Contract</th>
+                    <th class="px-5 py-3 text-left text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Reviewer</th>
+                    <th class="px-5 py-3 text-left text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Reviewed</th>
+                    <th class="px-5 py-3 text-center text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Rating</th>
+                    <th class="px-5 py-3 text-left text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Comment</th>
+                    <th class="px-5 py-3 text-center text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Date</th>
+                    <th class="px-5 py-3 text-right text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border/40">
+                {% for r in reviews %}
+                <tr class="hover:bg-muted/20 transition">
+                    <td class="px-5 py-3"><span class="rounded-lg bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">#{{ r.contract.id }}</span></td>
+                    <td class="px-5 py-3 font-medium">{{ r.reviewer.displayName }}</td>
+                    <td class="px-5 py-3">{{ r.reviewedUser.displayName }}</td>
+                    <td class="px-5 py-3 text-center">
+                        <div class="inline-flex items-center gap-0.5">
+                            {% for i in 1..5 %}
+                                <i data-lucide="star" class="h-3.5 w-3.5 {{ i <= r.rating ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground/30' }}"></i>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="px-5 py-3 max-w-xs truncate text-muted-foreground">{{ r.comment ?? '—' }}</td>
+                    <td class="px-5 py-3 text-center text-muted-foreground">{{ r.createdAt|date('M d, Y') }}</td>
+                    <td class="px-5 py-3 text-right">
+                        {% include 'components/_confirm_modal.html.twig' with {
+                            trigger_label: 'Delete',
+                            title: 'Delete this review?',
+                            description: 'Review by ' ~ r.reviewer.displayName ~ ' will be permanently removed.',
+                            action_url: path('app_admin_finance_review_delete', {id: r.id}),
+                            csrf_token: csrf_token('delete_review_' ~ r.id)
+                        } %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7">
+                    {% include 'components/_empty_state.html.twig' with {icon: 'star', title: 'No reviews yet', description: 'Reviews will appear when users rate completed contracts.'} %}
+                </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</div>
+{% endblock %}

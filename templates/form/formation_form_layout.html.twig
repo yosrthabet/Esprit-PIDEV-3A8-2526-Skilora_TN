@@ -1,0 +1,14 @@
+{% use 'form/finance_form_layout.html.twig' %}
+
+{% block form_row %}
+<div class="mb-5">
+    {{ form_label(form) }}
+    {% if help is defined and help %}<p class="mb-1 text-xs text-muted-foreground">{{ help|trans }}</p>{% endif %}
+    {{ form_widget(form) }}
+    {{ form_errors(form) }}
+</div>
+{% endblock %}
+
+{% block integer_widget %}
+<input type="number" {{ block('widget_attributes') }} {% if value is defined %}value="{{ value }}"{% endif %} class="h-11 w-full rounded-xl border border-border bg-background/70 px-4 text-sm transition focus:border-primary focus:ring-1 focus:ring-primary" />
+{% endblock %}

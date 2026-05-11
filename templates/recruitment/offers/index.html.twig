@@ -1,13 +1,81 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Hire Offers{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel p-8"><p class="text-xs font-bold uppercase tracking-label text-primary">Offer desk</p><h1 class="mt-2 text-4xl font-light tracking-holographic">Hire offers</h1></section>
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
+
+    {% include 'components/_breadcrumbs.html.twig' with {items: [{label: 'Recruitment', route: 'app_applications'}, {label: 'Hire Offers'}]} %}
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(16,185,129,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-emerald-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative flex flex-wrap items-end justify-between gap-6">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Offer desk</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Hire offers</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Review, accept, or decline hire offers from employers.</p>
+            </div>
+            <div class="rounded-3xl border border-white/10 bg-white/10 px-5 py-3 backdrop-blur">
+                <p class="text-3xl font-light">{{ offers|length }}</p>
+                <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Offer{{ offers|length != 1 ? 's' : '' }}</p>
+            </div>
+        </div>
+    </section>
+
+    {# ── Offer cards ── #}
     <section class="grid gap-4 lg:grid-cols-2">
         {% for offer in offers %}
-            <article class="glass-panel p-5"><span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ offer.status.value|title }}</span><h2 class="mt-3 text-xl font-semibold">{{ offer.application.jobOffer.title }}</h2><p class="mt-1 text-sm text-muted-foreground">{{ offer.salaryOffered ?: 'Negotiable' }} {{ offer.currency.value }} · {{ offer.contractType ?: 'Contract' }}</p>{% if offer.status.value == 'pending' %}<div class="mt-4 flex gap-2"><form method="post" action="{{ path('app_hire_offer_accept', {id: offer.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('accept_offer_' ~ offer.id) }}"><button class="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Accept</button></form><form method="post" action="{{ path('app_hire_offer_reject', {id: offer.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('reject_offer_' ~ offer.id) }}"><button class="rounded-xl border border-border px-4 py-2 text-sm font-semibold">Reject</button></form></div>{% elseif offer.status.value == 'accepted' %}<a href="{{ path('app_contracts') }}" class="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Open contracts</a>{% endif %}</article>
+            <article class="group rounded-[1.75rem] border border-border/70 bg-card/70 p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl hover:border-primary/20">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="rounded-full px-2.5 py-0.5 text-[10px] font-black
+                        {% if offer.status.value == 'pending' %}bg-amber-500/10 text-amber-600 dark:text-amber-400
+                        {% elseif offer.status.value == 'accepted' %}bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
+                        {% elseif offer.status.value == 'rejected' %}bg-rose-500/10 text-rose-600 dark:text-rose-400
+                        {% else %}bg-muted text-muted-foreground{% endif %}">
+                        {{ offer.status.value|title }}
+                    </span>
+                    <span class="text-[11px] text-muted-foreground">{{ offer.createdAt|date('M d, Y') }}</span>
+                </div>
+
+                <h2 class="mt-4 text-xl font-bold text-foreground">{{ offer.application.jobOffer.title }}</h2>
+
+                <div class="mt-3 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                    <span class="inline-flex items-center gap-1"><i data-lucide="wallet" class="h-3.5 w-3.5"></i> <span class="font-bold text-foreground">{{ offer.salaryOffered ?: 'Negotiable' }} {{ offer.currency.value }}</span></span>
+                    <span class="inline-flex items-center gap-1"><i data-lucide="file-text" class="h-3.5 w-3.5"></i> {{ offer.contractType ?: 'Contract' }}</span>
+                </div>
+
+                {% if offer.status.value == 'pending' %}
+                <div class="mt-5 flex flex-wrap gap-2 border-t border-border/40 pt-4">
+                    {% include 'components/_confirm_modal.html.twig' with {
+                        trigger_label: 'Accept offer',
+                        trigger_class: 'inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:shadow-md hover:bg-emerald-700',
+                        title: 'Accept this offer?',
+                        description: 'Accepting will create a contract for "' ~ offer.application.jobOffer.title ~ '".',
+                        action_url: path('app_hire_offer_accept', {id: offer.id}),
+                        csrf_token: csrf_token('accept_offer_' ~ offer.id),
+                        confirm_label: 'Accept',
+                        variant: 'success'
+                    } %}
+                    {% include 'components/_confirm_modal.html.twig' with {
+                        trigger_label: 'Decline',
+                        title: 'Decline this offer?',
+                        description: 'You can still re-apply in the future.',
+                        action_url: path('app_hire_offer_reject', {id: offer.id}),
+                        csrf_token: csrf_token('reject_offer_' ~ offer.id)
+                    } %}
+                </div>
+                {% elseif offer.status.value == 'accepted' %}
+                <div class="mt-5 border-t border-border/40 pt-4">
+                    <a href="{{ path('app_contracts') }}" class="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm transition hover:shadow-md">
+                        <i data-lucide="external-link" class="h-3.5 w-3.5"></i> Open contracts
+                    </a>
+                </div>
+                {% endif %}
+            </article>
         {% else %}
-            <div class="glass-panel col-span-full p-12 text-center text-muted-foreground">No hire offers yet.</div>
+            <div class="col-span-full">
+                {% include 'components/_empty_state.html.twig' with {icon: 'gift', title: 'No hire offers yet', description: 'When employers send you offers, they will appear here.'} %}
+            </div>
         {% endfor %}
     </section>
 </div>

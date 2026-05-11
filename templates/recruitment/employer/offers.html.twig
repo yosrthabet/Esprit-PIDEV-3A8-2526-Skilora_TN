@@ -1,47 +1,60 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Active Offers{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <header class="glass-panel p-6">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <p class="text-xs font-bold uppercase tracking-label text-primary">Hiring cockpit</p>
-                <h1 class="mt-1 text-4xl font-light tracking-holographic">Your offers</h1>
-                <p class="mt-2 text-sm text-muted-foreground">Manage active roles, drafts, and candidate funnel health.</p>
-            </div>
-            <a href="{{ path('app_post_job') }}" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground"><i data-lucide="plus" class="h-4 w-4"></i>New offer</a>
-        </div>
-    </header>
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
 
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(99,102,241,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-indigo-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative flex flex-wrap items-end justify-between gap-6">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Hiring cockpit</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Your offers</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Manage active roles, drafts, and candidate funnel health.</p>
+            </div>
+            <a href="{{ path('app_post_job') }}" class="rounded-full bg-white px-4 py-2 text-sm font-bold text-black shadow-sm transition hover:shadow-md">
+                <i data-lucide="plus" class="mr-1.5 inline h-3.5 w-3.5"></i> New offer
+            </a>
+        </div>
+    </section>
+
+    {# ── Job cards ── #}
     <section class="grid gap-4 lg:grid-cols-2">
         {% for job in jobs %}
             {% set readiness = job.readiness %}
-            <article class="glass-panel p-5 transition hover:border-primary/40">
+            <article class="group rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl hover:border-primary/40">
                 <div class="flex items-start justify-between gap-4">
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <span class="rounded-full bg-primary/10 px-2 py-0.5 font-bold text-primary">{{ job.status.value|title }}</span>
+                            <span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-black text-primary">{{ job.status.value|title }}</span>
                             <span>{{ job.applicationsCount }} applications</span>
                             <span>{{ job.viewsCount }} views</span>
                         </div>
-                        <h2 class="mt-2 text-xl font-semibold"><a href="{{ path('app_employer_offer_show', {id: job.id}) }}" class="hover:text-primary">{{ job.title }}</a></h2>
+                        <h2 class="mt-2 text-xl font-bold"><a href="{{ path('app_employer_offer_show', {id: job.id}) }}" class="group-hover:text-primary transition">{{ job.title }}</a></h2>
                         <p class="mt-2 line-clamp-2 text-sm text-muted-foreground">{{ job.description ?: 'No description yet.' }}</p>
                     </div>
-                    <div class="shrink-0 rounded-2xl bg-muted px-3 py-2 text-center"><p class="text-sm font-bold">{{ readiness.score }}%</p><p class="text-[10px] text-muted-foreground">quality</p></div>
+                    <div class="shrink-0 rounded-2xl bg-muted px-3 py-2 text-center"><p class="text-sm font-black">{{ readiness.score }}%</p><p class="text-[10px] text-muted-foreground">quality</p></div>
                 </div>
                 <div class="mt-5 flex flex-wrap gap-2">
-                    <a href="{{ path('app_employer_offer_show', {id: job.id}) }}" class="rounded-xl border border-border px-3 py-2 text-xs font-semibold hover:bg-muted">View</a>
-                    <a href="{{ path('app_employer_offer_edit', {id: job.id}) }}" class="rounded-xl border border-border px-3 py-2 text-xs font-semibold hover:bg-muted">Edit</a>
-                    <form method="post" action="{{ path('app_employer_offer_duplicate', {id: job.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('duplicate_job_' ~ job.id) }}"><button class="rounded-xl border border-border px-3 py-2 text-xs font-semibold hover:bg-muted">Duplicate</button></form>
-                    {% if job.status.value == 'closed' %}
-                        <form method="post" action="{{ path('app_employer_offer_reopen', {id: job.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('reopen_job_' ~ job.id) }}"><button class="rounded-xl border border-border px-3 py-2 text-xs font-semibold hover:bg-muted">Reopen</button></form>
+                    <a href="{{ path('app_employer_offer_show', {id: job.id}) }}" class="rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-muted transition">View</a>
+                    <a href="{{ path('app_employer_offer_edit', {id: job.id}) }}" class="rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-muted transition">Edit</a>
+                    <form method="post" action="{{ path('app_employer_offer_duplicate', {id: job.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('duplicate_job_' ~ job.id) }}"><button class="rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-muted transition">Duplicate</button></form>
+                    {% if job.status.value == 'filled' %}
+                        <span class="rounded-full bg-indigo-500/10 px-3 py-1.5 text-xs font-bold text-indigo-500">Position filled</span>
+                    {% elseif job.status.value == 'closed' %}
+                        <form method="post" action="{{ path('app_employer_offer_reopen', {id: job.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('reopen_job_' ~ job.id) }}"><button class="rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-muted transition">Reopen</button></form>
                     {% else %}
-                        <form method="post" action="{{ path('app_employer_offer_close', {id: job.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('close_job_' ~ job.id) }}"><button class="rounded-xl border border-border px-3 py-2 text-xs font-semibold hover:bg-muted">Close</button></form>
+                        <form method="post" action="{{ path('app_employer_offer_close', {id: job.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('close_job_' ~ job.id) }}"><button class="rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-muted transition">Close</button></form>
                     {% endif %}
                 </div>
             </article>
         {% else %}
-            <div class="glass-panel col-span-full p-12 text-center text-muted-foreground">No jobs posted yet. Create one focused offer to start your pipeline.</div>
+            <div class="col-span-full rounded-[1.75rem] border border-dashed border-border bg-card/50 p-12 text-center">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted"><i data-lucide="briefcase" class="h-8 w-8 text-muted-foreground/50"></i></div>
+                <p class="mt-4 text-sm font-bold">No jobs posted yet</p>
+                <p class="mt-1.5 text-xs text-muted-foreground">Create one focused offer to start your pipeline.</p>
+            </div>
         {% endfor %}
     </section>
 </div>

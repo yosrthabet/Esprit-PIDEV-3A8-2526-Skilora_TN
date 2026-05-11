@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skilora — Palette Lab</title>
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        /* ═══════════════════════════════════════
+           MINT — Teal-green (Wise / TransferWise energy)
+           Clean, trustworthy, fintech-grade
+           ═══════════════════════════════════════ */
+        [data-palette="mint"] {
+            --background: 40 20% 97%;
+            --foreground: 210 11% 12%;
+            --card: 0 0% 100%;
+            --card-foreground: 210 11% 12%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 210 11% 12%;
+            --primary: 162 72% 35%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 40 15% 94%;
+            --secondary-foreground: 210 11% 12%;
+            --muted: 40 15% 94%;
+            --muted-foreground: 210 8% 46%;
+            --accent: 40 15% 94%;
+            --accent-foreground: 210 11% 12%;
+            --destructive: 0 72% 51%;
+            --destructive-foreground: 0 0% 100%;
+            --border: 40 10% 88%;
+            --input: 40 10% 88%;
+            --ring: 162 72% 35%;
+        }
+        [data-palette="mint"].dark {
+            --background: 200 12% 6%;
+            --foreground: 40 20% 95%;
+            --card: 200 10% 9%;
+            --card-foreground: 40 20% 95%;
+            --popover: 200 10% 9%;
+            --popover-foreground: 40 20% 95%;
+            --primary: 162 72% 42%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 200 8% 14%;
+            --secondary-foreground: 40 20% 95%;
+            --muted: 200 8% 14%;
+            --muted-foreground: 200 8% 55%;
+            --accent: 200 8% 14%;
+            --accent-foreground: 40 20% 95%;
+            --destructive: 0 72% 45%;
+            --destructive-foreground: 0 0% 100%;
+            --border: 200 8% 16%;
+            --input: 200 8% 16%;
+            --ring: 162 72% 42%;
+        }
+
+        /* ═══════════════════════════════════════
+           SLATE — Deep navy blue
+           Professional, mature — Toptal / Deel energy
+           ═══════════════════════════════════════ */
+        [data-palette="slate"] {
+            --background: 210 20% 97%;
+            --foreground: 215 25% 10%;
+            --card: 0 0% 100%;
+            --card-foreground: 215 25% 10%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 215 25% 10%;
+            --primary: 217 72% 40%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 210 14% 93%;
+            --secondary-foreground: 215 25% 10%;
+            --muted: 210 14% 93%;
+            --muted-foreground: 215 12% 46%;
+            --accent: 210 14% 93%;
+            --accent-foreground: 215 25% 10%;
+            --destructive: 0 72% 51%;
+            --destructive-foreground: 0 0% 100%;
+            --border: 210 12% 87%;
+            --input: 210 12% 87%;
+            --ring: 217 72% 40%;
+        }
+        [data-palette="slate"].dark {
+            --background: 217 25% 5%;
+            --foreground: 210 18% 95%;
+            --card: 217 20% 8%;
+            --card-foreground: 210 18% 95%;
+            --popover: 217 20% 8%;
+            --popover-foreground: 210 18% 95%;
+            --primary: 217 72% 50%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 217 15% 14%;
+            --secondary-foreground: 210 18% 95%;
+            --muted: 217 15% 14%;
+            --muted-foreground: 215 10% 55%;
+            --accent: 217 15% 14%;
+            --accent-foreground: 210 18% 95%;
+            --destructive: 0 72% 45%;
+            --destructive-foreground: 0 0% 100%;
+            --border: 217 15% 16%;
+            --input: 217 15% 16%;
+            --ring: 217 72% 50%;
+        }
+
+        /* ═══════════════════════════════════════
+           CLAY — Terracotta / burnt earth
+           Warm, earthy, unique — nobody uses this
+           ═══════════════════════════════════════ */
+        [data-palette="clay"] {
+            --background: 30 25% 97%;
+            --foreground: 20 20% 10%;
+            --card: 0 0% 100%;
+            --card-foreground: 20 20% 10%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 20 20% 10%;
+            --primary: 16 65% 45%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 30 18% 93%;
+            --secondary-foreground: 20 20% 10%;
+            --muted: 30 18% 93%;
+            --muted-foreground: 20 10% 46%;
+            --accent: 30 18% 93%;
+            --accent-foreground: 20 20% 10%;
+            --destructive: 0 72% 51%;
+            --destructive-foreground: 0 0% 100%;
+            --border: 30 12% 87%;
+            --input: 30 12% 87%;
+            --ring: 16 65% 45%;
+        }
+        [data-palette="clay"].dark {
+            --background: 20 18% 5%;
+            --foreground: 30 20% 93%;
+            --card: 20 15% 8%;
+            --card-foreground: 30 20% 93%;
+            --popover: 20 15% 8%;
+            --popover-foreground: 30 20% 93%;
+            --primary: 16 65% 52%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 20 12% 14%;
+            --secondary-foreground: 30 20% 93%;
+            --muted: 20 12% 14%;
+            --muted-foreground: 20 8% 55%;
+            --accent: 20 12% 14%;
+            --accent-foreground: 30 20% 93%;
+            --destructive: 0 72% 45%;
+            --destructive-foreground: 0 0% 100%;
+            --border: 20 12% 16%;
+            --input: 20 12% 16%;
+            --ring: 16 65% 52%;
+        }
+    </style>
+</head>
+<body class="font-spatial"
+      x-data="{
+          palette: 'mint',
+          dark: localStorage.getItem('theme') === 'dark',
+          init() {
+              this.$watch('dark', v => {
+                  document.documentElement.classList.toggle('dark', v);
+                  localStorage.setItem('theme', v ? 'dark' : 'light');
+              });
+              if (this.dark) document.documentElement.classList.add('dark');
+          }
+      }"
+      x-effect="document.documentElement.setAttribute('data-palette', palette)">
+
+<div class="min-h-screen bg-background text-foreground transition-colors duration-300">
+
+    {# ── STICKY PALETTE SELECTOR ── #}
+    <div class="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-md">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Palette Lab</h1>
+                    <p class="text-xs text-muted-foreground">Flat, solid, no gradients. Click to compare.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center rounded-lg border border-border bg-background p-1 gap-1">
+                        <button @click="palette = 'mint'"
+                                :class="palette === 'mint' ? 'bg-[#0FA87A] text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                                class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition">
+                            <span class="h-3 w-3 rounded-full bg-[#0FA87A]"></span> Mint
+                        </button>
+                        <button @click="palette = 'slate'"
+                                :class="palette === 'slate' ? 'bg-[#2563AA] text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                                class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition">
+                            <span class="h-3 w-3 rounded-full bg-[#2563AA]"></span> Slate
+                        </button>
+                        <button @click="palette = 'clay'"
+                                :class="palette === 'clay' ? 'bg-[#C45D35] text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                                class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition">
+                            <span class="h-3 w-3 rounded-full bg-[#C45D35]"></span> Clay
+                        </button>
+                    </div>
+                    <button @click="dark = !dark"
+                            class="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-foreground transition">
+                        <i x-show="!dark" data-lucide="moon" class="h-4 w-4"></i>
+                        <i x-show="dark" data-lucide="sun" class="h-4 w-4" style="display:none;"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        {# ═══ 1. NAVBAR ═══ #}
+        <section>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-2">Navbar</p>
+            <div class="rounded-xl border border-border bg-card overflow-hidden">
+                <div class="border-b border-border px-5">
+                    <div class="flex h-14 items-center justify-between gap-4">
+                        <div class="flex items-center gap-2.5">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">S</div>
+                            <span class="text-base font-bold tracking-tight">Skilora</span>
+                        </div>
+                        <nav class="hidden sm:flex items-center gap-0.5">
+                            <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium text-primary bg-primary/[0.08]">
+                                <i data-lucide="home" class="h-4 w-4"></i> Home
+                            </a>
+                            <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition">
+                                <i data-lucide="search" class="h-4 w-4"></i> Find Jobs
+                            </a>
+                            <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition">
+                                <i data-lucide="file-text" class="h-4 w-4"></i> Applications
+                            </a>
+                            <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition">
+                                <i data-lucide="wallet" class="h-4 w-4"></i> Finance
+                            </a>
+                        </nav>
+                        <div class="flex items-center gap-3">
+                            <button class="h-8 rounded-lg bg-primary px-3.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition">Post a Job</button>
+                            <div class="h-8 w-8 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold">YT</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ═══ 2. HERO ═══ #}
+        <section>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-2">Dashboard Hero</p>
+            <div class="rounded-xl border border-border bg-card p-8">
+                <span class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                    <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-primary"></span>
+                    Freelancer workspace
+                </span>
+                <h2 class="mt-5 text-3xl sm:text-4xl font-semibold tracking-tight leading-[1.1]">
+                    Welcome back, Yosr
+                </h2>
+                <p class="mt-2 text-base text-muted-foreground max-w-lg">
+                    You have 3 pending applications and 2 active contracts. Your wallet balance is <span class="font-semibold text-foreground">2,450 TND</span>.
+                </p>
+                <div class="mt-5 flex flex-wrap gap-2.5">
+                    <button class="h-10 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition inline-flex items-center gap-2">
+                        <i data-lucide="search" class="h-4 w-4"></i> Find Jobs
+                    </button>
+                    <button class="h-10 rounded-lg border border-border bg-background px-5 text-sm font-semibold text-foreground hover:bg-muted transition inline-flex items-center gap-2">
+                        <i data-lucide="file-text" class="h-4 w-4 text-muted-foreground"></i> My Applications
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        {# ═══ 3. STAT CARDS ═══ #}
+        <section>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-2">Stat Cards</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {% set stats = [
+                    {label: 'Earnings', value: '2,450 TND', icon: 'wallet', trend: '+12%', trendColor: 'text-emerald-600 dark:text-emerald-400'},
+                    {label: 'Applications', value: '18', icon: 'file-text', trend: '+3', trendColor: 'text-emerald-600 dark:text-emerald-400'},
+                    {label: 'Contracts', value: '5', icon: 'file-signature', trend: 'Active', trendColor: 'text-primary'},
+                    {label: 'Match Score', value: '87%', icon: 'target', trend: '+5%', trendColor: 'text-emerald-600 dark:text-emerald-400'}
+                ] %}
+                {% for stat in stats %}
+                <div class="rounded-xl border border-border bg-card p-5 hover:shadow-sm transition">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{{ stat.label }}</span>
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <i data-lucide="{{ stat.icon }}" class="h-4 w-4"></i>
+                        </div>
+                    </div>
+                    <p class="text-2xl font-semibold tracking-tight">{{ stat.value }}</p>
+                    <p class="mt-1 text-xs">
+                        <span class="font-semibold {{ stat.trendColor }}">{{ stat.trend }}</span>
+                        <span class="text-muted-foreground"> vs last month</span>
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        {# ═══ 4. WALLET + TRANSACTIONS ═══ #}
+        <section>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-2">Wallet & Forms</p>
+            <div class="grid gap-4 lg:grid-cols-[22rem_1fr]">
+                <div class="rounded-xl border border-border bg-card p-5 space-y-5">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Wallet Balance</p>
+                        <p class="mt-1 text-3xl font-semibold tracking-tight text-primary">2,450.00 <span class="text-base font-normal text-muted-foreground">TND</span></p>
+                    </div>
+                    <div class="space-y-2.5">
+                        <label class="block text-sm font-medium">Amount</label>
+                        <input type="text" placeholder="0.00" value="500"
+                               class="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
+                        <button class="w-full h-10 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition">
+                            Credit wallet
+                        </button>
+                    </div>
+                </div>
+                <div class="rounded-xl border border-border bg-card p-5">
+                    <h3 class="text-sm font-semibold mb-3">Transactions</h3>
+                    <div class="space-y-2">
+                        {% set txns = [
+                            {type: 'Escrow Funded', amount: '-800.00', status: 'completed', date: 'May 8'},
+                            {type: 'Contract Payment', amount: '+1,200.00', status: 'completed', date: 'May 5'},
+                            {type: 'Wallet Top-up', amount: '+500.00', status: 'pending', date: 'May 3'}
+                        ] %}
+                        {% for txn in txns %}
+                        <div class="flex items-center justify-between rounded-lg border border-border/60 bg-background/50 px-4 py-3 hover:bg-muted/40 transition">
+                            <div>
+                                <p class="text-sm font-medium">{{ txn.type }}</p>
+                                <p class="text-[11px] text-muted-foreground">{{ txn.date }}, 2026</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-semibold {{ txn.amount starts with '+' ? 'text-emerald-600 dark:text-emerald-400' : '' }}">{{ txn.amount }} TND</p>
+                                <span class="inline-block rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase
+                                    {{ txn.status == 'completed' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' }}">
+                                    {{ txn.status }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ═══ 5. BUTTONS ═══ #}
+        <section>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-2">Buttons</p>
+            <div class="rounded-xl border border-border bg-card p-5">
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <button class="h-9 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition inline-flex items-center gap-1.5">
+                        <i data-lucide="plus" class="h-3.5 w-3.5"></i> Primary
+                    </button>
+                    <button class="h-9 rounded-lg border border-border bg-background px-4 text-sm font-semibold text-foreground hover:bg-muted transition inline-flex items-center gap-1.5">
+                        <i data-lucide="file-text" class="h-3.5 w-3.5 text-muted-foreground"></i> Secondary
+                    </button>
+                    <button class="h-9 rounded-lg px-4 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition">
+                        Ghost
+                    </button>
+                    <button class="h-9 rounded-lg bg-destructive px-4 text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 transition inline-flex items-center gap-1.5">
+                        <i data-lucide="trash-2" class="h-3.5 w-3.5"></i> Delete
+                    </button>
+                    <button class="h-9 rounded-lg border border-primary text-primary bg-primary/5 px-4 text-sm font-semibold hover:bg-primary/10 transition">
+                        Outline
+                    </button>
+                    <span class="h-9 rounded-lg bg-primary/10 text-primary px-3 text-sm font-medium inline-flex items-center gap-1.5">
+                        <i data-lucide="sparkles" class="h-3.5 w-3.5"></i> AI Powered
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        {# ═══ 6. STATUS BADGES ═══ #}
+        <section>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-2">Status Badges</p>
+            <div class="rounded-xl border border-border bg-card p-5">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="rounded-md bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</span>
+                    <span class="rounded-md bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Processing</span>
+                    <span class="rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Completed</span>
+                    <span class="rounded-md bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400">Rejected</span>
+                    <span class="rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary">Active</span>
+                    <span class="rounded-md bg-violet-50 px-2 py-1 text-[11px] font-semibold text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">AI Match 87%</span>
+                    <span class="rounded-md bg-foreground text-background px-2 py-1 text-[11px] font-semibold">Admin</span>
+                </div>
+            </div>
+        </section>
+
+        {# ═══ 7. TABLE ═══ #}
+        <section>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-2">Data Table</p>
+            <div class="rounded-xl border border-border bg-card overflow-hidden">
+                <div class="flex items-center justify-between px-5 py-3 border-b border-border">
+                    <h3 class="text-sm font-semibold">Payout Requests</h3>
+                    <button class="h-8 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition inline-flex items-center gap-1.5">
+                        <i data-lucide="plus" class="h-3 w-3"></i> New
+                    </button>
+                </div>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-border text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            <th class="px-5 py-2.5">User</th>
+                            <th class="px-5 py-2.5">Amount</th>
+                            <th class="px-5 py-2.5">Bank</th>
+                            <th class="px-5 py-2.5">Status</th>
+                            <th class="px-5 py-2.5">Date</th>
+                            <th class="px-5 py-2.5"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-border/60 hover:bg-muted/30 transition-colors">
+                            <td class="px-5 py-3"><span class="font-medium">Yosr Thabet</span><br><span class="text-[11px] text-muted-foreground">yosr@skilora.tn</span></td>
+                            <td class="px-5 py-3 font-semibold">1,200 TND</td>
+                            <td class="px-5 py-3 text-[11px] text-muted-foreground">BIAT — TN59...4821</td>
+                            <td class="px-5 py-3"><span class="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</span></td>
+                            <td class="px-5 py-3 text-[11px] text-muted-foreground">May 8</td>
+                            <td class="px-5 py-3">
+                                <div class="flex gap-1">
+                                    <button class="h-7 rounded-md bg-emerald-600 px-2 text-[11px] font-semibold text-white hover:bg-emerald-700">Approve</button>
+                                    <button class="h-7 rounded-md bg-red-600 px-2 text-[11px] font-semibold text-white hover:bg-red-700">Reject</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-border/60 hover:bg-muted/30 transition-colors">
+                            <td class="px-5 py-3"><span class="font-medium">Ahmed Ben Ali</span><br><span class="text-[11px] text-muted-foreground">ahmed@skilora.tn</span></td>
+                            <td class="px-5 py-3 font-semibold">800 TND</td>
+                            <td class="px-5 py-3 text-[11px] text-muted-foreground">STB — TN41...9023</td>
+                            <td class="px-5 py-3"><span class="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Approved</span></td>
+                            <td class="px-5 py-3 text-[11px] text-muted-foreground">May 5</td>
+                            <td class="px-5 py-3 text-[11px] text-muted-foreground">Processed</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        {# ═══ 8. FORMS ═══ #}
+        <section>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-2">Form Inputs</p>
+            <div class="rounded-xl border border-border bg-card p-5">
+                <div class="grid gap-4 sm:grid-cols-2 max-w-2xl">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Full Name</label>
+                        <input type="text" value="Yosr Thabet" class="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Email</label>
+                        <input type="email" value="yosr@skilora.tn" class="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Role</label>
+                        <select class="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition appearance-none">
+                            <option>Freelancer</option>
+                            <option>Employer</option>
+                            <option>Trainer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Currency</label>
+                        <select class="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition appearance-none">
+                            <option>TND</option>
+                            <option>EUR</option>
+                            <option>USD</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium mb-1">Bio</label>
+                        <textarea rows="2" placeholder="Tell us about yourself..." class="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition resize-none"></textarea>
+                    </div>
+                    <div class="sm:col-span-2 flex gap-2">
+                        <button class="h-9 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition">Save Changes</button>
+                        <button class="h-9 rounded-lg border border-border px-4 text-sm font-medium text-muted-foreground hover:bg-muted transition">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ═══ 9. PROFILE DROPDOWN ═══ #}
+        <section>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-2">Profile Dropdown</p>
+            <div class="rounded-xl border border-border bg-card p-5">
+                <div class="max-w-[260px]">
+                    <div class="rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+                        <div class="px-4 py-3 border-b border-border">
+                            <div class="flex items-center gap-2.5">
+                                <div class="h-9 w-9 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold shrink-0">YT</div>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold truncate">Yosr Thabet</p>
+                                    <p class="text-[11px] text-muted-foreground truncate">yosr@skilora.tn</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-1">
+                            <a class="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted transition cursor-pointer">
+                                <i data-lucide="user" class="h-4 w-4 text-muted-foreground"></i> My Profile
+                            </a>
+                            <a class="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted transition cursor-pointer">
+                                <i data-lucide="bell" class="h-4 w-4 text-muted-foreground"></i> Notifications
+                                <span class="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground px-1">3</span>
+                            </a>
+                            <a class="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted transition cursor-pointer">
+                                <i data-lucide="settings" class="h-4 w-4 text-muted-foreground"></i> Settings
+                            </a>
+                        </div>
+                        <div class="border-t border-border p-1">
+                            <a class="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted transition cursor-pointer">
+                                <i data-lucide="wallet" class="h-4 w-4 text-muted-foreground"></i> Wallet
+                                <span class="ml-auto text-[11px] font-semibold text-primary">2,450 TND</span>
+                            </a>
+                            <a class="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-muted transition cursor-pointer">
+                                <i data-lucide="landmark" class="h-4 w-4 text-muted-foreground"></i> Bank Accounts
+                            </a>
+                        </div>
+                        <div class="border-t border-border p-1">
+                            <a class="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-destructive hover:bg-destructive/10 transition cursor-pointer">
+                                <i data-lucide="log-out" class="h-4 w-4"></i> Log Out
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ═══ 10. COLOR SWATCHES ═══ #}
+        <section>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-2">Palette Swatches</p>
+            <div class="rounded-xl border border-border bg-card p-5">
+                <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                    <div>
+                        <div class="h-14 rounded-lg bg-primary mb-1.5"></div>
+                        <p class="text-[11px] font-medium">Primary</p>
+                    </div>
+                    <div>
+                        <div class="h-14 rounded-lg bg-foreground mb-1.5"></div>
+                        <p class="text-[11px] font-medium">Foreground</p>
+                    </div>
+                    <div>
+                        <div class="h-14 rounded-lg bg-background border border-border mb-1.5"></div>
+                        <p class="text-[11px] font-medium">Background</p>
+                    </div>
+                    <div>
+                        <div class="h-14 rounded-lg bg-card border border-border mb-1.5"></div>
+                        <p class="text-[11px] font-medium">Card</p>
+                    </div>
+                    <div>
+                        <div class="h-14 rounded-lg bg-muted mb-1.5"></div>
+                        <p class="text-[11px] font-medium">Muted</p>
+                    </div>
+                    <div>
+                        <div class="h-14 rounded-lg bg-destructive mb-1.5"></div>
+                        <p class="text-[11px] font-medium">Destructive</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ═══ 11. JOB CARD ═══ #}
+        <section>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground mb-2">Job Listing Card</p>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <div class="rounded-xl border border-border bg-card p-5 hover:shadow-sm hover:border-primary/30 transition">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h4 class="text-sm font-semibold">Senior PHP Developer</h4>
+                            <p class="text-[11px] text-muted-foreground mt-0.5">TechCorp Tunisia · Tunis</p>
+                        </div>
+                        <span class="shrink-0 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">92% Match</span>
+                    </div>
+                    <p class="mt-2 text-xs text-muted-foreground line-clamp-2">We're looking for a senior PHP developer with Symfony experience to join our fintech team. Remote-friendly.</p>
+                    <div class="mt-3 flex flex-wrap gap-1.5">
+                        <span class="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">Symfony</span>
+                        <span class="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">PHP 8</span>
+                        <span class="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">Docker</span>
+                        <span class="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">REST API</span>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                        <span class="text-sm font-semibold text-primary">2,500 - 3,500 TND</span>
+                        <span class="text-[11px] text-muted-foreground">2 days ago</span>
+                    </div>
+                </div>
+                <div class="rounded-xl border border-border bg-card p-5 hover:shadow-sm hover:border-primary/30 transition">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h4 class="text-sm font-semibold">UI/UX Designer</h4>
+                            <p class="text-[11px] text-muted-foreground mt-0.5">DesignHub · Remote</p>
+                        </div>
+                        <span class="shrink-0 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">68% Match</span>
+                    </div>
+                    <p class="mt-2 text-xs text-muted-foreground line-clamp-2">Join our creative team to design beautiful interfaces for web and mobile applications used by millions.</p>
+                    <div class="mt-3 flex flex-wrap gap-1.5">
+                        <span class="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">Figma</span>
+                        <span class="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">Tailwind</span>
+                        <span class="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">Prototyping</span>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                        <span class="text-sm font-semibold text-primary">1,800 - 2,800 TND</span>
+                        <span class="text-[11px] text-muted-foreground">5 days ago</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <div class="border-t border-border py-5 text-center text-xs text-muted-foreground">
+        Skilora Palette Lab — Pick one, ship it everywhere.
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+    new MutationObserver(() => lucide.createIcons()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-palette', 'class'] });
+</script>
+</body>
+</html>

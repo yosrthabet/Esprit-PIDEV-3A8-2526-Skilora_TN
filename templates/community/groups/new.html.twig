@@ -8,6 +8,10 @@
         <input type="hidden" name="_token" value="{{ csrf_token('community_group_new') }}">
         <input name="name" required placeholder="Group name" class="h-11 w-full rounded-xl border border-border bg-background/70 px-4 text-sm">
         <textarea name="description" rows="5" placeholder="What is this group for?" class="w-full rounded-xl border border-border bg-background/70 px-4 py-3 text-sm"></textarea>
+        <select name="privacy" class="h-11 w-full rounded-xl border border-border bg-background/70 px-4 text-sm">
+            <option value="public">Public group</option>
+            <option value="private">Private group</option>
+        </select>
         <button class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Create group</button>
     </form>
 </div>

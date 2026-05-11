@@ -1,38 +1,96 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Formations{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel p-8">
-        <p class="text-xs font-bold uppercase tracking-label text-primary">Learning marketplace</p>
-        <h1 class="mt-2 text-4xl font-light tracking-holographic">Build skills with trusted trainers.</h1>
-        <p class="mt-3 max-w-3xl text-muted-foreground">Browse published formations, enroll in one click, and track completion from your learning dashboard.</p>
-        <form class="mt-6 grid max-w-4xl gap-3 md:grid-cols-[1fr_220px_180px_auto]" method="get" action="{{ path('app_formations') }}">
-            <input name="q" value="{{ q }}" placeholder="Search Symfony, AI, design..." class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm outline-none focus:border-primary">
-            <input name="category" value="{{ category }}" placeholder="Category" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm outline-none focus:border-primary">
-            <select name="level" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+{% set free_count = formations|filter(f => not f.priceAmount)|length %}
+
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(245,158,11,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-amber-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[1fr_30rem] lg:items-end">
+            <div>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Learning marketplace</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Build skills,<br class="hidden sm:block"> grow careers.</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Browse published formations, enroll in one click, and track completion from your learning dashboard.</p>
+                <div class="mt-6 flex flex-wrap gap-2">
+                    <a href="{{ path('app_learning') }}" class="rounded-full bg-white px-4 py-2 text-sm font-bold text-black shadow-sm transition hover:shadow-md">
+                        <i data-lucide="book-open" class="mr-1.5 inline h-3.5 w-3.5"></i> My learning
+                    </a>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ formations|length }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Courses</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ free_count }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Free</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p class="text-3xl font-light">{{ levels|length }}</p>
+                    <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/55">Levels</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ── Filters ── #}
+    <form class="rounded-[1.75rem] border border-border/70 bg-card/70 p-4 shadow-sm grid gap-3 md:grid-cols-[1fr_220px_180px_auto] md:items-end" method="get" action="{{ path('app_formations') }}">
+        <label class="space-y-1">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Search</span>
+            <input name="q" value="{{ q }}" placeholder="Symfony, AI, design..." class="h-11 w-full rounded-2xl border border-border bg-background/70 px-4 text-sm outline-none focus:border-primary">
+        </label>
+        <label class="space-y-1">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Category</span>
+            <input name="category" value="{{ category }}" placeholder="Category" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-4 text-sm outline-none focus:border-primary">
+        </label>
+        <label class="space-y-1">
+            <span class="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Level</span>
+            <select name="level" class="h-11 w-full rounded-2xl border border-border bg-background/70 px-4 text-sm">
                 <option value="">All levels</option>
                 {% for item in levels %}<option value="{{ item.value }}" {{ level == item.value ? 'selected' }}>{{ item.value|title }}</option>{% endfor %}
             </select>
-            <button class="rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground">Filter</button>
-        </form>
-    </section>
+        </label>
+        <button class="h-11 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground shadow-sm transition hover:shadow-md">Filter</button>
+    </form>
 
+    {# ── Course grid ── #}
     <section class="grid gap-4 lg:grid-cols-3">
         {% for formation in formations %}
-            <a href="{{ path('app_formation_show', {id: formation.id}) }}" class="glass-panel p-5 transition hover:border-primary/40">
+            <a href="{{ path('app_formation_show', {id: formation.id}) }}" class="group rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl">
                 <div class="flex items-center justify-between gap-3">
-                    <span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ formation.category }}</span>
-                    <span class="text-xs text-muted-foreground">{{ formation.durationHours }}h</span>
+                    <span class="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-black text-primary">{{ formation.category }}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="rounded-full bg-muted px-2.5 py-1 text-[10px] font-black text-muted-foreground">
+                            <i data-lucide="clock" class="mr-0.5 inline h-3 w-3"></i> {{ formation.durationHours }}h
+                        </span>
+                        {% if formation.level is defined and formation.level %}
+                        <span class="rounded-full bg-muted px-2.5 py-1 text-[10px] font-black text-muted-foreground">{{ formation.level.value|default('All')|title }}</span>
+                        {% endif %}
+                    </div>
                 </div>
-                <h2 class="mt-4 text-xl font-semibold">{{ formation.title }}</h2>
+                <h2 class="mt-4 text-lg font-bold text-foreground group-hover:text-primary transition-colors">{{ formation.title }}</h2>
                 <p class="mt-2 line-clamp-3 text-sm text-muted-foreground">{{ formation.description ?: 'No description yet.' }}</p>
-                <div class="mt-5 flex items-center justify-between text-sm">
-                    <span>{{ formation.trainer.displayName }}</span>
-                    <span class="font-semibold">{{ formation.priceAmount ? formation.priceAmount ~ ' TND' : 'Free' }}</span>
+                <div class="mt-5 flex items-center justify-between border-t border-border/40 pt-4">
+                    <div class="flex items-center gap-2">
+                        {% set t_initials = formation.trainer.displayName|split(' ')|map(w => w|first)|join('')|upper %}
+                        <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-muted text-[9px] font-black text-muted-foreground">{{ t_initials }}</div>
+                        <span class="text-xs text-muted-foreground">{{ formation.trainer.displayName }}</span>
+                    </div>
+                    <span class="text-sm font-black {{ formation.priceAmount ? 'text-foreground' : 'text-emerald-600 dark:text-emerald-400' }}">{{ formation.priceAmount ? formation.priceAmount ~ ' TND' : 'Free' }}</span>
                 </div>
             </a>
         {% else %}
-            <div class="glass-panel col-span-full p-12 text-center text-muted-foreground">No published formations match this filter yet.</div>
+            <div class="col-span-full rounded-[1.75rem] border border-dashed border-border bg-card/50 p-12 text-center">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                    <i data-lucide="book-open" class="h-8 w-8 text-muted-foreground/50"></i>
+                </div>
+                <p class="mt-4 text-sm font-bold">No formations found</p>
+                <p class="mt-1.5 text-xs text-muted-foreground">No published formations match your filter yet.</p>
+            </div>
         {% endfor %}
     </section>
 </div>

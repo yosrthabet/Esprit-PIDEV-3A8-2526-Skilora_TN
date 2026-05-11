@@ -1,20 +1,158 @@
 {% extends 'layouts/adaptive.html.twig' %}
 {% block page_title %}Certificate{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-    <article class="glass-panel overflow-hidden p-10 text-center">
-        <p class="text-xs font-bold uppercase tracking-label text-primary">Skilora Certificate</p>
-        <h1 class="mt-4 text-4xl font-light tracking-holographic">{{ certificate.enrollment.formation.title }}</h1>
-        <p class="mt-4 text-muted-foreground">Awarded to</p>
-        <p class="mt-2 text-2xl font-semibold">{{ certificate.enrollment.user.displayName }}</p>
-        <p class="mt-6 text-sm text-muted-foreground">Issued {{ certificate.issuedAt|date('M d, Y') }}</p>
-        <p class="mt-6 rounded-xl bg-muted p-3 text-xs font-mono text-muted-foreground">{{ certificate.verificationId }}</p>
-        <div class="mt-5 flex flex-wrap justify-center gap-3">
-            <a href="{{ path('app_certificate_verify', {verificationId: certificate.verificationId}) }}" class="inline-flex rounded-xl border border-border px-5 py-3 text-sm font-bold">Public verification page</a>
-            <a href="{{ path('app_certificate_qr', {id: certificate.id}) }}" class="inline-flex rounded-xl border border-border px-5 py-3 text-sm font-bold">QR code</a>
-            <a href="{{ path('app_certificate_preview', {id: certificate.id}) }}" class="inline-flex rounded-xl border border-border px-5 py-3 text-sm font-bold">Preview</a>
-            <a href="{{ path('app_certificate_download', {id: certificate.id}) }}" class="inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Download PDF</a>
+<div class="mx-auto max-w-5xl space-y-8 px-4 py-10 sm:px-6 lg:px-8 animate-fade-in">
+
+    {% include 'components/_breadcrumbs.html.twig' with {items: [{label: 'Certificates', route: 'app_certificates'}, {label: certificate.enrollment.formation.title}]} %}
+
+    {# ═══════════════════════════════════════════════════════════════════
+       EPIC CERTIFICATE CARD
+       ═══════════════════════════════════════════════════════════════════ #}
+    <article class="certificate-card group relative overflow-hidden rounded-[2rem] shadow-2xl" style="background:#18181b;border:1px solid rgba(245,158,11,.15);box-shadow:0 25px 60px -12px rgba(245,158,11,.1),0 0 0 1px rgba(245,158,11,.05)">
+
+        {# ── Background layers (inline to bypass theme) ── #}
+        <div class="absolute inset-0 rounded-[2rem]" style="background:linear-gradient(160deg,#1a1a1f 0%,#27272a 40%,#1f1f23 100%)"></div>
+        <div class="absolute inset-0 rounded-[2rem]" style="background:radial-gradient(ellipse at top center, rgba(245,158,11,.12), transparent 55%)"></div>
+        <div class="absolute inset-0 rounded-[2rem]" style="background:radial-gradient(ellipse at bottom right, rgba(99,102,241,.06), transparent 45%)"></div>
+
+        {# ── Elegant inset border (smooth rounded) ── #}
+        <div class="absolute inset-4 rounded-[1.5rem] pointer-events-none" style="border:1px solid rgba(245,158,11,.12)"></div>
+        <div class="absolute inset-5 rounded-[1.25rem] pointer-events-none" style="border:1px solid rgba(245,158,11,.06)"></div>
+
+        {# ── Corner accents (small decorative dots) ── #}
+        <div class="absolute top-7 left-7 h-2 w-2 rounded-full" style="background:rgba(245,158,11,.35)"></div>
+        <div class="absolute top-7 right-7 h-2 w-2 rounded-full" style="background:rgba(245,158,11,.35)"></div>
+        <div class="absolute bottom-7 left-7 h-2 w-2 rounded-full" style="background:rgba(245,158,11,.35)"></div>
+        <div class="absolute bottom-7 right-7 h-2 w-2 rounded-full" style="background:rgba(245,158,11,.35)"></div>
+
+        {# ── Decorative top line ── #}
+        <div class="absolute top-4 left-1/2 -translate-x-1/2 w-32 h-px" style="background:linear-gradient(to right,transparent,rgba(245,158,11,.4),transparent)"></div>
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-32 h-px" style="background:linear-gradient(to right,transparent,rgba(245,158,11,.4),transparent)"></div>
+
+        {# ── Floating particles ── #}
+        <div class="absolute top-20 left-1/4 h-1 w-1 rounded-full animate-pulse" style="background:rgba(251,191,36,.35)"></div>
+        <div class="absolute top-1/3 right-[15%] h-1 w-1 rounded-full animate-pulse" style="background:rgba(251,191,36,.25);animation-delay:1.5s"></div>
+        <div class="absolute bottom-1/4 left-[20%] h-1 w-1 rounded-full animate-pulse" style="background:rgba(129,140,248,.2);animation-delay:2.5s"></div>
+        <div class="absolute top-1/2 right-[10%] h-0.5 w-0.5 rounded-full animate-pulse" style="background:rgba(251,191,36,.3);animation-delay:3s"></div>
+
+        {# ── Content ── #}
+        <div class="relative z-10 px-8 py-14 sm:px-14 sm:py-16 text-center" style="color:#fff">
+
+            {# Seal / Badge #}
+            <div class="mx-auto relative">
+                <div class="absolute inset-0 mx-auto flex items-center justify-center">
+                    <div class="h-28 w-28 rounded-full blur-2xl" style="background:rgba(245,158,11,.1)"></div>
+                </div>
+                <div class="relative mx-auto flex h-24 w-24 items-center justify-center rounded-full" style="border:2px solid rgba(245,158,11,.4);background:linear-gradient(135deg,#f59e0b,#ea580c);box-shadow:0 20px 25px -5px rgba(245,158,11,.3)">
+                    <i data-lucide="award" class="h-12 w-12" style="color:#fff;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))"></i>
+                </div>
+                <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
+                    <div class="h-8 w-3 rounded-b-sm rotate-[-12deg] origin-top" style="background:linear-gradient(to bottom,#f59e0b,#b45309)"></div>
+                    <div class="h-8 w-3 rounded-b-sm rotate-[12deg] origin-top" style="background:linear-gradient(to bottom,#f59e0b,#b45309)"></div>
+                </div>
+            </div>
+
+            {# Title #}
+            <div class="mt-10">
+                <p class="text-[11px] font-black uppercase tracking-[0.4em]" style="color:rgba(251,191,36,.8)">Certificate of Completion</p>
+                <div class="mx-auto mt-3 h-px w-40" style="background:linear-gradient(to right,transparent,rgba(245,158,11,.4),transparent)"></div>
+            </div>
+
+            {# Formation name #}
+            <h1 class="mt-8 text-3xl sm:text-5xl font-extralight tracking-tight" style="color:#ffffff">{{ certificate.enrollment.formation.title }}</h1>
+
+            {# Awarded to #}
+            <div class="mt-10">
+                <p class="text-xs uppercase tracking-[0.2em]" style="color:#a1a1aa">Awarded to</p>
+                <p class="mt-3 text-3xl sm:text-4xl font-semibold" style="background:linear-gradient(to right,#fde68a,#fef9c3,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">{{ certificate.enrollment.user.displayName }}</p>
+            </div>
+
+            {# Meta row #}
+            <div class="mx-auto mt-10 flex flex-wrap items-center justify-center gap-8 text-sm" style="color:#a1a1aa">
+                <span class="inline-flex items-center gap-2">
+                    <i data-lucide="calendar" class="h-4 w-4" style="color:rgba(245,158,11,.6)"></i>
+                    <span>{{ certificate.issuedAt|date('F d, Y') }}</span>
+                </span>
+                <span class="h-4 w-px" style="background:#3f3f46"></span>
+                <span class="inline-flex items-center gap-2">
+                    <i data-lucide="graduation-cap" class="h-4 w-4" style="color:rgba(245,158,11,.6)"></i>
+                    <span>{{ certificate.enrollment.formation.trainer.displayName }}</span>
+                </span>
+                <span class="h-4 w-px" style="background:#3f3f46"></span>
+                <span class="inline-flex items-center gap-2">
+                    <i data-lucide="layers" class="h-4 w-4" style="color:rgba(245,158,11,.6)"></i>
+                    <span>{{ certificate.enrollment.formation.modules|length }} modules</span>
+                </span>
+            </div>
+
+            {# ── Signature ── #}
+            {% if signature_data_uri|default(null) %}
+                <div class="mx-auto mt-12 flex flex-col items-center">
+                    <div class="relative rounded-xl px-8 py-4">
+                        <img src="{{ signature_data_uri }}" alt="Trainer signature"
+                             class="h-20 max-w-[240px] object-contain" style="filter:brightness(0) invert(1);opacity:.9">
+                    </div>
+                    <div class="mt-2 h-px w-48" style="background:linear-gradient(to right,transparent,rgba(245,158,11,.5),transparent)"></div>
+                    <p class="mt-3 text-sm font-medium" style="color:#d4d4d8">{{ certificate.enrollment.formation.trainer.displayName }}</p>
+                    <p class="text-[11px] tracking-wide" style="color:#71717a">Director / Trainer</p>
+                </div>
+            {% endif %}
+
+            {# ── Verification seal ── #}
+            <div class="mx-auto mt-10 max-w-sm rounded-2xl px-6 py-4 backdrop-blur" style="border:1px solid rgba(63,63,70,.5);background:rgba(39,39,42,.5)">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <i data-lucide="shield-check" class="h-3.5 w-3.5" style="color:#10b981"></i>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em]" style="color:rgba(16,185,129,.8)">Verified credential</p>
+                </div>
+                <p class="font-mono text-xs select-all tracking-wider" style="color:#d4d4d8">{{ certificate.verificationId }}</p>
+            </div>
         </div>
     </article>
+
+    {# ═══════════════════════════════════════════════════════════════════
+       ACTION BAR
+       ═══════════════════════════════════════════════════════════════════ #}
+    <div class="flex flex-wrap justify-center gap-3">
+        <a href="{{ path('app_certificate_download', {id: certificate.id}) }}" class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition hover:shadow-xl hover:shadow-amber-500/30 hover:scale-[1.02]">
+            <i data-lucide="download" class="h-4 w-4"></i> Download PDF
+        </a>
+        <a href="{{ path('app_certificate_qr', {id: certificate.id}) }}" class="inline-flex items-center gap-2 rounded-2xl border border-border px-5 py-3 text-sm font-semibold transition hover:bg-muted hover:scale-[1.02]">
+            <i data-lucide="qr-code" class="h-4 w-4"></i> QR Code
+        </a>
+        <a href="{{ path('app_certificate_preview', {id: certificate.id}) }}" class="inline-flex items-center gap-2 rounded-2xl border border-border px-5 py-3 text-sm font-semibold transition hover:bg-muted hover:scale-[1.02]">
+            <i data-lucide="eye" class="h-4 w-4"></i> Preview
+        </a>
+        <a href="{{ path('app_certificate_verify', {verificationId: certificate.verificationId}) }}" class="inline-flex items-center gap-2 rounded-2xl border border-border px-5 py-3 text-sm font-semibold transition hover:bg-muted hover:scale-[1.02]">
+            <i data-lucide="shield-check" class="h-4 w-4"></i> Verify
+        </a>
+    </div>
+
+    {# ═══════════════════════════════════════════════════════════════════
+       SHARE SECTION
+       ═══════════════════════════════════════════════════════════════════ #}
+    <div class="rounded-2xl border border-border/50 bg-card/50 p-6 text-center backdrop-blur">
+        <p class="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4">Share your achievement</p>
+        <div class="flex justify-center gap-3">
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ url('app_certificate_verify', {verificationId: certificate.verificationId})|url_encode }}" target="_blank" rel="noopener noreferrer" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-500 transition" title="Share on LinkedIn">
+                <i data-lucide="linkedin" class="h-5 w-5"></i>
+            </a>
+            <a href="https://twitter.com/intent/tweet?text={{ ('I just earned my certificate in ' ~ certificate.enrollment.formation.title ~ ' on Skilora!')|url_encode }}&url={{ url('app_certificate_verify', {verificationId: certificate.verificationId})|url_encode }}" target="_blank" rel="noopener noreferrer" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card hover:bg-sky-500/10 hover:border-sky-500/30 hover:text-sky-500 transition" title="Share on Twitter">
+                <i data-lucide="twitter" class="h-5 w-5"></i>
+            </a>
+            <button onclick="navigator.clipboard.writeText('{{ url('app_certificate_verify', {verificationId: certificate.verificationId}) }}');this.classList.add('!border-emerald-500/30','!text-emerald-500');setTimeout(()=>this.classList.remove('!border-emerald-500/30','!text-emerald-500'),2000)" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-500 transition" title="Copy verification link">
+                <i data-lucide="link" class="h-5 w-5"></i>
+            </button>
+            <a href="mailto:?subject={{ ('Certificate: ' ~ certificate.enrollment.formation.title)|url_encode }}&body={{ ('I completed ' ~ certificate.enrollment.formation.title ~ ' on Skilora! Verify: ' ~ url('app_certificate_verify', {verificationId: certificate.verificationId}))|url_encode }}" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card hover:bg-purple-500/10 hover:border-purple-500/30 hover:text-purple-500 transition" title="Share via email">
+                <i data-lucide="mail" class="h-5 w-5"></i>
+            </a>
+        </div>
+    </div>
 </div>
+
+<style>
+    .certificate-card {
+        background-image:
+            url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f59e0b' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+</style>
 {% endblock %}

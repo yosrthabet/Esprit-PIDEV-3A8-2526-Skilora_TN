@@ -1,55 +1,8 @@
-{# layouts/_nav.html.twig — Centralized navigation config for all roles #}
-{#
-   Sets: nav_items, dashboard_route, user_role
-   Consumed by: adaptive.html.twig (both sidebar & top-nav modes)
-#}
-
-{% set user_role = app.user ? app.user.role : '' %}
+{# layouts/_nav.html.twig — compatibility shim. Active navigation lives in App\Twig\AppExtension::getSkiloraNav(). #}
+{% set _nav = skilora_nav() %}
+{% set user_role = _nav.user_role %}
+{% set dashboard_route = _nav.dashboard_route %}
+{% set nav_items = _nav.nav_items %}
+{% set topnav_items = _nav.topnav_items %}
+{% set topnav_grouped = _nav.topnav_grouped %}
 {% set current_route = app.request.attributes.get('_route') %}
-
-{# Dashboard route per role #}
-{% if user_role == 'ADMIN' %}
-    {% set dashboard_route = 'app_dashboard' %}
-{% elseif user_role == 'TRAINER' %}
-    {% set dashboard_route = 'app_trainer_dashboard' %}
-{% else %}
-    {% set dashboard_route = 'app_workspace' %}
-{% endif %}
-
-{# ── ADMIN ──────────────────────────────────────────────── #}
-{% if user_role == 'ADMIN' %}
-    {% set nav_items = [
-        { label: 'Tableau de bord', route: 'app_dashboard', icon: 'layout-dashboard' },
-        { label: 'separator' },
-        { label: 'Utilisateurs', route: 'app_admin_user_index', icon: 'users' },
-    ] %}
-
-{# ── TRAINER ────────────────────────────────────────────── #}
-{% elseif user_role == 'TRAINER' %}
-    {% set nav_items = [
-        { label: 'Tableau de bord', route: 'app_trainer_dashboard', icon: 'layout-dashboard' },
-    ] %}
-
-{# ── EMPLOYER ───────────────────────────────────────────── #}
-{% elseif user_role == 'EMPLOYER' %}
-    {% set nav_items = [
-        { label: 'Tableau de bord', route: 'app_workspace', icon: 'layout-dashboard' },
-    ] %}
-
-{# ── USER / FREELANCER ──────────────────────────────────── #}
-{% else %}
-    {% set nav_items = [
-        { label: 'Accueil', route: 'app_workspace', icon: 'home' },
-        { label: 'separator' },
-        { label: 'Profil', route: 'app_profile', icon: 'user' },
-        { label: 'Notifications', route: 'app_notifications_index', icon: 'bell' },
-    ] %}
-{% endif %}
-
-{# ── Top-nav subset (no separators, compact) ────────────── #}
-{% set topnav_items = [] %}
-{% for item in nav_items %}
-    {% if item.label != 'separator' %}
-        {% set topnav_items = topnav_items|merge([item]) %}
-    {% endif %}
-{% endfor %}

@@ -3,43 +3,50 @@
 {% block page_title %}Invoices{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-[90rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-    <section class="glass-panel p-8">
-        <div class="flex flex-wrap items-start justify-between gap-4">
+<div class="mx-auto max-w-[94rem] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+    {# ── Hero ── #}
+    <section class="relative overflow-hidden rounded-[2rem] border border-border/60 p-6 text-white shadow-2xl shadow-black/20 sm:p-8 lg:p-10" style="background:linear-gradient(135deg,rgba(24,24,27,.98),rgba(39,39,42,.94) 48%,rgba(56,189,248,.22))">
+        <div class="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-sky-500/30 blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 h-40 w-96 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative flex flex-wrap items-end justify-between gap-6">
             <div>
-                <p class="text-xs font-bold uppercase tracking-label text-primary">Finance invoices</p>
-                <h1 class="mt-2 text-4xl font-light tracking-holographic">Invoices</h1>
-                <p class="mt-2 max-w-3xl text-sm text-muted-foreground">Invoices generated from finance contracts where you are the issuer, recipient, employer, or freelancer.</p>
+                <p class="text-xs font-black uppercase tracking-[0.35em] text-white/60">Finance invoices</p>
+                <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Invoices</h1>
+                <p class="mt-4 max-w-2xl text-base leading-7 text-white/70">Invoices generated from finance contracts where you are the issuer, recipient, employer, or freelancer.</p>
             </div>
-            <a href="{{ path('app_finance') }}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold transition hover:border-primary/50">Finance dashboard</a>
+            <a href="{{ path('app_finance') }}" class="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15">Finance dashboard</a>
         </div>
     </section>
 
-    <section class="glass-panel overflow-hidden p-5">
+    {# ── Table ── #}
+    <section class="rounded-[1.75rem] border border-border/70 bg-card/70 p-5 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="border-b border-border text-left text-xs uppercase tracking-label text-muted-foreground">
-                        <th class="py-3 pr-4 font-semibold">Invoice</th>
-                        <th class="py-3 pr-4 font-semibold">Contract</th>
-                        <th class="py-3 pr-4 font-semibold">Status</th>
-                        <th class="py-3 pr-4 text-right font-semibold">Amount</th>
-                        <th class="py-3 text-right font-semibold">Issued</th>
+                    <tr class="border-b border-border text-left text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+                        <th class="py-3 pr-4">Invoice</th>
+                        <th class="py-3 pr-4">Contract</th>
+                        <th class="py-3 pr-4">Status</th>
+                        <th class="py-3 pr-4 text-right">Amount</th>
+                        <th class="py-3 pr-4 text-right">Issued</th>
+                        <th class="py-3 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-border/50">
                     {% for invoice in invoices %}
                         {% set contract = invoice.contract %}
                         {% set application = contract.hireOffer.application %}
-                        <tr>
-                            <td class="py-3 pr-4"><a href="{{ path('app_finance_invoice_show', {id: invoice.id}) }}" class="font-semibold text-primary hover:underline">{{ invoice.number }}</a></td>
-                            <td class="py-3 pr-4"><a href="{{ path('app_contract_show', {id: contract.id}) }}" class="font-medium hover:text-primary">{{ application.jobOffer.title }}</a></td>
-                            <td class="py-3 pr-4"><span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{{ invoice.status.label }}</span></td>
-                            <td class="py-3 pr-4 text-right font-semibold">{{ invoice.amount ?: '0.00' }} {{ invoice.currency.value }}</td>
-                            <td class="py-3 text-right text-muted-foreground">{{ invoice.issuedAt|date('M d, Y') }}</td>
+                        <tr class="hover:bg-muted/20 transition">
+                            <td class="py-3 pr-4"><a href="{{ path('app_finance_invoice_show', {id: invoice.id}) }}" class="font-bold text-primary hover:underline">{{ invoice.number }}</a></td>
+                            <td class="py-3 pr-4"><a href="{{ path('app_contract_show', {id: contract.id}) }}" class="font-bold hover:text-primary transition">{{ application.jobOffer.title }}</a></td>
+                            <td class="py-3 pr-4"><span class="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-black text-primary">{{ invoice.status.label }}</span></td>
+                            <td class="py-3 pr-4 text-right font-bold">{{ invoice.amount ?: '0.00' }} {{ invoice.currency.value }}</td>
+                            <td class="py-3 pr-4 text-right text-muted-foreground">{{ invoice.issuedAt|date('M d, Y') }}</td>
+                            <td class="py-3 text-right"><a href="{{ path('app_finance_invoice_pdf', {id: invoice.id}) }}" class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary transition hover:bg-primary/20" title="Download PDF"><i data-lucide="download" class="h-3 w-3"></i> PDF</a></td>
                         </tr>
                     {% else %}
-                        <tr><td colspan="5" class="py-12 text-center text-muted-foreground">No invoices yet. Paid contract releases will appear here.</td></tr>
+                        <tr><td colspan="6" class="py-12 text-center text-muted-foreground">No invoices yet. Paid contract releases will appear here.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

@@ -138,7 +138,8 @@
                         <form action="{{ path('app_settings_2fa_disable') }}" method="post">
                             <input type="hidden" name="_token" value="{{ csrf_token('2fa_disable') }}">
                             <button type="submit"
-                                    onclick="return confirm('Are you sure? You will need to set up 2FA again.')"
+                                    data-confirm-click="Disable 2FA? You will need to set it up again."
+                                    data-confirm-label="Disable"
                                     class="inline-flex h-9 items-center justify-center rounded-md border border-destructive bg-transparent px-4 text-sm font-medium text-destructive shadow-sm transition-colors hover:bg-destructive hover:text-destructive-foreground">
                                 <i data-lucide="shield-off" class="mr-2 h-3.5 w-3.5"></i>
                                 Disable 2FA
@@ -317,7 +318,8 @@
                             <form action="{{ path('app_settings_sessions_revoke') }}" method="post">
                                 <input type="hidden" name="_token" value="{{ csrf_token('revoke_sessions') }}">
                                 <button type="submit"
-                                        onclick="return confirm('Log out all other sessions?')"
+                                        data-confirm-click="Log out all other sessions?"
+                                        data-confirm-label="Revoke"
                                         class="inline-flex h-8 items-center justify-center rounded-md border border-destructive bg-transparent px-3 text-xs font-medium text-destructive shadow-sm transition-colors hover:bg-destructive hover:text-destructive-foreground">
                                     <i data-lucide="log-out" class="mr-1.5 h-3 w-3"></i>
                                     Revoke all others
@@ -616,15 +618,119 @@
                 </div>
             </div>
 
+            {# ── Color Theme ────────────────────────────────────── #}
+            <div class="glass-panel overflow-hidden">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="palette" class="h-5 w-5 text-primary"></i>
+                        <h3 class="font-semibold leading-none tracking-tight">Color Theme</h3>
+                    </div>
+                    <p class="text-sm text-muted-foreground">Choose a color palette. This changes the primary color across the entire platform.</p>
+                </div>
+                <form action="{{ path('app_settings_palette') }}" method="post">
+                    <input type="hidden" name="_token" value="{{ csrf_token('settings_palette') }}">
+                    <div class="p-6 pt-0 space-y-4" x-data="{ selected: '{{ app.user.colorPalette ?? '' }}' }">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {# Default (no palette) #}
+                            <label class="cursor-pointer">
+                                <input type="radio" name="color_palette" value="" x-model="selected" class="sr-only peer">
+                                <div class="rounded-xl border-2 p-4 transition-all peer-checked:border-foreground peer-checked:shadow-sm"
+                                     :class="selected === '' ? 'border-foreground shadow-sm' : 'border-border hover:border-border/80'">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="flex gap-1">
+                                            <span class="h-5 w-5 rounded-full bg-zinc-900 dark:bg-zinc-100 border border-border/50"></span>
+                                            <span class="h-5 w-5 rounded-full bg-zinc-200 dark:bg-zinc-800 border border-border/50"></span>
+                                            <span class="h-5 w-5 rounded-full bg-zinc-400 border border-border/50"></span>
+                                        </div>
+                                        <span class="text-sm font-semibold">Default</span>
+                                        <span x-show="selected === ''" class="ml-auto">
+                                            <i data-lucide="check-circle-2" class="h-4 w-4 text-foreground"></i>
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground">Original monochrome theme — clean and neutral.</p>
+                                </div>
+                            </label>
+
+                            {# Mint #}
+                            <label class="cursor-pointer">
+                                <input type="radio" name="color_palette" value="mint" x-model="selected" class="sr-only peer">
+                                <div class="rounded-xl border-2 p-4 transition-all peer-checked:border-[#0FA87A] peer-checked:shadow-sm"
+                                     :class="selected === 'mint' ? 'border-[#0FA87A] shadow-sm' : 'border-border hover:border-border/80'">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="flex gap-1">
+                                            <span class="h-5 w-5 rounded-full bg-[#0FA87A] border border-border/50"></span>
+                                            <span class="h-5 w-5 rounded-full bg-[#b8e8d8] dark:bg-[#1a3a30] border border-border/50"></span>
+                                            <span class="h-5 w-5 rounded-full bg-[#6ec9a8] border border-border/50"></span>
+                                        </div>
+                                        <span class="text-sm font-semibold">Mint</span>
+                                        <span x-show="selected === 'mint'" class="ml-auto">
+                                            <i data-lucide="check-circle-2" class="h-4 w-4 text-[#0FA87A]"></i>
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground">Teal-green — trustworthy, fintech-grade, fresh.</p>
+                                </div>
+                            </label>
+
+                            {# Slate #}
+                            <label class="cursor-pointer">
+                                <input type="radio" name="color_palette" value="slate" x-model="selected" class="sr-only peer">
+                                <div class="rounded-xl border-2 p-4 transition-all peer-checked:border-[#2563AA] peer-checked:shadow-sm"
+                                     :class="selected === 'slate' ? 'border-[#2563AA] shadow-sm' : 'border-border hover:border-border/80'">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="flex gap-1">
+                                            <span class="h-5 w-5 rounded-full bg-[#2563AA] border border-border/50"></span>
+                                            <span class="h-5 w-5 rounded-full bg-[#b3cceb] dark:bg-[#1a2a42] border border-border/50"></span>
+                                            <span class="h-5 w-5 rounded-full bg-[#5a8ec4] border border-border/50"></span>
+                                        </div>
+                                        <span class="text-sm font-semibold">Slate</span>
+                                        <span x-show="selected === 'slate'" class="ml-auto">
+                                            <i data-lucide="check-circle-2" class="h-4 w-4 text-[#2563AA]"></i>
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground">Deep navy — professional, mature, enterprise.</p>
+                                </div>
+                            </label>
+
+                            {# Clay #}
+                            <label class="cursor-pointer">
+                                <input type="radio" name="color_palette" value="clay" x-model="selected" class="sr-only peer">
+                                <div class="rounded-xl border-2 p-4 transition-all peer-checked:border-[#C45D35] peer-checked:shadow-sm"
+                                     :class="selected === 'clay' ? 'border-[#C45D35] shadow-sm' : 'border-border hover:border-border/80'">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="flex gap-1">
+                                            <span class="h-5 w-5 rounded-full bg-[#C45D35] border border-border/50"></span>
+                                            <span class="h-5 w-5 rounded-full bg-[#e8c4b0] dark:bg-[#3a2a20] border border-border/50"></span>
+                                            <span class="h-5 w-5 rounded-full bg-[#d48a6a] border border-border/50"></span>
+                                        </div>
+                                        <span class="text-sm font-semibold">Clay</span>
+                                        <span x-show="selected === 'clay'" class="ml-auto">
+                                            <i data-lucide="check-circle-2" class="h-4 w-4 text-[#C45D35]"></i>
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground">Terracotta — warm, earthy, unique.</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button type="submit" class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
+                                Save Theme
+                            </button>
+                            <p class="text-xs text-muted-foreground">Changes apply immediately after saving.</p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             {# ── Display Preferences ────────────────────────────── #}
             <div class="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
                 <div class="flex flex-col space-y-1.5 p-6">
                     <h3 class="font-semibold leading-none tracking-tight">Display</h3>
-                    <p class="text-sm text-muted-foreground">Manage your display preferences.</p>
+                    <p class="text-sm text-muted-foreground">Light and dark mode preference.</p>
                 </div>
                 <div class="p-6 pt-0 space-y-4">
-                    <div class="rounded-lg border border-dashed border-border p-6 text-center text-muted-foreground">
-                        <p class="text-sm">Use the theme toggle in the top bar to switch between light and dark mode.</p>
+                    <div class="rounded-lg border border-dashed border-border p-4 text-center text-muted-foreground">
+                        <p class="text-sm">Use the <i data-lucide="moon" class="inline h-3.5 w-3.5"></i> / <i data-lucide="sun" class="inline h-3.5 w-3.5"></i> toggle in the top navigation bar to switch between light and dark mode.</p>
                     </div>
                 </div>
             </div>
@@ -722,7 +828,7 @@ function passkeyManager() {
         },
 
         async deletePasskey(id) {
-            if (!confirm('Remove this passkey? You will no longer be able to sign in with it.')) return;
+            if (!await window.confirmModal({ title: 'Remove this passkey?', description: 'You will no longer be able to sign in with it.', confirmLabel: 'Remove' })) return;
             this.error = null;
             this.successMsg = null;
 

@@ -1,0 +1,17 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Edit Ticket #{{ ticket.id }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+    <form method="post" class="glass-panel space-y-5 p-8">
+        <input type="hidden" name="_token" value="{{ csrf_token('support_ticket_edit_' ~ ticket.id) }}">
+        <header><a href="{{ path('app_support_show', {id: ticket.id}) }}" class="text-sm font-semibold text-muted-foreground hover:text-foreground">← Back to ticket</a><p class="mt-6 text-xs font-bold uppercase tracking-label text-primary">Edit ticket #{{ ticket.id }}</p><h1 class="mt-2 text-4xl font-light tracking-holographic">Update your request.</h1></header>
+        <label class="block space-y-1"><span class="text-sm font-semibold">Subject</span><input required name="subject" value="{{ ticket.subject }}" class="w-full rounded-xl border border-border bg-background/70 p-3"></label>
+        <div class="grid gap-4 md:grid-cols-2">
+            <label class="block space-y-1"><span class="text-sm font-semibold">Category</span><select name="category" class="w-full rounded-xl border border-border bg-background/70 p-3">{% for cat in categories %}<option value="{{ cat.value }}" {{ ticket.category == cat ? 'selected' }}>{{ cat.label }}</option>{% endfor %}</select></label>
+            <label class="block space-y-1"><span class="text-sm font-semibold">Priority</span><select name="priority" class="w-full rounded-xl border border-border bg-background/70 p-3">{% for pri in priorities %}<option value="{{ pri.value }}" {{ ticket.priority == pri ? 'selected' }}>{{ pri.label }}</option>{% endfor %}</select></label>
+        </div>
+        <label class="block space-y-1"><span class="text-sm font-semibold">Description</span><textarea required name="description" rows="7" class="w-full rounded-xl border border-border bg-background/70 p-3">{{ ticket.description }}</textarea></label>
+        <button class="rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground">Save changes</button>
+    </form>
+</div>
+{% endblock %}

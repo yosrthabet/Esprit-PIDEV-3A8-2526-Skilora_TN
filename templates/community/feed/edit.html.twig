@@ -1,0 +1,25 @@
+{% extends 'layouts/adaptive.html.twig' %}
+{% block page_title %}Edit Post{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+    <form method="post" enctype="multipart/form-data" class="glass-panel space-y-5 p-8">
+        <div>
+            <a href="{{ path('app_community_post_show', {id: post.id}) }}" class="text-sm font-semibold text-muted-foreground hover:text-foreground">← Back to post</a>
+            <p class="mt-6 text-xs font-bold uppercase tracking-label text-primary">Community</p>
+            <h1 class="mt-2 text-3xl font-light tracking-holographic">Edit your post</h1>
+        </div>
+        <input type="hidden" name="_token" value="{{ csrf_token('community_post_edit_' ~ post.id) }}">
+        <textarea name="content" rows="8" required class="w-full rounded-xl border border-border bg-background/70 px-4 py-3 text-sm">{{ post.content }}</textarea>
+        <div class="grid gap-3 sm:grid-cols-2">
+            <select name="visibility" class="h-11 rounded-xl border border-border bg-background/70 px-4 text-sm">
+                <option value="public" {{ post.visibility.value == 'public' ? 'selected' : '' }}>Public</option>
+                <option value="connections" {{ post.visibility.value == 'connections' ? 'selected' : '' }}>Connections</option>
+                <option value="private" {{ post.visibility.value == 'private' ? 'selected' : '' }}>Only me</option>
+            </select>
+            <input type="file" name="media" accept="image/*" class="rounded-xl border border-border bg-background/70 px-4 py-2 text-sm">
+        </div>
+        {% if post.mediaPath %}<img src="{{ asset(post.mediaPath) }}" alt="Current post image" class="max-h-60 rounded-xl object-cover">{% endif %}
+        <button class="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Save changes</button>
+    </form>
+</div>
+{% endblock %}
