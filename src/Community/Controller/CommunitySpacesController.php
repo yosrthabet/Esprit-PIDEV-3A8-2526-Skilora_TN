@@ -8,12 +8,16 @@ use App\Community\BlogArticleStatus;
 use App\Community\Entity\BlogArticle;
 use App\Community\Entity\CommunityEvent;
 use App\Community\Entity\CommunityGroup;
+use App\Community\Entity\CommunityPost;
 use App\Community\Entity\EventRsvp;
 use App\Community\Repository\BlogArticleRepository;
 use App\Community\Repository\CommunityEventRepository;
 use App\Community\Repository\CommunityGroupRepository;
+use App\Community\Repository\CommunityPostRepository;
 use App\Community\Repository\EventRsvpRepository;
 use App\Community\Repository\GroupMemberRepository;
+use App\Community\Service\CommunityNotifier;
+use App\Community\Service\ContentModerationService;
 use App\Controller\AppController;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,7 +33,10 @@ class CommunitySpacesController extends AppController
         private readonly CommunityEventRepository $eventRepository,
         private readonly EventRsvpRepository $rsvpRepository,
         private readonly BlogArticleRepository $articleRepository,
+        private readonly CommunityPostRepository $postRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly CommunityNotifier $notifier,
+        private readonly ContentModerationService $moderationService,
     ) {
     }
 
@@ -52,7 +59,8 @@ class CommunitySpacesController extends AppController
             $group = (new CommunityGroup())
                 ->setOwner($this->getAppUser())
                 ->setName($request->request->getString('name'))
-                ->setDescription($request->request->getString('description') ?: null);
+                ->setDescription($request->request->getString('description') ?: null)
+                ->setPrivacy($request->request->getString('privacy') ?: 'public');
             $group->addMember($this->getAppUser(), 'owner');
             $this->entityManager->persist($group);
             $this->entityManager->flush();
@@ -70,7 +78,35 @@ class CommunitySpacesController extends AppController
         return $this->render('community/groups/show.html.twig', [
             'group' => $group,
             'membership' => $this->memberRepository->findOneForUserAndGroup($this->getAppUser(), $group),
+            'posts' => $this->postRepository->findForGroup($group),
         ]);
+    }
+
+    #[Route('/community/groups/{id}/posts', name: 'app_community_group_post', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function groupPost(Request $request, CommunityGroup $group): Response
+    {
+        $this->denyAdminSocialAction();
+        $user = $this->getAppUser();
+        if ($this->memberRepository->findOneForUserAndGroup($user, $group) === null) {
+            throw $this->createAccessDeniedException('Join the group before posting.');
+        }
+        if (!$this->isCsrfTokenValid('community_group_post_' . $group->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+        $content = trim($request->request->getString('content'));
+        if ($content !== '') {
+            $moderation = $this->moderationService->moderate($content);
+            if (!$moderation['safe']) {
+                $this->addFlash('error', 'Please revise this content before posting. ' . ($moderation['reason'] ?? 'It may violate community guidelines.'));
+
+                return $this->redirectToRoute('app_community_group_show', ['id' => $group->getId()]);
+            }
+            $this->entityManager->persist((new CommunityPost())->setAuthor($user)->setGroup($group)->setContent($content));
+            $this->entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_community_group_show', ['id' => $group->getId()]);
     }
 
     #[Route('/community/groups/{id}/join', name: 'app_community_group_join', methods: ['POST'], requirements: ['id' => '\\d+'])]
@@ -81,12 +117,69 @@ class CommunitySpacesController extends AppController
         if (!$this->isCsrfTokenValid('community_group_join_' . $group->getId(), $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
-        if ($this->memberRepository->findOneForUserAndGroup($this->getAppUser(), $group) === null) {
-            $this->entityManager->persist($group->addMember($this->getAppUser()));
+        $user = $this->getAppUser();
+        if ($this->memberRepository->findOneForUserAndGroup($user, $group) === null) {
+            $this->entityManager->persist($group->addMember($user));
+            $this->notifier->notifyGroupJoin($group, $user);
             $this->entityManager->flush();
         }
 
         return $this->redirectToRoute('app_community_group_show', ['id' => $group->getId()]);
+    }
+
+    #[Route('/community/groups/{id}/edit', name: 'app_community_group_edit', methods: ['GET', 'POST'], requirements: ['id' => '\\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function groupEdit(Request $request, CommunityGroup $group): Response
+    {
+        if ($group->getOwner()->getId() !== $this->getAppUser()->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('community_group_edit_' . $group->getId(), $request->request->getString('_token'))) {
+                throw $this->createAccessDeniedException('Invalid CSRF token.');
+            }
+            $group->setName($request->request->getString('name') ?: $group->getName())
+                  ->setDescription($request->request->getString('description') ?: null)
+                  ->setPrivacy($request->request->getString('privacy') ?: $group->getPrivacy());
+            $this->entityManager->flush();
+
+            return $this->redirectToRoute('app_community_group_show', ['id' => $group->getId()]);
+        }
+
+        return $this->render('community/groups/edit.html.twig', ['group' => $group]);
+    }
+
+    #[Route('/community/groups/{id}/delete', name: 'app_community_group_delete', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function groupDelete(Request $request, CommunityGroup $group): Response
+    {
+        if ($group->getOwner()->getId() !== $this->getAppUser()->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+        if (!$this->isCsrfTokenValid('community_group_delete_' . $group->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+        $this->entityManager->remove($group);
+        $this->entityManager->flush();
+
+        return $this->redirectToRoute('app_community_groups');
+    }
+
+    #[Route('/community/groups/{id}/leave', name: 'app_community_group_leave', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function groupLeave(Request $request, CommunityGroup $group): Response
+    {
+        $user = $this->getAppUser();
+        if (!$this->isCsrfTokenValid('community_group_leave_' . $group->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+        $member = $this->memberRepository->findOneForUserAndGroup($user, $group);
+        if ($member !== null && $member->getRole() !== 'owner') {
+            $this->entityManager->remove($member);
+            $this->entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_community_groups');
     }
 
     #[Route('/community/events', name: 'app_community_events', methods: ['GET'])]

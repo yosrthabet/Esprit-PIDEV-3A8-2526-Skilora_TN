@@ -1,0 +1,137 @@
+# ═══════════════════════════════════════════════════
+# Skilora — الترجمة العربية
+# ═══════════════════════════════════════════════════
+
+# ── Navigation ──
+nav:
+    dashboard: لوحة التحكم
+    home: الرئيسية
+    users: المستخدمون
+    recruitment: التوظيف
+    formations: التدريبات
+    certificates: الشهادات
+    finance: المالية
+    contracts: العقود
+    support: الدعم
+    calendar: التقويم
+    reviews: التقييمات
+    community: المجتمع
+    ai_recruitment: ذكاء اصطناعي - التوظيف
+    ai_formations: ذكاء اصطناعي - التدريب
+    chatbot: المساعد الآلي
+    post_job: نشر وظيفة
+    my_offers: عروضي
+    applications: الطلبات
+    interviews: المقابلات
+    hire_offers: عروض التوظيف
+    messages: الرسائل
+    my_formations: تدريباتي
+    catalog: الكتالوج
+    learning: التعلم
+    find_jobs: البحث عن وظائف
+    preferences: التفضيلات
+    invoices: الفواتير
+    escrow: الضمان
+    analytics: التحليلات
+    network: الشبكة
+    overview: نظرة عامة
+    manage: الإدارة
+    exchange_rates: أسعار الصرف
+    payslips: كشوف الرواتب
+    ai_tools: أدوات الذكاء الاصطناعي
+    social: اجتماعي
+    my_courses: دوراتي
+
+# ── Profile Dropdown ──
+profile:
+    my_profile: ملفي الشخصي
+    notifications: الإشعارات
+    settings: الإعدادات
+    wallet: المحفظة
+    bank_accounts: الحسابات البنكية
+    analytics: التحليلات
+    theme: المظهر
+    log_out: تسجيل الخروج
+    guest: زائر
+
+# ── Common UI ──
+common:
+    save: حفظ
+    cancel: إلغاء
+    delete: حذف
+    edit: تعديل
+    create: إنشاء
+    search: بحث
+    filter: تصفية
+    loading: جارٍ التحميل…
+    no_results: لم يتم العثور على نتائج
+    confirm: تأكيد
+    back: رجوع
+    next: التالي
+    previous: السابق
+    submit: إرسال
+    close: إغلاق
+    view_all: عرض الكل
+    see_more: عرض المزيد
+    actions: إجراءات
+    status: الحالة
+    date: التاريخ
+    amount: المبلغ
+    currency: العملة
+    description: الوصف
+    details: التفاصيل
+    yes: نعم
+    no: لا
+
+# ── Auth ──
+auth:
+    login: تسجيل الدخول
+    logout: تسجيل الخروج
+    register: إنشاء حساب
+    forgot_password: نسيت كلمة المرور
+    reset_password: إعادة تعيين كلمة المرور
+    email: البريد الإلكتروني
+    password: كلمة المرور
+    remember_me: تذكرني
+
+# ── Finance ──
+finance:
+    dashboard: لوحة التحكم المالية
+    wallet: المحفظة
+    balance: الرصيد
+    top_up: إعادة الشحن
+    bank_accounts: الحسابات البنكية
+    invoices: الفواتير
+    escrow: الضمان
+    contracts: العقود
+    analytics: التحليلات
+    transactions: المعاملات
+    amount: المبلغ
+    status: الحالة
+    pending: قيد الانتظار
+    completed: مكتمل
+    failed: فشل
+
+# ── Notifications ──
+notifications:
+    title: الإشعارات
+    view_all: عرض الكل
+    no_notifications: لا توجد إشعارات.
+    loading: جارٍ التحميل…
+    unread: غير مقروءة
+
+# ── Employer ──
+employer:
+    post_job: نشر وظيفة
+
+# ── Search ──
+search:
+    placeholder: البحث عن وظائف…
+    quick_matches: تطابقات سريعة
+    search_all: عرض جميع النتائج ←
+    no_matches: لا توجد تطابقات حتى الآن
+
+# ── Footer / Misc ──
+misc:
+    skilora: سكيلورا
+    copyright: "© %year% سكيلورا. جميع الحقوق محفوظة."

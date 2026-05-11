@@ -6,8 +6,7 @@ namespace App\Recruitment\Service;
 
 use App\Entity\User;
 use App\Recruitment\CvBuilder\CvBuilderData;
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use Psr\Log\LoggerInterface;
 use Twig\Environment;
 
 final class CvPdfGeneratorService
@@ -15,27 +14,69 @@ final class CvPdfGeneratorService
     public function __construct(
         private readonly Environment $twig,
         private readonly string $projectDir,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     public function generatePdfBinary(CvBuilderData $data): string
     {
         $template = $data->template === 'classic'
-            ? 'recruitment/cv/pdf/classic.html.twig'
-            : 'recruitment/cv/pdf/modern.html.twig';
+            ? 'recruitment/cv/pdf/classic.tex.twig'
+            : 'recruitment/cv/pdf/modern.tex.twig';
 
-        $options = new Options();
-        $options->set('isRemoteEnabled', false);
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('defaultFont', 'DejaVu Sans');
-        $options->set('chroot', [realpath($this->projectDir) ?: $this->projectDir]);
+        $latex = $this->twig->render($template, ['cv' => $data]);
 
-        $dompdf = new Dompdf($options);
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->loadHtml($this->twig->render($template, ['cv' => $data]), 'UTF-8');
-        $dompdf->render();
+        return $this->compileLaTeX($latex);
+    }
 
-        return $dompdf->output();
+    private function compileLaTeX(string $latex): string
+    {
+        $tmpDir = sys_get_temp_dir() . '/skilora_cv_' . bin2hex(random_bytes(8));
+        if (!mkdir($tmpDir, 0755, true)) {
+            throw new \RuntimeException('Cannot create temp directory for LaTeX compilation.');
+        }
+
+        $texFile = $tmpDir . '/cv.tex';
+        file_put_contents($texFile, $latex);
+
+        $cmd = sprintf(
+            'cd %s && /usr/bin/pdflatex -interaction=nonstopmode -halt-on-error cv.tex 2>&1',
+            escapeshellarg($tmpDir)
+        );
+
+        $output = [];
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+
+        $pdfFile = $tmpDir . '/cv.pdf';
+        if (!file_exists($pdfFile)) {
+            $log = implode("\n", array_slice($output, -30));
+            $this->logger->error('LaTeX compilation failed', ['output' => $log, 'exit_code' => $exitCode, 'tmpDir' => $tmpDir]);
+
+            @copy($texFile, '/tmp/skilora_cv_last_failed.tex');
+            file_put_contents('/tmp/skilora_cv_last_failed.log', implode("\n", $output));
+
+            $this->cleanupDir($tmpDir);
+            throw new \RuntimeException('CV generation failed. Please check your input for special characters and try again.');
+        }
+
+        $pdf = file_get_contents($pdfFile);
+        $this->cleanupDir($tmpDir);
+
+        if ($pdf === false || $pdf === '') {
+            throw new \RuntimeException('Generated PDF is empty.');
+        }
+
+        return $pdf;
+    }
+
+    private function cleanupDir(string $dir): void
+    {
+        $files = glob($dir . '/*') ?: [];
+        foreach ($files as $file) {
+            @unlink($file);
+        }
+        @rmdir($dir);
     }
 
     /**

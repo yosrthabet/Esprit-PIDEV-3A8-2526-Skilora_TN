@@ -11,6 +11,7 @@ use App\Enum\Currency;
 use App\Enum\HireOfferStatus;
 use App\Enum\InterviewFormat;
 use App\Enum\InterviewStatus;
+use App\Enum\JobOfferStatus;
 use App\Finance\Service\ContractService;
 use App\Recruitment\Entity\Application;
 use App\Recruitment\Entity\HireOffer;
@@ -123,9 +124,34 @@ class ApplicationPipelineService
             throw new \RuntimeException('This offer is no longer pending.');
         }
         $offer->accept();
-        $offer->getApplication()->setStatus(ApplicationStatus::OFFER);
+        $application = $offer->getApplication();
+        $application->setStatus(ApplicationStatus::HIRED);
+
+        $jobOffer = $application->getJobOffer();
+        $jobOffer->setStatus(JobOfferStatus::FILLED);
+
         $this->entityManager->flush();
-        $this->contractService->createFromAcceptedOffer($offer);
+
+        $contract = $this->contractService->createFromAcceptedOffer($offer);
+
+        // Notify employer that candidate accepted and contract is ready for funding
+        $employer = $jobOffer->getCompany()?->getOwner();
+        if ($employer !== null) {
+            $notification = (new Notification())
+                ->setUser($employer)
+                ->setType('hire_accepted')
+                ->setTitle('Offer accepted')
+                ->setMessage(sprintf(
+                    '%s accepted your hire offer for "%s". Fund the escrow to begin work.',
+                    $candidate->getDisplayName(),
+                    $jobOffer->getTitle(),
+                ))
+                ->setIcon('✅')
+                ->setReferenceType('contract')
+                ->setReferenceId($contract->getId());
+            $this->entityManager->persist($notification);
+            $this->entityManager->flush();
+        }
     }
 
     public function rejectOffer(User $candidate, HireOffer $offer): void

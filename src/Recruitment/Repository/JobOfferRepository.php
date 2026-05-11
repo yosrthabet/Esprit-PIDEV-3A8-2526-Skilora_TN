@@ -26,12 +26,14 @@ class JobOfferRepository extends ServiceEntityRepository
     {
         $qb = $this->openDiscoveryQuery($query, $workType, $source);
 
+        $qb->addSelect("CASE WHEN j.feedSource IS NULL OR j.feedSource = 'platform' THEN 1 ELSE 0 END AS HIDDEN is_platform");
+
         if ($sort === 'match') {
-            $qb->orderBy('j.featured', 'DESC')->addOrderBy('j.sourceQuality', 'DESC')->addOrderBy('j.postedAt', 'DESC');
+            $qb->orderBy('is_platform', 'DESC')->addOrderBy('j.featured', 'DESC')->addOrderBy('j.sourceQuality', 'DESC')->addOrderBy('j.postedAt', 'DESC');
         } elseif ($sort === 'salary') {
-            $qb->orderBy('j.maxSalary', 'DESC')->addOrderBy('j.postedAt', 'DESC');
+            $qb->orderBy('is_platform', 'DESC')->addOrderBy('j.maxSalary', 'DESC')->addOrderBy('j.postedAt', 'DESC');
         } else {
-            $qb->orderBy('j.postedAt', 'DESC')->addOrderBy('j.id', 'DESC');
+            $qb->orderBy('is_platform', 'DESC')->addOrderBy('j.postedAt', 'DESC')->addOrderBy('j.id', 'DESC');
         }
 
         /** @var list<JobOffer> $jobs */

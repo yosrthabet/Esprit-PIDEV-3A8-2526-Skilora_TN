@@ -48,6 +48,18 @@ class Formation
     #[ORM\Column(length: 20, enumType: FormationStatus::class)]
     private FormationStatus $status = FormationStatus::DRAFT;
 
+    #[ORM\Column(name: 'director_signature', type: Types::TEXT, nullable: true)]
+    private ?string $directorSignature = null;
+
+    #[ORM\Column(name: 'certificate_signature_filename', length: 255, nullable: true)]
+    private ?string $certificateSignatureFilename = null;
+
+    #[ORM\Column(name: 'review_note', type: Types::TEXT, nullable: true)]
+    private ?string $reviewNote = null;
+
+    #[ORM\Column(name: 'review_score', type: Types::DECIMAL, precision: 5, scale: 2, nullable: true)]
+    private ?string $reviewScore = null;
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -107,6 +119,14 @@ class Formation
     /** @return Collection<int, FormationReview> */
     public function getReviews(): Collection { return $this->reviews; }
     public function isPublished(): bool { return $this->status === FormationStatus::PUBLISHED; }
+    public function getDirectorSignature(): ?string { return $this->directorSignature; }
+    public function setDirectorSignature(?string $directorSignature): static { $this->directorSignature = $directorSignature; $this->touch(); return $this; }
+    public function getCertificateSignatureFilename(): ?string { return $this->certificateSignatureFilename; }
+    public function setCertificateSignatureFilename(?string $certificateSignatureFilename): static { $this->certificateSignatureFilename = $certificateSignatureFilename; $this->touch(); return $this; }
+    public function getReviewNote(): ?string { return $this->reviewNote; }
+    public function setReviewNote(?string $reviewNote): static { $this->reviewNote = $reviewNote; return $this; }
+    public function getReviewScore(): ?string { return $this->reviewScore; }
+    public function setReviewScore(?string $reviewScore): static { $this->reviewScore = $reviewScore; return $this; }
 
     private function touch(): void
     {

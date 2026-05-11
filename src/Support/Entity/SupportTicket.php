@@ -56,6 +56,12 @@ class SupportTicket
     #[ORM\Column(name: 'resolved_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $resolvedAt = null;
 
+    #[ORM\Column(name: 'feedback_rating', nullable: true)]
+    private ?int $feedbackRating = null;
+
+    #[ORM\Column(name: 'feedback_comment', type: Types::TEXT, nullable: true)]
+    private ?string $feedbackComment = null;
+
     /** @var Collection<int, SupportMessage> */
     #[ORM\OneToMany(mappedBy: 'ticket', targetEntity: SupportMessage::class, cascade: ['remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['createdAt' => 'ASC'])]
@@ -89,4 +95,9 @@ class SupportTicket
     /** @return Collection<int, SupportMessage> */
     public function getMessages(): Collection { return $this->messages; }
     public function touch(): void { $this->updatedAt = new \DateTimeImmutable(); }
+    public function getFeedbackRating(): ?int { return $this->feedbackRating; }
+    public function setFeedbackRating(?int $feedbackRating): static { $this->feedbackRating = $feedbackRating !== null ? max(1, min(5, $feedbackRating)) : null; return $this; }
+    public function getFeedbackComment(): ?string { return $this->feedbackComment; }
+    public function setFeedbackComment(?string $feedbackComment): static { $this->feedbackComment = $feedbackComment; return $this; }
+    public function hasFeedback(): bool { return $this->feedbackRating !== null; }
 }

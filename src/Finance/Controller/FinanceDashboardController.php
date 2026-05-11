@@ -12,6 +12,8 @@ use App\Finance\Entity\ContractDispute;
 use App\Finance\Repository\ContractRepository;
 use App\Finance\Repository\EscrowTransactionRepository;
 use App\Finance\Repository\InvoiceRepository;
+use App\Finance\Repository\PaymentTransactionRepository;
+use App\Finance\Repository\WalletRepository;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -23,6 +25,8 @@ final class FinanceDashboardController extends AppController
         private readonly ContractRepository $contractRepository,
         private readonly EscrowTransactionRepository $transactionRepository,
         private readonly InvoiceRepository $invoiceRepository,
+        private readonly WalletRepository $walletRepository,
+        private readonly PaymentTransactionRepository $paymentTransactionRepository,
     ) {
     }
 
@@ -39,6 +43,8 @@ final class FinanceDashboardController extends AppController
             'status_counts' => $this->statusCounts($contracts),
             'active_escrow_total' => $this->activeEscrowTotal($contracts),
             'paid_invoice_total' => $this->invoiceRepository->sumPaidForUser($user),
+            'wallet' => $this->walletRepository->findOneForUser($user),
+            'wallet_topups_total' => $this->paymentTransactionRepository->sumSucceededForUser($user),
             'open_disputes' => array_slice($openDisputes, 0, 5),
             'open_dispute_count' => count($openDisputes),
             'recent_transactions' => $this->transactionRepository->findForUser($user, 8),

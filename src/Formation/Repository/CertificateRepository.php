@@ -28,6 +28,19 @@ class CertificateRepository extends ServiceEntityRepository
         return $this->findOneBy(['verificationId' => $verificationId]);
     }
 
+    /** @return list<Certificate> */
+    public function findAllRecent(int $limit = 50): array
+    {
+        /** @var list<Certificate> $result */
+        $result = $this->createQueryBuilder('c')
+            ->orderBy('c.issuedAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
     public function countForTrainer(User $trainer): int
     {
         return (int) $this->createQueryBuilder('c')

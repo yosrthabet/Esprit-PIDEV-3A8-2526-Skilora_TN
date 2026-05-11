@@ -10,8 +10,13 @@ use App\Enum\TicketPriority;
 use App\Enum\TicketStatus;
 use App\Support\Entity\SupportMessage;
 use App\Support\Entity\SupportTicket;
+use App\Support\Entity\TicketAttachment;
 use App\Support\Repository\SupportMessageRepository;
 use App\Support\Repository\SupportTicketRepository;
+use App\Support\Repository\TicketAttachmentRepository;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use App\Service\AI\AiTextService;
 use App\Support\Service\SupportNotifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -28,6 +33,8 @@ class SupportController extends AppController
         private readonly SupportMessageRepository $messageRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly SupportNotifier $notifier,
+        private readonly TicketAttachmentRepository $attachmentRepository,
+        private readonly AiTextService $aiTextService,
     ) {
     }
 
@@ -86,6 +93,82 @@ class SupportController extends AppController
         return $this->render('support/client/new.html.twig');
     }
 
+    #[Route('/support/{id}/edit', name: 'app_support_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function edit(Request $request, SupportTicket $ticket): Response
+    {
+        $user = $this->getAppUser();
+        if ($ticket->getRequester()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+        if (!in_array($ticket->getStatus(), [TicketStatus::OPEN, TicketStatus::IN_PROGRESS], true)) {
+            $this->addFlash('error', 'This ticket can no longer be edited.');
+
+            return $this->redirectToRoute('app_support_show', ['id' => $ticket->getId()]);
+        }
+
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('support_ticket_edit_' . $ticket->getId(), $request->request->getString('_token'))) {
+                throw $this->createAccessDeniedException('Invalid CSRF token.');
+            }
+            $ticket
+                ->setSubject(trim($request->request->getString('subject')) ?: $ticket->getSubject())
+                ->setDescription(trim($request->request->getString('description')) ?: $ticket->getDescription())
+                ->setCategory(TicketCategory::tryFrom($request->request->getString('category')) ?? $ticket->getCategory())
+                ->setPriority(TicketPriority::tryFrom($request->request->getString('priority')) ?? $ticket->getPriority());
+            $ticket->touch();
+            $this->entityManager->flush();
+            $this->addFlash('success', 'Ticket updated.');
+
+            return $this->redirectToRoute('app_support_show', ['id' => $ticket->getId()]);
+        }
+
+        return $this->render('support/client/edit.html.twig', [
+            'ticket' => $ticket,
+            'categories' => TicketCategory::cases(),
+            'priorities' => TicketPriority::cases(),
+        ]);
+    }
+
+    #[Route('/support/{id}/close', name: 'app_support_close', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function close(Request $request, SupportTicket $ticket): Response
+    {
+        $user = $this->getAppUser();
+        if ($ticket->getRequester()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+        if (!$this->isCsrfTokenValid('support_ticket_close_' . $ticket->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+        $ticket->setStatus(TicketStatus::CLOSED);
+        $this->entityManager->flush();
+        $this->addFlash('success', 'Ticket closed.');
+
+        return $this->redirectToRoute('app_support');
+    }
+
+    #[Route('/support/{id}/feedback', name: 'app_support_feedback', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function feedback(Request $request, SupportTicket $ticket): Response
+    {
+        $user = $this->getAppUser();
+        if ($ticket->getRequester()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+        if ($ticket->hasFeedback()) {
+            $this->addFlash('info', 'Feedback already submitted.');
+
+            return $this->redirectToRoute('app_support_show', ['id' => $ticket->getId()]);
+        }
+        if (!$this->isCsrfTokenValid('support_feedback_' . $ticket->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+        $ticket->setFeedbackRating($request->request->getInt('rating'))
+               ->setFeedbackComment(trim($request->request->getString('comment')) ?: null);
+        $this->entityManager->flush();
+        $this->addFlash('success', 'Thank you for your feedback!');
+
+        return $this->redirectToRoute('app_support_show', ['id' => $ticket->getId()]);
+    }
+
     #[Route('/support/{id}', name: 'app_support_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     #[Route('/admin/support/{id}', name: 'app_admin_support_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(SupportTicket $ticket): Response
@@ -96,6 +179,7 @@ class SupportController extends AppController
         return $this->render('support/show.html.twig', [
             'ticket' => $ticket,
             'messages' => $this->messageRepository->findVisibleForTicket($ticket, $admin),
+            'attachments' => $this->attachmentRepository->findForTicket($ticket),
             'admin' => $admin,
         ]);
     }
@@ -140,6 +224,95 @@ class SupportController extends AppController
         ]);
     }
 
+    #[Route('/support/messages/{id}/edit', name: 'app_support_message_edit', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function editMessage(Request $request, SupportMessage $message): JsonResponse
+    {
+        $user = $this->getAppUser();
+        if ($message->getSender()->getId() !== $user->getId()) {
+            return new JsonResponse(['error' => 'Not your message.'], 403);
+        }
+        if (!$this->isCsrfTokenValid('support_msg_edit_' . $message->getId(), $request->request->getString('_token'))) {
+            return new JsonResponse(['error' => 'Invalid token.'], 403);
+        }
+        $body = trim($request->request->getString('body'));
+        if ($body === '') {
+            return new JsonResponse(['error' => 'Body is required.'], 422);
+        }
+        $message->setBody($body);
+        $this->entityManager->flush();
+
+        return new JsonResponse(['message' => $this->serializeMessage($message)]);
+    }
+
+    #[Route('/support/messages/{id}/delete', name: 'app_support_message_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function deleteMessage(Request $request, SupportMessage $message): JsonResponse
+    {
+        $user = $this->getAppUser();
+        if ($message->getSender()->getId() !== $user->getId()) {
+            return new JsonResponse(['error' => 'Not your message.'], 403);
+        }
+        if (!$this->isCsrfTokenValid('support_msg_delete_' . $message->getId(), $request->request->getString('_token'))) {
+            return new JsonResponse(['error' => 'Invalid token.'], 403);
+        }
+        $this->entityManager->remove($message);
+        $this->entityManager->flush();
+
+        return new JsonResponse(['deleted' => true]);
+    }
+
+    #[Route('/support/{id}/attachments', name: 'app_support_upload_attachment', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function uploadAttachment(Request $request, SupportTicket $ticket): Response
+    {
+        $user = $this->getAppUser();
+        $admin = $this->isGranted('ROLE_ADMIN');
+        $this->assertTicketAccess($ticket, $admin);
+        if (!$this->isCsrfTokenValid('support_attachment_' . $ticket->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+        /** @var \Symfony\Component\HttpFoundation\File\UploadedFile|null $file */
+        $file = $request->files->get('attachment');
+        if ($file === null || !$file->isValid()) {
+            $this->addFlash('error', 'No valid file uploaded.');
+
+            return $this->redirectToRoute($admin ? 'app_admin_support_show' : 'app_support_show', ['id' => $ticket->getId()]);
+        }
+        $uploadDir = $this->getParameter('kernel.project_dir') . '/var/uploads/support';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0o775, true);
+        }
+        $storedName = bin2hex(random_bytes(16)) . '.' . ($file->guessExtension() ?: 'bin');
+        $file->move($uploadDir, $storedName);
+
+        $attachment = (new TicketAttachment())
+            ->setTicket($ticket)
+            ->setUploadedBy($user)
+            ->setOriginalName($file->getClientOriginalName())
+            ->setStoredPath('var/uploads/support/' . $storedName)
+            ->setMimeType($file->getClientMimeType())
+            ->setFileSize($file->getSize());
+        $this->entityManager->persist($attachment);
+        $this->entityManager->flush();
+        $this->addFlash('success', 'File attached.');
+
+        return $this->redirectToRoute($admin ? 'app_admin_support_show' : 'app_support_show', ['id' => $ticket->getId()]);
+    }
+
+    #[Route('/support/attachments/{id}/download', name: 'app_support_download_attachment', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function downloadAttachment(TicketAttachment $attachment): BinaryFileResponse
+    {
+        $admin = $this->isGranted('ROLE_ADMIN');
+        $this->assertTicketAccess($attachment->getTicket(), $admin);
+        $filePath = $this->getParameter('kernel.project_dir') . '/' . $attachment->getStoredPath();
+        if (!file_exists($filePath)) {
+            throw $this->createNotFoundException('File not found.');
+        }
+        $response = new BinaryFileResponse($filePath);
+        $response->headers->set('Content-Type', $attachment->getMimeType() ?: 'application/octet-stream');
+        $response->setContentDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $attachment->getOriginalName());
+
+        return $response;
+    }
+
     #[Route('/admin/support', name: 'app_admin_support', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     public function adminIndex(Request $request): Response
@@ -159,6 +332,32 @@ class SupportController extends AppController
             'category_stats' => $this->ticketRepository->countByCategory(),
             'daily_stats' => $this->ticketRepository->countLast7DaysVolume(),
             'active_count' => $statusStats[TicketStatus::IN_PROGRESS->value] ?? 0,
+        ]);
+    }
+
+    #[Route('/admin/support/calendar', name: 'app_admin_support_calendar', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function adminCalendar(): Response
+    {
+        $tickets = $this->ticketRepository->findForAdmin(null, null, null, null, 'newest');
+        $events = [];
+        foreach ($tickets as $t) {
+            $events[] = [
+                'id' => $t->getId(),
+                'title' => '#' . $t->getId() . ' ' . mb_substr($t->getSubject(), 0, 40),
+                'start' => $t->getCreatedAt()->format('Y-m-d'),
+                'url' => $this->generateUrl('app_admin_support_show', ['id' => $t->getId()]),
+                'color' => match($t->getPriority()) {
+                    TicketPriority::URGENT => '#ef4444',
+                    TicketPriority::HIGH => '#f97316',
+                    TicketPriority::NORMAL => '#eab308',
+                    TicketPriority::LOW => '#22c55e',
+                },
+            ];
+        }
+
+        return $this->render('support/admin/calendar.html.twig', [
+            'events_json' => json_encode($events, \JSON_THROW_ON_ERROR),
         ]);
     }
 
@@ -204,9 +403,41 @@ class SupportController extends AppController
         $this->entityManager->flush();
         if ($old !== $ticket->getStatus()) {
             $this->notifier->notifyRequester($ticket, 'Support status updated', 'Your ticket is now ' . $ticket->getStatus()->label() . '.');
+            $this->notifier->sendStatusChangeEmail($ticket, $old->label(), $ticket->getStatus()->label());
         }
 
         return $this->redirectToRoute('app_admin_support_show', ['id' => $ticket->getId()]);
+    }
+
+    #[Route('/support/ai/suggest-subject', name: 'app_support_ai_suggest_subject', methods: ['POST'])]
+    public function aiSuggestSubject(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true) ?: [];
+        $description = trim((string) ($data['description'] ?? ''));
+
+        $suggestion = $this->aiTextService->suggestSubject($description);
+
+        return $this->json(['suggestion' => $suggestion ?? '']);
+    }
+
+    #[Route('/support/ai/correct-text', name: 'app_support_ai_correct_text', methods: ['POST'])]
+    public function aiCorrectText(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true) ?: [];
+        $text = trim((string) ($data['text'] ?? ''));
+
+        $correction = $this->aiTextService->correctText($text);
+
+        return $this->json(['correction' => $correction ?? $text]);
+    }
+
+    #[Route('/support/ai/detect-tone', name: 'app_support_ai_detect_tone', methods: ['POST'])]
+    public function aiDetectTone(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true) ?: [];
+        $text = trim((string) ($data['text'] ?? ''));
+
+        return $this->json(['tone' => $this->aiTextService->detectTone($text)]);
     }
 
     private function assertTicketAccess(SupportTicket $ticket, bool $admin): void

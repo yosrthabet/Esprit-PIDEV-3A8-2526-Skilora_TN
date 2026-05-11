@@ -12,7 +12,10 @@ use App\Finance\Entity\ContractDispute;
 use App\Finance\Entity\EscrowTransaction;
 use App\Finance\Entity\Invoice;
 use App\Finance\Repository\ContractRepository;
+use App\Finance\Entity\PaymentTransaction;
+use App\Finance\Entity\Wallet;
 use App\Finance\Repository\InvoiceRepository;
+use App\Finance\Repository\WalletRepository;
 use App\Recruitment\Entity\HireOffer;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -21,6 +24,7 @@ class ContractService
     public function __construct(
         private readonly ContractRepository $contractRepository,
         private readonly InvoiceRepository $invoiceRepository,
+        private readonly WalletRepository $walletRepository,
         private readonly FinanceNotifier $notifier,
         private readonly EntityManagerInterface $entityManager,
     ) {
@@ -99,6 +103,7 @@ class ContractService
         }
         $contract->releaseEscrow();
         $this->entityManager->persist($this->transaction($contract, EscrowTransactionType::RELEASE));
+        $this->creditFreelancerWallet($contract);
         $invoice = $this->invoiceRepository->findOneForContract($contract) ?? $this->createInvoice($contract);
         $invoice->markPaid();
         $this->entityManager->persist($invoice);
@@ -128,9 +133,11 @@ class ContractService
 
     public function resolveDispute(ContractDispute $dispute, string $resolution): void
     {
+        $contract = $dispute->getContract();
         $dispute->resolve($resolution);
-        $dispute->getContract()->closeFromDispute();
-        $this->entityManager->persist($this->transaction($dispute->getContract(), EscrowTransactionType::RELEASE));
+        $contract->closeFromDispute();
+        $this->entityManager->persist($this->transaction($contract, EscrowTransactionType::RELEASE));
+        $this->creditFreelancerWallet($contract);
         $this->entityManager->flush();
     }
 
@@ -141,6 +148,32 @@ class ContractService
             ->setType($type)
             ->setAmount($contract->getAmount())
             ->setCurrency($contract->getCurrency());
+    }
+
+    private function creditFreelancerWallet(Contract $contract): void
+    {
+        $freelancer = $contract->getFreelancer();
+        $amount = $contract->getAmount();
+        if ($amount === null || !is_numeric($amount) || bccomp($amount, '0.00', 2) <= 0) {
+            return;
+        }
+
+        $wallet = $this->walletRepository->findOneForUser($freelancer, $contract->getCurrency());
+        if ($wallet === null) {
+            $wallet = (new Wallet())
+                ->setUser($freelancer)
+                ->setCurrency($contract->getCurrency());
+            $this->entityManager->persist($wallet);
+        }
+        $wallet->credit($amount);
+
+        $tx = (new PaymentTransaction())
+            ->setUser($freelancer)
+            ->setType('escrow_release')
+            ->setAmount($amount)
+            ->setCurrency($contract->getCurrency())
+            ->setProviderReference('contract-' . $contract->getId());
+        $this->entityManager->persist($tx);
     }
 
     private function createInvoice(Contract $contract): Invoice

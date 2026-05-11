@@ -146,6 +146,44 @@ class MessagingController extends AppController
         return new JsonResponse(['message' => $this->serializeMessage($message, $user)], 201);
     }
 
+    #[Route('/api/inbox/messages/{id}/edit', name: 'app_inbox_message_edit', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function editMessage(Request $request, DmMessage $message): JsonResponse
+    {
+        $user = $this->getAppUser();
+        if ($message->getSender()->getId() !== $user->getId()) {
+            return new JsonResponse(['error' => 'Not your message.'], 403);
+        }
+        if (!$this->isCsrfTokenValid('inbox_msg_edit_' . $message->getId(), $request->request->getString('_token'))) {
+            return new JsonResponse(['error' => 'Invalid token.'], 403);
+        }
+        $body = trim($request->request->getString('body'));
+        if ($body === '') {
+            return new JsonResponse(['error' => 'Body is required.'], 422);
+        }
+        $message->setBody($body);
+        $this->entityManager->flush();
+
+        return new JsonResponse(['message' => $this->serializeMessage($message, $user)]);
+    }
+
+    #[Route('/api/inbox/messages/{id}/delete', name: 'app_inbox_message_delete', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function deleteMessage(Request $request, DmMessage $message): JsonResponse
+    {
+        $user = $this->getAppUser();
+        if ($message->getSender()->getId() !== $user->getId()) {
+            return new JsonResponse(['error' => 'Not your message.'], 403);
+        }
+        if (!$this->isCsrfTokenValid('inbox_msg_delete_' . $message->getId(), $request->request->getString('_token'))) {
+            return new JsonResponse(['error' => 'Invalid token.'], 403);
+        }
+        $this->entityManager->remove($message);
+        $this->entityManager->flush();
+
+        return new JsonResponse(['deleted' => true]);
+    }
+
     #[Route('/api/inbox/unread-count', name: 'app_inbox_unread_count', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function unreadCount(): JsonResponse
@@ -182,14 +220,20 @@ class MessagingController extends AppController
         return $other instanceof User && $this->invitationRepository->areFriends($user, $other);
     }
 
-    /** @return array{id: int|null, body: string, sender: string, mine: bool, created_at: string} */
+    /** @return array<string, mixed> */
     private function serializeMessage(DmMessage $message, User $viewer): array
     {
         return [
             'id' => $message->getId(),
             'body' => $message->getBody(),
             'sender' => $message->getSender()->getDisplayName(),
+            'sender_id' => $message->getSender()->getId(),
             'mine' => $message->getSender()->getId() === $viewer->getId(),
+            'message_type' => $message->getMessageType(),
+            'voice_url' => $message->getVoiceUrl(),
+            'image_url' => $message->getImageUrl(),
+            'is_read' => $message->isRead(),
+            'read_at' => $message->getReadAt()?->format('H:i'),
             'created_at' => $message->getCreatedAt()->format('M d, H:i'),
         ];
     }

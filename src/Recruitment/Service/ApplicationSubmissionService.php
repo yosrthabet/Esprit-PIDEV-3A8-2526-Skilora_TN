@@ -26,6 +26,7 @@ class ApplicationSubmissionService
     public function __construct(
         private readonly ApplicationRepository $applicationRepository,
         private readonly JobMatchService $jobMatchService,
+        private readonly ApplicationQualityScreeningService $screeningService,
         private readonly EntityManagerInterface $entityManager,
         private readonly string $cvUploadDir,
     ) {
@@ -65,6 +66,11 @@ class ApplicationSubmissionService
 
     private function createApplication(User $candidate, JobOffer $jobOffer, string $relativePath, ?string $coverLetter): Application
     {
+        $screening = $this->screeningService->analyze($coverLetter, null);
+        if ($screening->blocked) {
+            throw new \RuntimeException('Application blocked by quality screening: ' . implode(' ', $screening->reasons));
+        }
+
         $match = $this->jobMatchService->score($candidate, $jobOffer);
         $application = (new Application())
             ->setCandidate($candidate)

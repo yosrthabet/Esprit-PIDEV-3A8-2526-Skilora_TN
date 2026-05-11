@@ -12,14 +12,23 @@ use App\Formation\Entity\Formation;
 use App\Formation\Entity\FormationMaterial;
 use App\Formation\Entity\FormationModule;
 use App\Formation\Entity\FormationReview;
+use App\Formation\Entity\Quiz;
+use App\Formation\Entity\QuizResult;
+use App\Formation\Entity\ReviewVote;
+use App\Formation\Repository\QuizRepository;
+use App\Formation\Repository\QuizResultRepository;
+use App\Formation\Repository\ReviewVoteRepository;
 use App\Formation\EnrollmentStatus;
 use App\Formation\FormationLevel;
+use App\Formation\FormationStatus;
 use App\Formation\Repository\CertificateRepository;
 use App\Formation\Repository\EnrollmentRepository;
 use App\Formation\Repository\FormationReviewRepository;
 use App\Formation\Repository\FormationRepository;
 use App\Formation\Service\EnrollmentService;
+use App\Formation\Service\FormationAiReviewService;
 use App\Formation\Service\FormationNotifier;
+use App\Formation\Service\FormationCertificateSignatureHandler;
 use App\Formation\Service\FormationProgressService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -36,9 +45,14 @@ class FormationController extends AppController
         private readonly EnrollmentRepository $enrollmentRepository,
         private readonly CertificateRepository $certificateRepository,
         private readonly FormationReviewRepository $reviewRepository,
+        private readonly ReviewVoteRepository $reviewVoteRepository,
+        private readonly QuizRepository $quizRepository,
+        private readonly QuizResultRepository $quizResultRepository,
         private readonly EnrollmentService $enrollmentService,
         private readonly FormationNotifier $notifier,
         private readonly FormationProgressService $progressService,
+        private readonly FormationCertificateSignatureHandler $signatureHandler,
+        private readonly FormationAiReviewService $aiReviewService,
         private readonly EntityManagerInterface $entityManager,
     ) {
     }
@@ -92,11 +106,23 @@ class FormationController extends AppController
         }
 
         $existing = $this->enrollmentRepository->findOneForUserAndFormation($user, $formation);
-        $enrollment = $this->enrollmentService->enroll($user, $formation);
+
+        try {
+            $enrollment = $this->enrollmentService->enroll($user, $formation);
+        } catch (\RuntimeException $e) {
+            $this->addFlash('error', $e->getMessage());
+            return $this->redirectToRoute('app_formations');
+        }
+
         if ($existing === null) {
             $this->notifier->notifyTrainerEnrollment($enrollment);
         }
-        $this->addFlash('success', 'Formation added to your learning space.');
+
+        $price = (float) ($formation->getPriceAmount() ?? '0');
+        $msg = $price > 0
+            ? sprintf('Enrolled! %.2f TND deducted from your wallet.', $price)
+            : 'Formation added to your learning space.';
+        $this->addFlash('success', $msg);
 
         return $this->redirectToRoute('app_learning_show', ['id' => $enrollment->getId()]);
     }
@@ -123,8 +149,30 @@ class FormationController extends AppController
 
         $this->entityManager->persist($review);
         $this->entityManager->flush();
+        $this->addFlash('success', 'Thank you for your review!');
 
-        return $this->redirectToRoute('app_formation_show', ['id' => $formation->getId()]);
+        return $this->redirectToRoute('app_learning_show', ['id' => $enrollment->getId()]);
+    }
+
+    #[Route('/formations/reviews/{id}/vote', name: 'app_formation_review_vote', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function reviewVote(Request $request, FormationReview $review): Response
+    {
+        $user = $this->getAppUser();
+        if (!$this->isCsrfTokenValid('review_vote_' . $review->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+        $helpful = $request->request->getString('vote') === 'helpful';
+        $existing = $this->reviewVoteRepository->findOneForUserAndReview($user, $review);
+        if ($existing !== null) {
+            $existing->setHelpful($helpful);
+        } else {
+            $vote = (new ReviewVote())->setReview($review)->setUser($user)->setHelpful($helpful);
+            $this->entityManager->persist($vote);
+        }
+        $this->entityManager->flush();
+
+        return $this->redirectToRoute('app_formation_show', ['id' => $review->getFormation()->getId()]);
     }
 
     #[Route('/learning', name: 'app_learning', methods: ['GET'])]
@@ -149,10 +197,14 @@ class FormationController extends AppController
             }
         }
 
+        $user = $this->getAppUser();
+        $hasReviewed = $this->reviewRepository->findOneForUserAndFormation($user, $enrollment->getFormation()) !== null;
+
         return $this->render('formation/learning/show.html.twig', [
             'enrollment' => $enrollment,
             'progress_percent' => $this->progressService->getCompletionPercent($enrollment),
             'completed_module_ids' => $completedModuleIds,
+            'has_reviewed' => $hasReviewed,
         ]);
     }
 
@@ -206,6 +258,7 @@ class FormationController extends AppController
 
         return $this->render('formation/certificates/show.html.twig', [
             'certificate' => $certificate,
+            'signature_data_uri' => $this->signatureHandler->getSignatureDataUri($certificate->getEnrollment()->getFormation()),
         ]);
     }
 
@@ -213,9 +266,11 @@ class FormationController extends AppController
     #[Route('/certificate/verify/{verificationId}', name: 'certificate_verify', methods: ['GET'])]
     public function certificateVerify(string $verificationId): Response
     {
+        $cert = $this->certificateRepository->findOneByVerificationId($verificationId);
         return $this->render('formation/certificates/verify.html.twig', [
-            'certificate' => $this->certificateRepository->findOneByVerificationId($verificationId),
+            'certificate' => $cert,
             'verification_id' => $verificationId,
+            'signature_data_uri' => $cert ? $this->signatureHandler->getSignatureDataUri($cert->getEnrollment()->getFormation()) : null,
         ]);
     }
 
@@ -228,6 +283,7 @@ class FormationController extends AppController
         return $this->render('formation/certificates/preview.html.twig', [
             'certificate' => $certificate,
             'verification_url' => $this->certificateVerificationUrl($certificate),
+            'signature_data_uri' => $this->signatureHandler->getSignatureDataUri($certificate->getEnrollment()->getFormation()),
         ]);
     }
 
@@ -255,6 +311,7 @@ class FormationController extends AppController
         $html = $this->renderView('formation/certificates/pdf.html.twig', [
             'certificate' => $certificate,
             'verification_url' => $this->certificateVerificationUrl($certificate),
+            'signature_data_uri' => $this->signatureHandler->getSignatureDataUri($certificate->getEnrollment()->getFormation()),
         ]);
 
         if (class_exists(\Dompdf\Dompdf::class)) {
@@ -305,6 +362,7 @@ class FormationController extends AppController
             $this->applyFormationRequest($formation, $request);
             $this->entityManager->persist($formation);
             $this->entityManager->flush();
+            $this->signatureHandler->handleSignatureFromRequest($request, $formation);
             $this->notifier->notifyAdminsNewFormation($formation);
 
             return $this->redirectToRoute('app_trainer_formation_modules', ['id' => $formation->getId()]);
@@ -340,6 +398,7 @@ class FormationController extends AppController
             }
             $this->applyFormationRequest($formation, $request);
             $this->entityManager->flush();
+            $this->signatureHandler->handleSignatureFromRequest($request, $formation);
 
             return $this->redirectToRoute('app_trainer_formations');
         }
@@ -349,6 +408,64 @@ class FormationController extends AppController
             'levels' => FormationLevel::cases(),
             'action' => 'Update formation',
         ]);
+    }
+
+    #[Route('/trainer/formations/{id}/signature-preview', name: 'app_trainer_formation_signature_preview', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_TRAINER')]
+    public function trainerSignaturePreview(Formation $formation): Response
+    {
+        $this->assertTrainerOwns($formation);
+        $dataUri = $this->signatureHandler->getSignatureDataUri($formation);
+        if (null === $dataUri) {
+            throw $this->createNotFoundException('No signature found.');
+        }
+        $binary = base64_decode(explode(',', $dataUri, 2)[1] ?? '', true);
+        $response = new Response($binary ?: '');
+        $response->headers->set('Content-Type', 'image/png');
+        $response->headers->set('Content-Disposition', 'inline; filename="signature.png"');
+        return $response;
+    }
+
+    #[Route('/trainer/formations/{id}/submit-review', name: 'app_trainer_formation_submit_review', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_TRAINER')]
+    public function trainerSubmitForReview(Request $request, Formation $formation): Response
+    {
+        $this->assertTrainerOwns($formation);
+        if (!$this->isCsrfTokenValid('trainer_formation_submit_' . $formation->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+        if (!in_array($formation->getStatus(), [FormationStatus::DRAFT, FormationStatus::REFUSED], true)) {
+            $this->addFlash('error', 'This formation cannot be submitted for review in its current state.');
+            return $this->redirectToRoute('app_trainer_formation_modules', ['id' => $formation->getId()]);
+        }
+        if ($formation->getModules()->isEmpty()) {
+            $this->addFlash('error', 'Add at least one module before submitting for review.');
+            return $this->redirectToRoute('app_trainer_formation_modules', ['id' => $formation->getId()]);
+        }
+        if (null === $formation->getCertificateSignatureFilename()) {
+            $this->addFlash('error', 'Please add your certificate signature before submitting.');
+            return $this->redirectToRoute('app_trainer_formation_modules', ['id' => $formation->getId()]);
+        }
+        $formation->setStatus(FormationStatus::PENDING_REVIEW);
+        $this->entityManager->flush();
+
+        // Trigger async AI review
+        try {
+            $this->aiReviewService->reviewFormation($formation);
+        } catch (\Throwable) {
+            // If AI review fails, stay in pending_review for manual review
+        }
+
+        if ($formation->getStatus() === FormationStatus::PUBLISHED) {
+            $this->addFlash('success', 'Your formation passed AI review and is now published!');
+        } elseif ($formation->getStatus() === FormationStatus::REFUSED) {
+            $this->addFlash('error', 'AI review did not approve your formation: ' . ($formation->getReviewNote() ?? 'quality below threshold'));
+            return $this->redirectToRoute('app_trainer_formation_modules', ['id' => $formation->getId()]);
+        } else {
+            $this->addFlash('success', 'Formation submitted for review. You will be notified once reviewed.');
+        }
+
+        return $this->redirectToRoute('app_trainer_formations');
     }
 
     #[Route('/trainer/formations/{id}/delete', name: 'app_trainer_formation_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
@@ -588,6 +705,15 @@ class FormationController extends AppController
         return $this->redirectToRoute('app_admin_formations');
     }
 
+    #[Route('/admin/certificates', name: 'app_admin_certificates', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function adminCertificates(): Response
+    {
+        return $this->render('formation/admin/certificates.html.twig', [
+            'certificates' => $this->certificateRepository->findAllRecent(50),
+        ]);
+    }
+
     private function applyFormationRequest(Formation $formation, Request $request): void
     {
         $formation
@@ -663,6 +789,82 @@ class FormationController extends AppController
         if (!$this->isCsrfTokenValid('admin_formation_' . $action . '_' . $formation->getId(), $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
+    }
+
+    #[Route('/formations/{id}/quizzes', name: 'app_formation_quizzes', methods: ['GET'], requirements: ['id' => '\\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function quizzes(Formation $formation): Response
+    {
+        $user = $this->getAppUser();
+        $enrollment = $this->enrollmentRepository->findOneForUserAndFormation($user, $formation);
+        if ($enrollment === null) {
+            throw $this->createAccessDeniedException('You must be enrolled.');
+        }
+
+        return $this->render('formation/quiz/index.html.twig', [
+            'formation' => $formation,
+            'quizzes' => $this->quizRepository->findPublishedForFormation($formation),
+            'results' => $this->quizResultRepository->findForStudent($user),
+        ]);
+    }
+
+    #[Route('/quizzes/{id}/take', name: 'app_quiz_take', methods: ['GET'], requirements: ['id' => '\\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function takeQuiz(Quiz $quiz): Response
+    {
+        $user = $this->getAppUser();
+        $enrollment = $this->enrollmentRepository->findOneForUserAndFormation($user, $quiz->getFormation());
+        if ($enrollment === null) {
+            throw $this->createAccessDeniedException('You must be enrolled.');
+        }
+
+        return $this->render('formation/quiz/take.html.twig', [
+            'quiz' => $quiz,
+            'questions' => $quiz->getQuestions(),
+        ]);
+    }
+
+    #[Route('/quizzes/{id}/submit', name: 'app_quiz_submit', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function submitQuiz(Request $request, Quiz $quiz): Response
+    {
+        $user = $this->getAppUser();
+        $enrollment = $this->enrollmentRepository->findOneForUserAndFormation($user, $quiz->getFormation());
+        if ($enrollment === null) {
+            throw $this->createAccessDeniedException('You must be enrolled.');
+        }
+        if (!$this->isCsrfTokenValid('quiz_submit_' . $quiz->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        $answers = [];
+        $earnedPoints = 0;
+        $totalPoints = 0;
+        foreach ($quiz->getQuestions() as $question) {
+            $qid = $question->getId();
+            if ($qid === null) {
+                continue;
+            }
+            $selected = $request->request->getInt('q_' . $qid, -1);
+            $answers[$qid] = $selected;
+            $totalPoints += $question->getPoints();
+            if ($question->isCorrect($selected)) {
+                $earnedPoints += $question->getPoints();
+            }
+        }
+
+        $result = (new QuizResult())
+            ->setQuiz($quiz)
+            ->setStudent($user)
+            ->setAnswers($answers);
+        $result->complete($earnedPoints, $totalPoints, $quiz->getPassingScore());
+        $this->entityManager->persist($result);
+        $this->entityManager->flush();
+
+        return $this->render('formation/quiz/result.html.twig', [
+            'quiz' => $quiz,
+            'result' => $result,
+        ]);
     }
 
     private function certificateVerificationUrl(Certificate $certificate): string

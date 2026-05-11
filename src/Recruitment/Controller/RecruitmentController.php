@@ -11,6 +11,7 @@ use App\Enum\Currency;
 use App\Enum\ExperienceLevel;
 use App\Enum\JobOfferStatus;
 use App\Enum\WorkType;
+use App\Finance\Repository\ContractRepository;
 use App\Recruitment\Entity\Application;
 use App\Recruitment\Entity\Company;
 use App\Recruitment\Entity\HireOffer;
@@ -24,10 +25,12 @@ use App\Recruitment\Repository\JobInterviewRepository;
 use App\Recruitment\Repository\JobOfferRepository;
 use App\Recruitment\Repository\JobPreferenceRepository;
 use App\Recruitment\Repository\SavedJobRepository;
+use App\Recruitment\Service\AnetiService;
 use App\Recruitment\Service\ApplicationSubmissionService;
 use App\Recruitment\Service\ApplicationPipelineService;
 use App\Recruitment\Service\EmployerJobOfferService;
 use App\Recruitment\Service\JobMatchService;
+use App\Service\AI\SkiloraMlClient;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -52,7 +55,10 @@ class RecruitmentController extends AppController
         private readonly EmployerJobOfferService $employerJobOfferService,
         private readonly ApplicationSubmissionService $applicationSubmissionService,
         private readonly ApplicationPipelineService $applicationPipelineService,
+        private readonly ContractRepository $contractRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly SkiloraMlClient $mlClient,
+        private readonly AnetiService $anetiService,
         private readonly string $cvUploadDir,
     ) {
     }
@@ -151,6 +157,63 @@ class RecruitmentController extends AppController
         }
 
         return $this->redirectToRoute('app_applications');
+    }
+
+    #[Route('/jobs/{id}/ai-cv-analysis', name: 'app_job_ai_cv_analysis', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_USER')]
+    public function aiCvAnalysis(Request $request, JobOffer $jobOffer): JsonResponse
+    {
+        $cvFile = $request->files->get('cv');
+        $cvText = '';
+
+        if ($cvFile instanceof UploadedFile) {
+            $ext = strtolower($cvFile->getClientOriginalExtension());
+            if ($ext === 'txt') {
+                $cvText = file_get_contents($cvFile->getPathname()) ?: '';
+            } elseif ($ext === 'pdf') {
+                $raw = file_get_contents($cvFile->getPathname()) ?: '';
+                $cvText = $this->extractTextFromPdf($raw);
+            } else {
+                $cvText = file_get_contents($cvFile->getPathname()) ?: '';
+            }
+        }
+
+        if (trim($cvText) === '') {
+            $cvText = $request->request->getString('cv_text');
+        }
+
+        if (trim($cvText) === '') {
+            return $this->json(['error' => 'Please upload a CV or paste your CV text.'], 400);
+        }
+
+        $cvText = mb_convert_encoding($cvText, 'UTF-8', 'UTF-8');
+        $cvText = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $cvText) ?? $cvText;
+
+        $skills = $jobOffer->getSkillsRequired() ? explode(',', $jobOffer->getSkillsRequired()) : [];
+        $skills = array_map('trim', $skills);
+
+        $result = $this->mlClient->cvJobFit([
+            'cv_text' => $cvText,
+            'job_title' => $jobOffer->getTitle(),
+            'job_description' => $jobOffer->getDescription() ?? '',
+            'job_skills' => $skills,
+        ]);
+
+        return new JsonResponse(json_encode($result, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE), 200, [], true);
+    }
+
+    private function extractTextFromPdf(string $raw): string
+    {
+        $text = '';
+        if (preg_match_all('/\((.*?)\)/', $raw, $matches)) {
+            $text = implode(' ', $matches[1]);
+        }
+        if (strlen($text) < 50) {
+            $text = preg_replace('/[^\x20-\x7E\n]/', ' ', $raw) ?? '';
+            $text = preg_replace('/\s+/', ' ', $text) ?? '';
+        }
+        $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+        return trim($text);
     }
 
     #[Route('/jobs/{id}/save', name: 'app_job_save', methods: ['POST'], requirements: ['id' => '\d+'])]
@@ -340,6 +403,24 @@ class RecruitmentController extends AppController
         return $this->redirectToRoute('app_application_show', ['id' => $application->getId()]);
     }
 
+    #[Route('/applications/{id}/delete', name: 'app_application_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function applicationDelete(Request $request, Application $application): Response
+    {
+        $user = $this->getAppUser();
+        if ($application->getCandidate()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+        if (!$this->isCsrfTokenValid('delete_application_' . $application->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+        $this->entityManager->remove($application);
+        $this->entityManager->flush();
+        $this->addFlash('success', 'Application withdrawn.');
+
+        return $this->redirectToRoute('app_applications');
+    }
+
     #[Route('/applications/{id}/interview', name: 'app_application_interview', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_EMPLOYER')]
     public function applicationInterview(Request $request, Application $application): Response
@@ -403,9 +484,14 @@ class RecruitmentController extends AppController
             throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
         $this->applicationPipelineService->acceptOffer($this->getAppUser(), $hireOffer);
-        $this->addFlash('success', 'Offer accepted. Finance contract setup is next.');
+        $this->addFlash('success', 'Offer accepted! Your contract has been created. The employer will fund escrow to begin work.');
 
-        return $this->redirectToRoute('app_hire_offers');
+        $contract = $this->contractRepository->findOneByHireOffer($hireOffer);
+        if ($contract !== null) {
+            return $this->redirectToRoute('app_contract_show', ['id' => $contract->getId()]);
+        }
+
+        return $this->redirectToRoute('app_contracts');
     }
 
     #[Route('/hire-offers/{id}/reject', name: 'app_hire_offer_reject', methods: ['POST'], requirements: ['id' => '\d+'])]
@@ -432,7 +518,12 @@ class RecruitmentController extends AppController
                 throw $this->createAccessDeniedException('Invalid CSRF token.');
             }
 
-            $job = $this->employerJobOfferService->createFromRequest($user, $request->request);
+            try {
+                $job = $this->employerJobOfferService->createFromRequest($user, $request->request);
+            } catch (\RuntimeException $e) {
+                $this->addFlash('error', $e->getMessage());
+                return $this->render('recruitment/employer/post_job.html.twig', ['company' => $company, 'job' => null]);
+            }
 
             return $this->redirectToRoute('app_employer_offer_show', ['id' => $job->getId()]);
         }
@@ -538,6 +629,17 @@ class RecruitmentController extends AppController
         return $this->render('recruitment/interviews/index.html.twig');
     }
 
+    #[Route('/companies/{id}', name: 'app_company_show', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function companyProfile(Company $company): Response
+    {
+        return $this->render('recruitment/company/show.html.twig', [
+            'company' => $company,
+            'jobs' => $this->jobOfferRepository->findRecentForCompany($company, 12),
+            'open_jobs_count' => $this->jobOfferRepository->countOpenForCompany($company),
+        ]);
+    }
+
     #[Route('/search/jobs', name: 'app_job_search_api', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function searchApi(Request $request): JsonResponse
@@ -562,6 +664,19 @@ class RecruitmentController extends AppController
         }, $this->jobOfferRepository->findSearchSuggestions($query));
 
         return new JsonResponse(['results' => $results]);
+    }
+
+    #[Route('/api/aneti-feed', name: 'app_aneti_feed_api', methods: ['GET'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function anetiFeedApi(Request $request): JsonResponse
+    {
+        $search = trim($request->query->getString('q')) ?: null;
+        $source = trim($request->query->getString('source')) ?: null;
+        $limit = min(100, max(1, $request->query->getInt('limit', 40)));
+
+        $feed = $this->anetiService->getLatestFeed($source, $search, $limit);
+
+        return new JsonResponse($feed);
     }
 
     private function normalizeWorkType(string $workType): ?string

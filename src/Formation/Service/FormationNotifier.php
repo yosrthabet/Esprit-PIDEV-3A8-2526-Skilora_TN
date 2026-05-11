@@ -48,6 +48,32 @@ class FormationNotifier
         $this->entityManager->flush();
     }
 
+    public function notifyTrainerFormationPublished(Formation $formation): void
+    {
+        $this->notify(
+            $formation->getTrainer(),
+            'formation.ai_published',
+            'Formation approved & published',
+            'Your formation "' . $formation->getTitle() . '" passed AI review (score: ' . ($formation->getReviewScore() ?? '?') . ') and is now live!',
+            'formation',
+            $formation->getId(),
+        );
+        $this->entityManager->flush();
+    }
+
+    public function notifyTrainerFormationRefused(Formation $formation): void
+    {
+        $this->notify(
+            $formation->getTrainer(),
+            'formation.ai_refused',
+            'Formation review failed',
+            'Your formation "' . $formation->getTitle() . '" did not pass AI review. Reason: ' . ($formation->getReviewNote() ?? 'quality below threshold'),
+            'formation',
+            $formation->getId(),
+        );
+        $this->entityManager->flush();
+    }
+
     public function notifyCertificateIssued(Certificate $certificate): void
     {
         $this->notify(

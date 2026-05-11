@@ -9,6 +9,8 @@ use App\Enum\Currency;
 use App\Enum\ExperienceLevel;
 use App\Enum\JobOfferStatus;
 use App\Enum\WorkType;
+use App\Finance\Entity\PaymentTransaction;
+use App\Finance\Repository\WalletRepository;
 use App\Recruitment\Entity\Company;
 use App\Recruitment\Entity\JobOffer;
 use App\Recruitment\Repository\CompanyRepository;
@@ -20,6 +22,7 @@ class EmployerJobOfferService
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly CompanyRepository $companyRepository,
+        private readonly WalletRepository $walletRepository,
     ) {
     }
 
@@ -47,6 +50,11 @@ class EmployerJobOfferService
         $jobOffer = (new JobOffer())->setCompany($company)->setCompanyName($company->getName());
 
         $this->applyRequestData($jobOffer, $data);
+
+        if ($jobOffer->getStatus() === JobOfferStatus::OPEN) {
+            $this->holdEscrow($owner, $jobOffer);
+        }
+
         $this->entityManager->persist($jobOffer);
         $this->entityManager->flush();
 
@@ -133,5 +141,31 @@ class EmployerJobOfferService
             ->setCurrency(Currency::tryFrom($data->getString('currency')) ?? Currency::TND)
             ->scheduleExpiry($deadline !== '' ? new \DateTimeImmutable($deadline) : null)
             ->setStatus($data->getString('intent') === 'draft' ? JobOfferStatus::DRAFT : JobOfferStatus::OPEN);
+    }
+
+    private function holdEscrow(User $employer, JobOffer $jobOffer): void
+    {
+        $salary = (float) ($jobOffer->getMaxSalary() ?? $jobOffer->getMinSalary() ?? '0');
+        if ($salary <= 0) {
+            return;
+        }
+
+        $wallet = $this->walletRepository->findOneForUser($employer);
+        if ($wallet === null || (float) $wallet->getBalance() < $salary) {
+            $balance = $wallet !== null ? $wallet->getBalance() : '0.00';
+            throw new \RuntimeException(
+                sprintf('Insufficient wallet balance to publish this offer. Required: %.2f TND, available: %s TND. Please top up your wallet first.', $salary, $balance)
+            );
+        }
+
+        $wallet->debit(number_format($salary, 2, '.', ''));
+
+        $transaction = (new PaymentTransaction())
+            ->setUser($employer)
+            ->setType('escrow_hold')
+            ->setAmount(number_format($salary, 2, '.', ''))
+            ->setCurrency(Currency::TND)
+            ->setProviderReference('job-offer-escrow');
+        $this->entityManager->persist($transaction);
     }
 }

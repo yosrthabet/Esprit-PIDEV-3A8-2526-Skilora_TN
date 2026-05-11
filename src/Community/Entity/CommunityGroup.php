@@ -31,6 +31,12 @@ class CommunityGroup
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
+    #[ORM\Column(length: 20, options: ['default' => 'public'])]
+    private string $privacy = 'public';
+
+    #[ORM\Column(name: 'image_path', length: 512, nullable: true)]
+    private ?string $imagePath = null;
+
     #[ORM\Column(name: 'members_count')]
     private int $membersCount = 0;
 
@@ -58,6 +64,10 @@ class CommunityGroup
     public function setName(string $name): static { $this->name = trim($name); $this->touch(); return $this; }
     public function getDescription(): ?string { return $this->description; }
     public function setDescription(?string $description): static { $this->description = $description !== null ? trim($description) : null; $this->touch(); return $this; }
+    public function getPrivacy(): string { return $this->privacy; }
+    public function setPrivacy(string $privacy): static { $this->privacy = in_array($privacy, ['public', 'private'], true) ? $privacy : 'public'; $this->touch(); return $this; }
+    public function getImagePath(): ?string { return $this->imagePath; }
+    public function setImagePath(?string $imagePath): static { $imagePath = trim($imagePath ?? ''); $this->imagePath = $imagePath !== '' ? $imagePath : null; $this->touch(); return $this; }
     public function getMembersCount(): int { return $this->membersCount; }
     public function incrementMembers(): void { $this->membersCount++; $this->touch(); }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }

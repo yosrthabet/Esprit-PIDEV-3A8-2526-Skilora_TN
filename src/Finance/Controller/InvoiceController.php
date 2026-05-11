@@ -7,6 +7,7 @@ namespace App\Finance\Controller;
 use App\Controller\AppController;
 use App\Finance\Entity\Invoice;
 use App\Finance\Repository\InvoiceRepository;
+use App\Finance\Service\InvoicePdfService;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -14,8 +15,10 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 final class InvoiceController extends AppController
 {
-    public function __construct(private readonly InvoiceRepository $invoiceRepository)
-    {
+    public function __construct(
+        private readonly InvoiceRepository $invoiceRepository,
+        private readonly InvoicePdfService $pdfService,
+    ) {
     }
 
     #[Route('/finance/invoices', name: 'app_finance_invoices', methods: ['GET'])]
@@ -38,6 +41,23 @@ final class InvoiceController extends AppController
 
         return $this->render('finance/invoices/show.html.twig', [
             'invoice' => $invoice,
+        ]);
+    }
+
+    #[Route('/finance/invoices/{id}/pdf', name: 'app_finance_invoice_pdf', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function downloadPdf(Invoice $invoice): Response
+    {
+        if (!$this->invoiceRepository->isVisibleToUser($invoice, $this->getAppUser())) {
+            throw $this->createAccessDeniedException('You cannot access this invoice.');
+        }
+
+        $pdf = $this->pdfService->generatePdf($invoice);
+        $filename = 'Skilora_' . $invoice->getNumber() . '.pdf';
+
+        return new Response($pdf, Response::HTTP_OK, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Length' => (string) strlen($pdf),
         ]);
     }
 }

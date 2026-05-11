@@ -1,0 +1,137 @@
+# ═══════════════════════════════════════════════════
+# Skilora — Traductions françaises
+# ═══════════════════════════════════════════════════
+
+# ── Navigation ──
+nav:
+    dashboard: Tableau de bord
+    home: Accueil
+    users: Utilisateurs
+    recruitment: Recrutement
+    formations: Formations
+    certificates: Certificats
+    finance: Finance
+    contracts: Contrats
+    support: Support
+    calendar: Calendrier
+    reviews: Avis
+    community: Communauté
+    ai_recruitment: IA Recrutement
+    ai_formations: IA Formations
+    chatbot: Chatbot
+    post_job: Publier une offre
+    my_offers: Mes offres
+    applications: Candidatures
+    interviews: Entretiens
+    hire_offers: Offres d'embauche
+    messages: Messagerie
+    my_formations: Mes formations
+    catalog: Catalogue
+    learning: Apprentissage
+    find_jobs: Trouver un emploi
+    preferences: Préférences
+    invoices: Factures
+    escrow: Escrow
+    analytics: Analytique
+    network: Réseau
+    overview: Vue d'ensemble
+    manage: Gestion
+    exchange_rates: Taux de change
+    payslips: Fiches de paie
+    ai_tools: Outils IA
+    social: Social
+    my_courses: Mes cours
+
+# ── Profile Dropdown ──
+profile:
+    my_profile: Mon profil
+    notifications: Notifications
+    settings: Paramètres
+    wallet: Portefeuille
+    bank_accounts: Comptes bancaires
+    analytics: Analytique
+    theme: Thème
+    log_out: Se déconnecter
+    guest: Invité
+
+# ── Common UI ──
+common:
+    save: Enregistrer
+    cancel: Annuler
+    delete: Supprimer
+    edit: Modifier
+    create: Créer
+    search: Rechercher
+    filter: Filtrer
+    loading: Chargement…
+    no_results: Aucun résultat trouvé
+    confirm: Confirmer
+    back: Retour
+    next: Suivant
+    previous: Précédent
+    submit: Soumettre
+    close: Fermer
+    view_all: Voir tout
+    see_more: Voir plus
+    actions: Actions
+    status: Statut
+    date: Date
+    amount: Montant
+    currency: Devise
+    description: Description
+    details: Détails
+    yes: Oui
+    no: Non
+
+# ── Auth ──
+auth:
+    login: Se connecter
+    logout: Se déconnecter
+    register: S'inscrire
+    forgot_password: Mot de passe oublié
+    reset_password: Réinitialiser le mot de passe
+    email: E-mail
+    password: Mot de passe
+    remember_me: Se souvenir de moi
+
+# ── Finance ──
+finance:
+    dashboard: Tableau de bord Finance
+    wallet: Portefeuille
+    balance: Solde
+    top_up: Recharger
+    bank_accounts: Comptes bancaires
+    invoices: Factures
+    escrow: Escrow
+    contracts: Contrats
+    analytics: Analytique
+    transactions: Transactions
+    amount: Montant
+    status: Statut
+    pending: En attente
+    completed: Terminé
+    failed: Échoué
+
+# ── Notifications ──
+notifications:
+    title: Notifications
+    view_all: Voir tout
+    no_notifications: Aucune notification.
+    loading: Chargement…
+    unread: non lu(s)
+
+# ── Employer ──
+employer:
+    post_job: Publier une offre
+
+# ── Search ──
+search:
+    placeholder: Rechercher des emplois…
+    quick_matches: Correspondances rapides
+    search_all: Voir tous les résultats →
+    no_matches: Aucune correspondance
+
+# ── Footer / Misc ──
+misc:
+    skilora: Skilora
+    copyright: "© %year% Skilora. Tous droits réservés."

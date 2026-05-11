@@ -2,9 +2,10 @@
 
 namespace App\Twig;
 
+use App\Entity\User;
 use App\Enum\WorkType;
+use App\Finance\Repository\WalletRepository;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\Routing\RouterInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
@@ -13,7 +14,7 @@ class AppExtension extends AbstractExtension
 {
     public function __construct(
         private readonly Security $security,
-        private readonly RouterInterface $router,
+        private readonly WalletRepository $walletRepository,
     ) {
     }
 
@@ -62,7 +63,18 @@ class AppExtension extends AbstractExtension
     {
         return [
             new TwigFunction('skilora_nav', [$this, 'getSkiloraNav']),
+            new TwigFunction('wallet_balance', [$this, 'getWalletBalance']),
         ];
+    }
+
+    public function getWalletBalance(): string
+    {
+        $user = $this->security->getUser();
+        if (!$user instanceof User) {
+            return '0.00';
+        }
+        $wallet = $this->walletRepository->findOneForUser($user);
+        return $wallet !== null ? $wallet->getBalance() : '0.00';
     }
 
     /** @return array<mixed> */
@@ -91,138 +103,212 @@ class AppExtension extends AbstractExtension
 
         $navItems = match ($role) {
             'ADMIN' => [
-                ['label' => 'Tableau de bord', 'route' => 'app_dashboard',   'icon' => 'layout-dashboard'],
+                ['label' => 'Dashboard',       'route' => 'app_dashboard',          'icon' => 'layout-dashboard'],
                 ['label' => 'separator'],
-                ['label' => 'Recrutement',     'route' => 'app_jobs', 'icon' => 'briefcase'],
-                ['label' => 'Finance',         'route' => 'app_admin_finance', 'icon' => 'wallet'],
+                ['label' => 'Users',           'route' => 'app_admin_user_index',   'icon' => 'users'],
+                ['label' => 'Recruitment',     'route' => 'app_admin_recruitment',  'icon' => 'briefcase'],
+                ['label' => 'Formations',      'route' => 'app_admin_formations',   'icon' => 'graduation-cap'],
+                ['label' => 'Certificates',    'route' => 'app_admin_certificates', 'icon' => 'award'],
+                ['label' => 'Finance',         'route' => 'app_admin_finance',      'icon' => 'wallet'],
+                ['label' => 'Contracts',       'route' => 'app_contracts',          'icon' => 'file-signature'],
                 ['label' => 'separator'],
-                ['label' => 'Support',           'route' => 'app_support',          'icon' => 'life-buoy'],
-                ['label' => 'Communauté',        'route' => 'app_admin_community',  'icon' => 'message-circle'],
+                ['label' => 'Support',         'route' => 'app_admin_support',      'icon' => 'life-buoy'],
+                ['label' => 'Calendar',        'route' => 'app_admin_support_calendar', 'icon' => 'calendar'],
+                ['label' => 'Reviews',         'route' => 'app_admin_finance_reviews',  'icon' => 'star'],
+                ['label' => 'Community',       'route' => 'app_admin_community',    'icon' => 'message-circle'],
                 ['label' => 'separator'],
-                ['label' => 'Mon profil',        'route' => 'app_profile',          'icon' => 'user'],
-                ['label' => 'Notifications',     'route' => 'app_notifications_index', 'icon' => 'bell'],
+                ['label' => 'AI Recruitment',  'route' => 'app_recruitment_ml',     'icon' => 'sparkles'],
+                ['label' => 'AI Formations',   'route' => 'app_formation_ml',       'icon' => 'sparkles'],
+                ['label' => 'Chatbot',         'route' => 'app_chatbot',            'icon' => 'bot'],
             ],
             'EMPLOYER' => [
-                ['label' => 'Tableau de bord',   'route' => 'app_workspace',        'icon' => 'layout-dashboard'],
+                ['label' => 'Dashboard',       'route' => 'app_workspace',          'icon' => 'layout-dashboard'],
                 ['label' => 'separator'],
-                ['label' => 'Publier une offre', 'route' => 'app_post_job',         'icon' => 'plus-circle'],
-                ['label' => 'Mes offres',        'route' => 'app_active_offers',    'icon' => 'briefcase'],
-                ['label' => 'Candidatures',      'route' => 'app_applications',     'icon' => 'inbox'],
-                ['label' => 'Entretiens',        'route' => 'app_interviews',       'icon' => 'video'],
-                ['label' => 'Messagerie',        'route' => 'app_inbox',            'icon' => 'messages-square'],
+                ['label' => 'Post a Job',      'route' => 'app_post_job',           'icon' => 'plus-circle'],
+                ['label' => 'My Offers',       'route' => 'app_active_offers',      'icon' => 'briefcase'],
+                ['label' => 'Applications',    'route' => 'app_applications',       'icon' => 'inbox'],
+                ['label' => 'Interviews',      'route' => 'app_interviews',         'icon' => 'video'],
+                ['label' => 'Hire Offers',     'route' => 'app_hire_offers',        'icon' => 'handshake'],
                 ['label' => 'separator'],
-                ['label' => 'Mon profil',        'route' => 'app_profile',          'icon' => 'user'],
-                ['label' => 'Notifications',     'route' => 'app_notifications_index', 'icon' => 'bell'],
-                ['label' => 'Support',           'route' => 'app_support',          'icon' => 'life-buoy'],
-                ['label' => 'Communauté',        'route' => 'app_community',        'icon' => 'message-circle'],
+                ['label' => 'Finance',         'route' => 'app_finance',            'icon' => 'wallet'],
+                ['label' => 'Contracts',       'route' => 'app_contracts',          'icon' => 'file-signature'],
+                ['label' => 'Invoices',        'route' => 'app_finance_invoices',   'icon' => 'receipt'],
+                ['label' => 'Escrow',          'route' => 'app_finance_escrow',     'icon' => 'landmark'],
+                ['label' => 'separator'],
+                ['label' => 'Community',       'route' => 'app_community',          'icon' => 'message-circle'],
+                ['label' => 'Messages',        'route' => 'app_inbox',              'icon' => 'messages-square'],
+                ['label' => 'Support',         'route' => 'app_support',            'icon' => 'life-buoy'],
             ],
             'TRAINER' => [
-                ['label' => 'Tableau de bord',   'route' => 'app_trainer_dashboard', 'icon' => 'layout-dashboard'],
+                ['label' => 'Dashboard',       'route' => 'app_trainer_dashboard',  'icon' => 'layout-dashboard'],
                 ['label' => 'separator'],
-                ['label' => 'Mon profil',        'route' => 'app_profile',           'icon' => 'user'],
-                ['label' => 'Messagerie',        'route' => 'app_inbox',             'icon' => 'messages-square'],
-                ['label' => 'Notifications',     'route' => 'app_notifications_index', 'icon' => 'bell'],
-                ['label' => 'Support',           'route' => 'app_support',           'icon' => 'life-buoy'],
-                ['label' => 'Communauté',        'route' => 'app_community',         'icon' => 'message-circle'],
+                ['label' => 'My Formations',   'route' => 'app_trainer_formations', 'icon' => 'graduation-cap'],
+                ['label' => 'Catalog',         'route' => 'app_formations',         'icon' => 'library'],
+                ['label' => 'Learning',        'route' => 'app_learning',           'icon' => 'book-open'],
+                ['label' => 'Certificates',    'route' => 'app_certificates',       'icon' => 'award'],
+                ['label' => 'separator'],
+                ['label' => 'Community',       'route' => 'app_community',          'icon' => 'message-circle'],
+                ['label' => 'Network',         'route' => 'app_community_network',  'icon' => 'users'],
+                ['label' => 'Messages',        'route' => 'app_inbox',              'icon' => 'messages-square'],
+                ['label' => 'Support',         'route' => 'app_support',            'icon' => 'life-buoy'],
             ],
             default => [ // USER / FREELANCER
-                ['label' => 'Accueil',           'route' => 'app_workspace',         'icon' => 'home'],
+                ['label' => 'Home',            'route' => 'app_workspace',          'icon' => 'home'],
                 ['label' => 'separator'],
-                ['label' => 'Trouver un emploi', 'route' => 'app_jobs',              'icon' => 'search'],
-                ['label' => 'Mes candidatures',  'route' => 'app_applications',      'icon' => 'file-text'],
-                ['label' => 'Préférences emploi','route' => 'app_candidate_job_preferences', 'icon' => 'sliders-horizontal'],
-                ['label' => 'Messagerie',        'route' => 'app_inbox',             'icon' => 'inbox'],
+                ['label' => 'Find Jobs',       'route' => 'app_jobs',               'icon' => 'search'],
+                ['label' => 'Applications',    'route' => 'app_applications',       'icon' => 'file-text'],
+                ['label' => 'Hire Offers',     'route' => 'app_hire_offers',        'icon' => 'handshake'],
+                ['label' => 'Preferences',     'route' => 'app_candidate_job_preferences', 'icon' => 'sliders-horizontal'],
                 ['label' => 'separator'],
-                ['label' => 'Mon profil',        'route' => 'app_profile',           'icon' => 'user'],
-                ['label' => 'Notifications',     'route' => 'app_notifications_index', 'icon' => 'bell'],
+                ['label' => 'Finance',         'route' => 'app_finance',            'icon' => 'wallet'],
+                ['label' => 'Contracts',       'route' => 'app_contracts',          'icon' => 'file-signature'],
+                ['label' => 'Invoices',        'route' => 'app_finance_invoices',   'icon' => 'receipt'],
+                ['label' => 'Escrow',          'route' => 'app_finance_escrow',     'icon' => 'landmark'],
                 ['label' => 'separator'],
-                ['label' => 'Paramètres',        'route' => 'app_settings',          'icon' => 'settings'],
-                ['label' => 'Support',           'route' => 'app_support',           'icon' => 'life-buoy'],
-                ['label' => 'Communauté',        'route' => 'app_community',         'icon' => 'message-circle'],
+                ['label' => 'Formations',      'route' => 'app_formations',         'icon' => 'graduation-cap'],
+                ['label' => 'Learning',        'route' => 'app_learning',           'icon' => 'book-open'],
+                ['label' => 'Certificates',    'route' => 'app_certificates',       'icon' => 'award'],
+                ['label' => 'separator'],
+                ['label' => 'Community',       'route' => 'app_community',          'icon' => 'message-circle'],
+                ['label' => 'Network',         'route' => 'app_community_network',  'icon' => 'users'],
+                ['label' => 'Messages',        'route' => 'app_inbox',              'icon' => 'inbox'],
+                ['label' => 'Support',         'route' => 'app_support',            'icon' => 'life-buoy'],
             ],
         };
-
-        $formationRoute = match ($role) {
-            'ADMIN' => $this->firstExistingRoute(['app_admin_formations', 'app_formations']),
-            'TRAINER' => $this->firstExistingRoute(['app_trainer_formations', 'app_formations']),
-            default => $this->firstExistingRoute(['app_formations']),
-        };
-        if ($formationRoute !== null) {
-            $navItems[] = ['label' => 'Formations', 'route' => $formationRoute, 'icon' => 'graduation-cap'];
-        }
-        $learningRoute = $this->firstExistingRoute(['app_learning']);
-        if ($learningRoute !== null && $role !== 'ADMIN') {
-            $navItems[] = ['label' => 'Learning', 'route' => $learningRoute, 'icon' => 'book-open'];
-        }
 
         $topnavItems = array_values(array_filter($navItems, fn(array $item) => $item['label'] !== 'separator'));
 
-        // Grouped nav for top-nav bar: primary links + dropdown groups
         $topnavGrouped = match ($role) {
             'ADMIN' => [
                 'primary' => [
-                    ['label' => 'Tableau de bord', 'route' => 'app_dashboard',   'icon' => 'layout-dashboard'],
-                    ['label' => 'Recrutement',     'route' => 'app_jobs', 'icon' => 'briefcase'],
-                    ['label' => 'Support',         'route' => 'app_admin_support',     'icon' => 'life-buoy'],
+                    ['label' => 'Dashboard',    'route' => 'app_dashboard',          'icon' => 'layout-dashboard'],
+                    ['label' => 'Users',        'route' => 'app_admin_user_index',   'icon' => 'users'],
+                    ['label' => 'Recruitment',  'route' => 'app_admin_recruitment',  'icon' => 'briefcase'],
+                    ['label' => 'Formations',   'route' => 'app_admin_formations',   'icon' => 'graduation-cap'],
+                    ['label' => 'Finance',      'route' => 'app_admin_finance',      'icon' => 'wallet'],
+                    ['label' => 'Support',      'route' => 'app_admin_support',      'icon' => 'life-buoy'],
                 ],
                 'groups' => [
                     [
-                        'label' => 'Modération', 'icon' => 'shield', 'children' => [
-                            ['label' => 'Communauté', 'route' => 'app_admin_community', 'icon' => 'message-circle'],
+                        'label' => 'Manage', 'icon' => 'shield', 'children' => [
+                            ['label' => 'Certificates', 'route' => 'app_admin_certificates', 'icon' => 'award'],
+                            ['label' => 'Reviews',      'route' => 'app_admin_finance_reviews', 'icon' => 'star'],
+                            ['label' => 'Calendar',     'route' => 'app_admin_support_calendar', 'icon' => 'calendar'],
+                            ['label' => 'Payouts',       'route' => 'app_admin_finance_payouts', 'icon' => 'banknote'],
+                            ['label' => 'Exchange Rates','route' => 'app_admin_finance_exchange_rates', 'icon' => 'arrow-left-right'],
+                            ['label' => 'Payslips',     'route' => 'app_admin_finance_payslips', 'icon' => 'file-text'],
+                            ['label' => 'Community',    'route' => 'app_admin_community', 'icon' => 'message-circle'],
+                        ],
+                    ],
+                    [
+                        'label' => 'AI Tools', 'icon' => 'sparkles', 'children' => [
+                            ['label' => 'AI Recruitment', 'route' => 'app_recruitment_ml', 'icon' => 'sparkles'],
+                            ['label' => 'AI Formations',  'route' => 'app_formation_ml',  'icon' => 'sparkles'],
+                            ['label' => 'Chatbot',        'route' => 'app_chatbot',       'icon' => 'bot'],
                         ],
                     ],
                 ],
             ],
             'EMPLOYER' => [
                 'primary' => [
-                    ['label' => 'Tableau de bord',   'route' => 'app_workspace',     'icon' => 'layout-dashboard'],
-                    ['label' => 'Mes offres',        'route' => 'app_active_offers', 'icon' => 'briefcase'],
-                    ['label' => 'Candidatures',      'route' => 'app_applications',  'icon' => 'inbox'],
-                    ['label' => 'Entretiens',        'route' => 'app_interviews',    'icon' => 'video'],
-                    ['label' => 'Contrats',          'route' => 'app_contracts',     'icon' => 'file-signature'],
+                    ['label' => 'Dashboard',    'route' => 'app_workspace',          'icon' => 'layout-dashboard'],
+                    ['label' => 'My Offers',    'route' => 'app_active_offers',      'icon' => 'briefcase'],
+                    ['label' => 'Applications', 'route' => 'app_applications',       'icon' => 'inbox'],
+                    ['label' => 'Interviews',   'route' => 'app_interviews',         'icon' => 'video'],
                 ],
                 'groups' => [
                     [
-                        'label' => 'Plus', 'icon' => 'grid', 'children' => [
-                            ['label' => 'Publier une offre', 'route' => 'app_post_job', 'icon' => 'plus-circle'],
-                            ['label' => 'Support',           'route' => 'app_support',  'icon' => 'life-buoy'],
-                            ['label' => 'Communauté',        'route' => 'app_community', 'icon' => 'message-circle'],
-                            ['label' => 'Messagerie',        'route' => 'app_inbox', 'icon' => 'messages-square'],
+                        'label' => 'Finance', 'icon' => 'wallet', 'children' => [
+                            ['label' => 'Overview',  'route' => 'app_finance',          'icon' => 'bar-chart-3'],
+                            ['label' => 'Contracts', 'route' => 'app_contracts',        'icon' => 'file-signature'],
+                            ['label' => 'Invoices',  'route' => 'app_finance_invoices', 'icon' => 'receipt'],
+                            ['label' => 'Escrow',    'route' => 'app_finance_escrow',   'icon' => 'landmark'],
+                            ['label' => 'Payouts',   'route' => 'app_finance_payouts',  'icon' => 'banknote'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Social', 'icon' => 'users', 'children' => [
+                            ['label' => 'Community', 'route' => 'app_community',          'icon' => 'message-circle'],
+                            ['label' => 'Network',   'route' => 'app_community_network',  'icon' => 'users'],
+                            ['label' => 'Messages',  'route' => 'app_inbox',              'icon' => 'messages-square'],
+                            ['label' => 'Support',   'route' => 'app_support',            'icon' => 'life-buoy'],
+                        ],
+                    ],
+                    [
+                        'label' => 'AI Tools', 'icon' => 'sparkles', 'children' => [
+                            ['label' => 'AI Recruitment', 'route' => 'app_recruitment_ml', 'icon' => 'sparkles'],
+                            ['label' => 'Chatbot',        'route' => 'app_chatbot',       'icon' => 'bot'],
                         ],
                     ],
                 ],
             ],
             'TRAINER' => [
                 'primary' => [
-                    ['label' => 'Tableau de bord', 'route' => 'app_trainer_dashboard', 'icon' => 'layout-dashboard'],
-                    ['label' => 'Mon profil',      'route' => 'app_profile',           'icon' => 'user'],
-                    ['label' => 'Support',         'route' => 'app_support',           'icon' => 'life-buoy'],
-                    ['label' => 'Communauté',      'route' => 'app_community',         'icon' => 'message-circle'],
-                    ['label' => 'Messagerie',      'route' => 'app_inbox',             'icon' => 'messages-square'],
+                    ['label' => 'Dashboard',     'route' => 'app_trainer_dashboard',  'icon' => 'layout-dashboard'],
+                    ['label' => 'My Formations', 'route' => 'app_trainer_formations', 'icon' => 'graduation-cap'],
+                    ['label' => 'Catalog',       'route' => 'app_formations',         'icon' => 'library'],
+                    ['label' => 'Learning',      'route' => 'app_learning',           'icon' => 'book-open'],
                 ],
-                'groups' => [],
+                'groups' => [
+                    [
+                        'label' => 'Social', 'icon' => 'users', 'children' => [
+                            ['label' => 'Community',    'route' => 'app_community',         'icon' => 'message-circle'],
+                            ['label' => 'Network',      'route' => 'app_community_network', 'icon' => 'users'],
+                            ['label' => 'Messages',     'route' => 'app_inbox',             'icon' => 'messages-square'],
+                            ['label' => 'Certificates', 'route' => 'app_certificates',      'icon' => 'award'],
+                            ['label' => 'Support',      'route' => 'app_support',           'icon' => 'life-buoy'],
+                        ],
+                    ],
+                    [
+                        'label' => 'AI Tools', 'icon' => 'sparkles', 'children' => [
+                            ['label' => 'AI Formations', 'route' => 'app_formation_ml', 'icon' => 'sparkles'],
+                            ['label' => 'Chatbot',       'route' => 'app_chatbot',      'icon' => 'bot'],
+                        ],
+                    ],
+                ],
             ],
             default => [ // USER / FREELANCER
                 'primary' => [
-                    ['label' => 'Accueil',           'route' => 'app_workspace',   'icon' => 'home'],
-                    ['label' => 'Trouver un emploi', 'route' => 'app_jobs',        'icon' => 'search'],
-                    ['label' => 'Candidatures',      'route' => 'app_applications','icon' => 'file-text'],
-                    ['label' => 'Préférences',       'route' => 'app_candidate_job_preferences', 'icon' => 'sliders-horizontal'],
-                    ['label' => 'Contrats',          'route' => 'app_contracts',   'icon' => 'file-signature'],
-                    ['label' => 'Support',           'route' => 'app_support',     'icon' => 'life-buoy'],
-                    ['label' => 'Communauté',        'route' => 'app_community',   'icon' => 'message-circle'],
-                    ['label' => 'Messagerie',        'route' => 'app_inbox',       'icon' => 'inbox'],
+                    ['label' => 'Home',         'route' => 'app_workspace',          'icon' => 'home'],
+                    ['label' => 'Find Jobs',    'route' => 'app_jobs',               'icon' => 'search'],
+                    ['label' => 'Applications', 'route' => 'app_applications',       'icon' => 'file-text'],
+                    ['label' => 'Contracts',    'route' => 'app_contracts',          'icon' => 'file-signature'],
                 ],
-                'groups' => [],
+                'groups' => [
+                    [
+                        'label' => 'Finance', 'icon' => 'wallet', 'children' => [
+                            ['label' => 'Overview',  'route' => 'app_finance',          'icon' => 'bar-chart-3'],
+                            ['label' => 'Invoices',  'route' => 'app_finance_invoices', 'icon' => 'receipt'],
+                            ['label' => 'Escrow',    'route' => 'app_finance_escrow',   'icon' => 'landmark'],
+                            ['label' => 'Analytics', 'route' => 'app_finance_analytics','icon' => 'trending-up'],
+                            ['label' => 'Payouts',   'route' => 'app_finance_payouts',  'icon' => 'banknote'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Learning', 'icon' => 'graduation-cap', 'children' => [
+                            ['label' => 'Formations',   'route' => 'app_formations',   'icon' => 'graduation-cap'],
+                            ['label' => 'My Courses',   'route' => 'app_learning',     'icon' => 'book-open'],
+                            ['label' => 'Certificates', 'route' => 'app_certificates', 'icon' => 'award'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Social', 'icon' => 'users', 'children' => [
+                            ['label' => 'Community', 'route' => 'app_community',          'icon' => 'message-circle'],
+                            ['label' => 'Network',   'route' => 'app_community_network',  'icon' => 'users'],
+                            ['label' => 'Messages',  'route' => 'app_inbox',              'icon' => 'inbox'],
+                            ['label' => 'Support',   'route' => 'app_support',            'icon' => 'life-buoy'],
+                        ],
+                    ],
+                    [
+                        'label' => 'AI Tools', 'icon' => 'sparkles', 'children' => [
+                            ['label' => 'AI Recruitment', 'route' => 'app_recruitment_ml', 'icon' => 'sparkles'],
+                            ['label' => 'AI Formations',  'route' => 'app_formation_ml',  'icon' => 'sparkles'],
+                            ['label' => 'Chatbot',        'route' => 'app_chatbot',       'icon' => 'bot'],
+                        ],
+                    ],
+                ],
             ],
         };
-
-        if ($formationRoute !== null) {
-            $topnavGrouped['primary'][] = ['label' => 'Formations', 'route' => $formationRoute, 'icon' => 'graduation-cap'];
-        }
-        if ($learningRoute !== null && $role !== 'ADMIN') {
-            $topnavGrouped['primary'][] = ['label' => 'Learning', 'route' => $learningRoute, 'icon' => 'book-open'];
-        }
 
         return [
             'user_role'        => $role,
@@ -231,17 +317,5 @@ class AppExtension extends AbstractExtension
             'topnav_items'     => $topnavItems,
             'topnav_grouped'   => $topnavGrouped,
         ];
-    }
-
-    /** @param list<string> $routeNames */
-    private function firstExistingRoute(array $routeNames): ?string
-    {
-        foreach ($routeNames as $routeName) {
-            if ($this->router->getRouteCollection()->get($routeName) !== null) {
-                return $routeName;
-            }
-        }
-
-        return null;
     }
 }
